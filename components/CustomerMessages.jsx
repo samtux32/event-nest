@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 import CustomerHeader from '@/components/CustomerHeader';
 import ConversationList from '@/components/ConversationList';
@@ -10,8 +11,11 @@ import MessageInput from '@/components/MessageInput';
 import EventDetailsSidebar from '@/components/EventDetailsSidebar';
 
 export default function CustomerMessages() {
+  const searchParams = useSearchParams();
   const [conversations, setConversations] = useState([]);
-  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [selectedConversation, setSelectedConversation] = useState(
+    searchParams.get('conv') || null
+  );
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');

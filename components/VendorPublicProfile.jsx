@@ -83,10 +83,10 @@ export default function VendorPublicProfile({ vendorId }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ vendorId }),
       });
+      const data = await res.json();
       if (res.ok) {
-        router.push('/customer-messages');
+        router.push(`/customer-messages?conv=${data.conversation.id}`);
       } else {
-        const data = await res.json();
         alert(data.error || 'Failed to start conversation');
       }
     } catch {
@@ -121,7 +121,7 @@ export default function VendorPublicProfile({ vendorId }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: "Hi, I'd like to discuss a custom quote for my event." }),
       });
-      router.push('/customer-messages');
+      router.push(`/customer-messages?conv=${conversation.id}`);
     } catch {
       alert('Something went wrong. Please try again.');
     } finally {

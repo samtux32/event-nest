@@ -55,7 +55,7 @@ export async function GET() {
           select: { text: true, createdAt: true },
         },
       },
-      orderBy: { lastMessageAt: 'desc' },
+      orderBy: { lastMessageAt: { sort: 'desc', nulls: 'last' } },
     })
 
     const mapped = conversations.map((conv) => {
