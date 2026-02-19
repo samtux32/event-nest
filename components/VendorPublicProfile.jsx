@@ -17,7 +17,8 @@ import {
   Clock,
   AlertCircle,
   Loader2,
-  BadgeCheck
+  BadgeCheck,
+  Sparkles
 } from 'lucide-react';
 
 function formatPrice(decimal) {
@@ -654,10 +655,13 @@ export default function VendorPublicProfile({ vendorId }) {
                 <button
                   onClick={handleRequestQuote}
                   disabled={requestingQuote}
-                  className="w-full border-2 border-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 text-sm"
+                  className="w-full relative overflow-hidden bg-gradient-to-r from-violet-500 to-purple-600 text-white py-4 rounded-xl font-bold hover:from-violet-600 hover:to-purple-700 transition-all flex items-center justify-center gap-2 disabled:opacity-60 shadow-md shadow-purple-200"
                 >
-                  {requestingQuote ? <Loader2 size={18} className="animate-spin" /> : null}
-                  {requestingQuote ? 'Opening...' : 'Request Custom Quote'}
+                  {requestingQuote
+                    ? <Loader2 size={18} className="animate-spin" />
+                    : <Sparkles size={18} />
+                  }
+                  {requestingQuote ? 'Opening chat...' : 'Request Custom Quote'}
                 </button>
               )}
 

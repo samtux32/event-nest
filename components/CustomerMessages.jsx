@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle } from 'lucide-react';
 import CustomerHeader from '@/components/CustomerHeader';
 import ConversationList from '@/components/ConversationList';
@@ -17,6 +17,7 @@ export default function CustomerMessages() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingConvos, setLoadingConvos] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const messagesEndRef = useRef(null);
 
   // Fetch conversations
   useEffect(() => {
@@ -64,6 +65,11 @@ export default function CustomerMessages() {
 
     fetchMessages();
   }, [selectedConversation]);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const selectedConv = conversations.find(c => c.id === selectedConversation);
 
@@ -166,14 +172,17 @@ export default function CustomerMessages() {
                     ))}
                   </div>
                 ) : (
-                  messages.map((message) => (
-                    <MessageBubble
-                      key={message.id}
-                      message={message}
-                      isCustomer={true}
-                      onQuoteUpdated={handleQuoteUpdated}
-                    />
-                  ))
+                  <>
+                    {messages.map((message) => (
+                      <MessageBubble
+                        key={message.id}
+                        message={message}
+                        isCustomer={true}
+                        onQuoteUpdated={handleQuoteUpdated}
+                      />
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </>
                 )}
               </div>
 

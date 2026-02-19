@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import VendorHeader from '@/components/VendorHeader';
 import ConversationList from '@/components/ConversationList';
 import ChatHeader from '@/components/ChatHeader';
@@ -19,6 +19,7 @@ export default function Messages() {
   const [loadingConvos, setLoadingConvos] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [showQuoteForm, setShowQuoteForm] = useState(false);
+  const messagesEndRef = useRef(null);
 
   // Fetch conversations
   useEffect(() => {
@@ -53,7 +54,6 @@ export default function Messages() {
         const data = await res.json();
         if (res.ok) {
           setMessages(data.messages);
-          // Clear unread count locally
           setConversations(prev =>
             prev.map(c => c.id === selectedConversation ? { ...c, unread: 0 } : c)
           );
@@ -69,6 +69,11 @@ export default function Messages() {
     setShowQuoteForm(false);
   }, [selectedConversation]);
 
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   const selectedConv = conversations.find(c => c.id === selectedConversation);
 
   const handleSendMessage = async () => {
@@ -77,7 +82,6 @@ export default function Messages() {
     const text = messageInput.trim();
     setMessageInput('');
 
-    // Optimistic update
     const tempMessage = {
       id: 'temp-' + Date.now(),
       sender: 'me',
@@ -88,7 +92,6 @@ export default function Messages() {
     };
     setMessages(prev => [...prev, tempMessage]);
 
-    // Update conversation's last message locally
     setConversations(prev =>
       prev.map(c => c.id === selectedConversation
         ? { ...c, lastMessage: text, timestamp: 'Just now' }
@@ -104,7 +107,6 @@ export default function Messages() {
       });
       const data = await res.json();
       if (res.ok) {
-        // Replace temp message with real one
         setMessages(prev =>
           prev.map(m => m.id === tempMessage.id ? data.message : m)
         );
@@ -193,37 +195,27 @@ export default function Messages() {
                     ))}
                   </div>
                 ) : (
-                  messages.map((message) => (
-                    <MessageBubble
-                      key={message.id}
-                      message={message}
-                      isCustomer={false}
-                      onQuoteUpdated={handleQuoteUpdated}
-                    />
-                  ))
+                  <>
+                    {messages.map((message) => (
+                      <MessageBubble
+                        key={message.id}
+                        message={message}
+                        isCustomer={false}
+                        onQuoteUpdated={handleQuoteUpdated}
+                      />
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </>
                 )}
               </div>
 
-              {/* Quote Form (slides in above input) */}
-              {showQuoteForm && (
-                <QuoteForm
-                  conversationId={selectedConversation}
-                  onClose={() => setShowQuoteForm(false)}
-                  onSent={handleQuoteSent}
-                />
-              )}
-
-              {/* Input + Send Quote button */}
-              <div className="bg-white border-t border-gray-200 px-4 pt-2 pb-1">
+              {/* Toolbar above input */}
+              <div className="bg-white border-t border-gray-200 px-4 pt-2 pb-0 flex items-center gap-2">
                 <button
-                  onClick={() => setShowQuoteForm(prev => !prev)}
-                  className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
-                    showQuoteForm
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'text-purple-600 hover:bg-purple-50'
-                  }`}
+                  onClick={() => setShowQuoteForm(true)}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors"
                 >
-                  <FileText size={14} />
+                  <FileText size={13} />
                   Send Quote
                 </button>
               </div>
@@ -253,6 +245,15 @@ export default function Messages() {
           <EventDetailsSidebar conversation={selectedConv} />
         )}
       </div>
+
+      {/* Quote Form Modal — outside the flex layout so it doesn't affect message area */}
+      {showQuoteForm && (
+        <QuoteForm
+          conversationId={selectedConversation}
+          onClose={() => setShowQuoteForm(false)}
+          onSent={handleQuoteSent}
+        />
+      )}
     </div>
   );
 }
