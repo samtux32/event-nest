@@ -21,7 +21,8 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') || '/'
+  const raw = searchParams.get('redirectTo') || '/'
+  const redirectTo = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/'
   const supabase = createClient()
 
   async function handleLogin(e) {

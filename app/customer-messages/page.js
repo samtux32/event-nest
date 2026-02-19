@@ -1,5 +1,7 @@
 import CustomerMessages from '@/components/CustomerMessages'
 
+export const metadata = { title: 'Messages | Event Nest' }
+
 export default function CustomerMessagesPage() {
   return <CustomerMessages />
 }
