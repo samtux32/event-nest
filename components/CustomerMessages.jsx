@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 import CustomerHeader from '@/components/CustomerHeader';
 import ConversationList from '@/components/ConversationList';
@@ -11,11 +10,8 @@ import MessageInput from '@/components/MessageInput';
 import EventDetailsSidebar from '@/components/EventDetailsSidebar';
 
 export default function CustomerMessages() {
-  const searchParams = useSearchParams();
   const [conversations, setConversations] = useState([]);
-  const [selectedConversation, setSelectedConversation] = useState(
-    searchParams.get('conv') || null
-  );
+  const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,16 +19,26 @@ export default function CustomerMessages() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const messagesEndRef = useRef(null);
 
+  // Read ?conv= from URL on mount and pre-select that conversation
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const convId = params.get('conv');
+    if (convId) setSelectedConversation(convId);
+  }, []);
+
   // Fetch conversations
   useEffect(() => {
     async function fetchConversations() {
       try {
         const res = await fetch('/api/conversations');
         const data = await res.json();
+        console.log('[CustomerMessages] convos status:', res.status, 'count:', data.conversations?.length, 'error:', data.error);
         if (res.ok) {
           setConversations(data.conversations);
-          if (data.conversations.length > 0 && !selectedConversation) {
-            setSelectedConversation(data.conversations[0].id);
+          // Use functional update so we see the LATEST selectedConversation
+          // (not a stale closure value), avoiding overriding the ?conv= URL param
+          if (data.conversations.length > 0) {
+            setSelectedConversation(prev => prev || data.conversations[0].id);
           }
         }
       } catch (err) {
@@ -54,6 +60,7 @@ export default function CustomerMessages() {
       try {
         const res = await fetch(`/api/conversations/${selectedConversation}/messages`);
         const data = await res.json();
+        console.log('[CustomerMessages] msgs status:', res.status, 'count:', data.messages?.length, 'error:', data.error);
         if (res.ok) {
           setMessages(data.messages);
           setConversations(prev =>
