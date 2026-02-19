@@ -1,6 +1,22 @@
 import React from 'react';
+import QuoteCard from '@/components/QuoteCard';
 
-export default function MessageBubble({ message }) {
+export default function MessageBubble({ message, isCustomer, onQuoteUpdated }) {
+  if (message.type === 'quote' && message.quote) {
+    return (
+      <div className={`flex gap-3 ${message.sender === 'me' ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex flex-col ${message.sender === 'me' ? 'items-end' : ''}`}>
+          <QuoteCard
+            quote={message.quote}
+            isCustomer={isCustomer}
+            onQuoteUpdated={onQuoteUpdated}
+          />
+          <span className="text-xs text-gray-500 mt-1 px-2">{message.timestamp}</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex gap-3 ${message.sender === 'me' ? 'flex-row-reverse' : ''}`}>
       {message.sender === 'them' && (

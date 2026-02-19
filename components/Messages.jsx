@@ -7,7 +7,8 @@ import ChatHeader from '@/components/ChatHeader';
 import MessageBubble from '@/components/MessageBubble';
 import MessageInput from '@/components/MessageInput';
 import EventDetailsSidebar from '@/components/EventDetailsSidebar';
-import { MessageCircle } from 'lucide-react';
+import QuoteForm from '@/components/QuoteForm';
+import { MessageCircle, FileText } from 'lucide-react';
 
 export default function Messages() {
   const [conversations, setConversations] = useState([]);
@@ -17,6 +18,7 @@ export default function Messages() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingConvos, setLoadingConvos] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [showQuoteForm, setShowQuoteForm] = useState(false);
 
   // Fetch conversations
   useEffect(() => {
@@ -64,6 +66,7 @@ export default function Messages() {
     }
 
     fetchMessages();
+    setShowQuoteForm(false);
   }, [selectedConversation]);
 
   const selectedConv = conversations.find(c => c.id === selectedConversation);
@@ -79,6 +82,8 @@ export default function Messages() {
       id: 'temp-' + Date.now(),
       sender: 'me',
       text,
+      type: 'text',
+      quote: null,
       timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
     };
     setMessages(prev => [...prev, tempMessage]);
@@ -107,6 +112,33 @@ export default function Messages() {
     } catch (err) {
       console.error('Failed to send message:', err);
     }
+  };
+
+  const handleQuoteSent = (quote) => {
+    setShowQuoteForm(false);
+    const quoteMessage = {
+      id: 'quote-' + quote.id,
+      sender: 'me',
+      text: `Custom quote: ${quote.title}`,
+      type: 'quote',
+      quote,
+      timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+    };
+    setMessages(prev => [...prev, quoteMessage]);
+    setConversations(prev =>
+      prev.map(c => c.id === selectedConversation
+        ? { ...c, lastMessage: `Quote: ${quote.title}`, timestamp: 'Just now' }
+        : c
+      )
+    );
+  };
+
+  const handleQuoteUpdated = (updatedQuote) => {
+    setMessages(prev =>
+      prev.map(m =>
+        m.quote?.id === updatedQuote.id ? { ...m, quote: updatedQuote } : m
+      )
+    );
   };
 
   return (
@@ -162,11 +194,39 @@ export default function Messages() {
                   </div>
                 ) : (
                   messages.map((message) => (
-                    <MessageBubble key={message.id} message={message} />
+                    <MessageBubble
+                      key={message.id}
+                      message={message}
+                      isCustomer={false}
+                      onQuoteUpdated={handleQuoteUpdated}
+                    />
                   ))
                 )}
               </div>
 
+              {/* Quote Form (slides in above input) */}
+              {showQuoteForm && (
+                <QuoteForm
+                  conversationId={selectedConversation}
+                  onClose={() => setShowQuoteForm(false)}
+                  onSent={handleQuoteSent}
+                />
+              )}
+
+              {/* Input + Send Quote button */}
+              <div className="bg-white border-t border-gray-200 px-4 pt-2 pb-1">
+                <button
+                  onClick={() => setShowQuoteForm(prev => !prev)}
+                  className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                    showQuoteForm
+                      ? 'bg-purple-100 text-purple-700'
+                      : 'text-purple-600 hover:bg-purple-50'
+                  }`}
+                >
+                  <FileText size={14} />
+                  Send Quote
+                </button>
+              </div>
               <MessageInput
                 value={messageInput}
                 onChange={setMessageInput}

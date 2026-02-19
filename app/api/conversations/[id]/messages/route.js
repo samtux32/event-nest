@@ -41,6 +41,7 @@ export async function GET(request, { params }) {
         sender: {
           select: { id: true },
         },
+        quote: true,
       },
     })
 
@@ -59,6 +60,16 @@ export async function GET(request, { params }) {
       id: msg.id,
       sender: msg.senderId === user.id ? 'me' : 'them',
       text: msg.text,
+      type: msg.type,
+      quote: msg.quote ? {
+        id: msg.quote.id,
+        title: msg.quote.title,
+        description: msg.quote.description,
+        price: Number(msg.quote.price),
+        features: msg.quote.features,
+        status: msg.quote.status,
+        bookingId: msg.quote.bookingId,
+      } : null,
       timestamp: new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
     }))
 

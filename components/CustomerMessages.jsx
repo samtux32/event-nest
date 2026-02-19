@@ -67,6 +67,14 @@ export default function CustomerMessages() {
 
   const selectedConv = conversations.find(c => c.id === selectedConversation);
 
+  const handleQuoteUpdated = (updatedQuote) => {
+    setMessages(prev =>
+      prev.map(m =>
+        m.quote?.id === updatedQuote.id ? { ...m, quote: updatedQuote } : m
+      )
+    );
+  };
+
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedConversation) return;
 
@@ -159,7 +167,12 @@ export default function CustomerMessages() {
                   </div>
                 ) : (
                   messages.map((message) => (
-                    <MessageBubble key={message.id} message={message} />
+                    <MessageBubble
+                      key={message.id}
+                      message={message}
+                      isCustomer={true}
+                      onQuoteUpdated={handleQuoteUpdated}
+                    />
                   ))
                 )}
               </div>

@@ -39,6 +39,7 @@ export default function VendorPublicProfile({ vendorId }) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [requestingQuote, setRequestingQuote] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [submittingReply, setSubmittingReply] = useState(false);
@@ -91,6 +92,39 @@ export default function VendorPublicProfile({ vendorId }) {
       alert('Something went wrong. Please try again.');
     } finally {
       setSendingMessage(false);
+    }
+  };
+
+  const handleRequestQuote = async () => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    setRequestingQuote(true);
+    try {
+      // Create/find conversation
+      const convRes = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendorId }),
+      });
+      if (!convRes.ok) {
+        const data = await convRes.json();
+        alert(data.error || 'Failed to start conversation');
+        return;
+      }
+      const { conversation } = await convRes.json();
+      // Send opening message
+      await fetch(`/api/conversations/${conversation.id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: "Hi, I'd like to discuss a custom quote for my event." }),
+      });
+      router.push('/customer-messages');
+    } catch {
+      alert('Something went wrong. Please try again.');
+    } finally {
+      setRequestingQuote(false);
     }
   };
 
@@ -615,6 +649,17 @@ export default function VendorPublicProfile({ vendorId }) {
                 {sendingMessage ? <Loader2 size={20} className="animate-spin" /> : <MessageCircle size={20} />}
                 {sendingMessage ? 'Opening...' : 'Send Message'}
               </button>
+
+              {vendor.customQuotesEnabled && (
+                <button
+                  onClick={handleRequestQuote}
+                  disabled={requestingQuote}
+                  className="w-full border-2 border-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 text-sm"
+                >
+                  {requestingQuote ? <Loader2 size={18} className="animate-spin" /> : null}
+                  {requestingQuote ? 'Opening...' : 'Request Custom Quote'}
+                </button>
+              )}
 
               {vendor.responseTime && (
                 <p className="text-center text-sm text-gray-500 mt-4">

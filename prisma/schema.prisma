@@ -48,6 +48,17 @@ enum PaymentStatus {
   refunded
 }
 
+enum MessageType {
+  text
+  quote
+}
+
+enum QuoteStatus {
+  pending
+  accepted
+  declined
+}
+
 // ═══════════════════════════════════════════════════
 // AUTH & USERS
 // ═══════════════════════════════════════════════════
@@ -83,6 +94,7 @@ model CustomerProfile {
   wishlists      Wishlist[]
   wishlistGroups WishlistGroup[]
   conversations  Conversation[]
+  quotes         Quote[]
 
   @@map("customer_profiles")
 }
@@ -137,6 +149,7 @@ model VendorProfile {
   wishlistGroupVendors WishlistGroupVendor[]
   conversations        Conversation[]
   profileViews         ProfileView[]
+  quotes               Quote[]
 
   @@map("vendor_profiles")
 }
@@ -256,6 +269,7 @@ model Booking {
   package      Package?        @relation(fields: [packageId], references: [id], onDelete: SetNull)
   conversation Conversation?
   review       Review?
+  quote        Quote?
 
   @@index([vendorId, status])
   @@index([customerId])
@@ -281,6 +295,7 @@ model Conversation {
   vendor   VendorProfile   @relation(fields: [vendorId], references: [id])
   customer CustomerProfile @relation(fields: [customerId], references: [id])
   messages Message[]
+  quotes   Quote[]
 
   @@unique([vendorId, customerId]) // One conversation per vendor-customer pair
   @@index([vendorId])
@@ -289,18 +304,44 @@ model Conversation {
 }
 
 model Message {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  conversationId String   @map("conversation_id") @db.Uuid
-  senderId       String   @map("sender_id") @db.Uuid
-  text           String   @db.Text
-  isRead         Boolean  @default(false) @map("is_read")
-  createdAt      DateTime @default(now()) @map("created_at")
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String      @map("conversation_id") @db.Uuid
+  senderId       String      @map("sender_id") @db.Uuid
+  text           String      @db.Text
+  type           MessageType @default(text)
+  quoteId        String?     @map("quote_id") @db.Uuid
+  isRead         Boolean     @default(false) @map("is_read")
+  createdAt      DateTime    @default(now()) @map("created_at")
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender       User         @relation("MessageSender", fields: [senderId], references: [id])
+  quote        Quote?       @relation(fields: [quoteId], references: [id], onDelete: SetNull)
 
   @@index([conversationId, createdAt])
   @@map("messages")
+}
+
+model Quote {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String      @map("conversation_id") @db.Uuid
+  vendorId       String      @map("vendor_id") @db.Uuid
+  customerId     String      @map("customer_id") @db.Uuid
+  title          String
+  description    String?     @db.Text
+  price          Decimal     @db.Decimal(10, 2)
+  features       String[]
+  status         QuoteStatus @default(pending)
+  bookingId      String?     @unique @map("booking_id") @db.Uuid
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  conversation Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  vendor       VendorProfile   @relation(fields: [vendorId], references: [id])
+  customer     CustomerProfile @relation(fields: [customerId], references: [id])
+  booking      Booking?        @relation(fields: [bookingId], references: [id])
+  messages     Message[]
+
+  @@map("quotes")
 }
 
 // ═══════════════════════════════════════════════════
