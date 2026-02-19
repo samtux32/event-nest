@@ -1,0 +1,425 @@
+// ─────────────────────────────────────────────────
+// Event Nest - Database Schema
+// Prisma ORM with Supabase PostgreSQL
+// ─────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════
+// ENUMS
+// ═══════════════════════════════════════════════════
+
+enum UserRole {
+  customer
+  vendor
+  admin
+}
+
+enum PricingModel {
+  per_day
+  per_head
+  both
+}
+
+enum VerificationStatus {
+  pending
+  verified
+  rejected
+}
+
+enum BookingStatus {
+  new_inquiry
+  pending
+  confirmed
+  completed
+  cancelled
+}
+
+enum PaymentStatus {
+  unpaid
+  paid
+  refunded
+}
+
+// ═══════════════════════════════════════════════════
+// AUTH & USERS
+// ═══════════════════════════════════════════════════
+
+/// Maps to Supabase Auth user. This table extends the
+/// auth.users table with app-specific profile data.
+model User {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email     String   @unique
+  role      UserRole
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  customerProfile CustomerProfile?
+  vendorProfile   VendorProfile?
+  sentMessages    Message[]        @relation("MessageSender")
+  notifications   Notification[]
+
+  @@map("users")
+}
+
+model CustomerProfile {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String  @unique @map("user_id") @db.Uuid
+  fullName  String  @map("full_name")
+  phone     String?
+  avatarUrl String? @map("avatar_url")
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events         Event[]
+  bookings       Booking[]
+  reviews        Review[]
+  wishlists      Wishlist[]
+  wishlistGroups WishlistGroup[]
+  conversations  Conversation[]
+
+  @@map("customer_profiles")
+}
+
+// ═══════════════════════════════════════════════════
+// VENDOR
+// ═══════════════════════════════════════════════════
+
+model VendorProfile {
+  id                   String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId               String       @unique @map("user_id") @db.Uuid
+  businessName         String       @map("business_name")
+  category             String
+  tagline              String?
+  description          String?      @db.Text
+  location             String?
+  latitude             Float?       // For PostGIS radius search
+  longitude            Float?       // For PostGIS radius search
+  responseTime         String?      @map("response_time")
+  coverImageUrl        String?      @map("cover_image_url")
+  profileImageUrl      String?      @map("profile_image_url")
+  pricingModel         PricingModel @default(per_day) @map("pricing_model")
+  pricePerDay          Decimal?     @map("price_per_day") @db.Decimal(10, 2)
+  pricePerHead         Decimal?     @map("price_per_head") @db.Decimal(10, 2)
+  customQuotesEnabled  Boolean      @default(true) @map("custom_quotes_enabled")
+  phone                String?
+  email                String?
+  website              String?
+  instagram            String?
+  facebook             String?
+  twitter              String?
+  yearsExperience      Int?         @map("years_experience")
+  completedEventsCount Int          @default(0) @map("completed_events_count")
+  isAvailable          Boolean      @default(true) @map("is_available")
+  isApproved           Boolean      @default(false) @map("is_approved") // Admin verification gate
+  profileCompletion    Int          @default(0) @map("profile_completion")
+  averageRating        Decimal?     @map("average_rating") @db.Decimal(2, 1)
+  totalReviews         Int          @default(0) @map("total_reviews")
+  stripeAccountId      String?      @map("stripe_account_id") // Stripe Connect
+  createdAt            DateTime     @default(now()) @map("created_at")
+  updatedAt            DateTime     @updatedAt @map("updated_at")
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packages        Package[]
+  portfolioImages PortfolioImage[]
+  documents       Document[]
+  awards          Award[]
+  bookings        Booking[]
+  reviews         Review[]
+  reviewReplies   ReviewReply[]
+  wishlists            Wishlist[]
+  wishlistGroupVendors WishlistGroupVendor[]
+  conversations        Conversation[]
+  profileViews         ProfileView[]
+
+  @@map("vendor_profiles")
+}
+
+model Package {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vendorId  String  @map("vendor_id") @db.Uuid
+  name      String
+  price     Decimal @db.Decimal(10, 2)
+  duration  String?
+  isPopular Boolean @default(false) @map("is_popular")
+  sortOrder Int     @default(0) @map("sort_order")
+  features  String[] // Postgres text array
+
+  vendor   VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@map("packages")
+}
+
+model PortfolioImage {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vendorId  String   @map("vendor_id") @db.Uuid
+  imageUrl  String   @map("image_url")
+  caption   String?
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@map("portfolio_images")
+}
+
+model Document {
+  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vendorId           String             @map("vendor_id") @db.Uuid
+  fileUrl            String             @map("file_url")
+  fileName           String             @map("file_name")
+  fileType           String             @map("file_type")
+  fileSize           Int                @map("file_size") // bytes
+  verificationStatus VerificationStatus @default(pending) @map("verification_status")
+  adminNotes         String?            @map("admin_notes") @db.Text
+  createdAt          DateTime           @default(now()) @map("created_at")
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+model Award {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vendorId String @map("vendor_id") @db.Uuid
+  title    String
+  year     Int?
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@map("awards")
+}
+
+// ═══════════════════════════════════════════════════
+// EVENTS & BOOKINGS
+// ═══════════════════════════════════════════════════
+
+/// A customer's planned event that can group multiple vendor bookings
+model Event {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId   String   @map("customer_id") @db.Uuid
+  name         String   // e.g., "Our Wedding", "Tom's 25th Birthday"
+  eventDate    DateTime? @map("event_date") @db.Date
+  eventType    String?  @map("event_type")
+  guestCount   Int?     @map("guest_count")
+  venueName    String?  @map("venue_name")
+  venueAddress String?  @map("venue_address")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  customer  CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  bookings  Booking[]
+  wishlists Wishlist[]
+
+  @@map("events")
+}
+
+model Booking {
+  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventId            String?       @map("event_id") @db.Uuid
+  vendorId           String        @map("vendor_id") @db.Uuid
+  customerId         String        @map("customer_id") @db.Uuid
+  packageId          String?       @map("package_id") @db.Uuid
+  eventDate          DateTime?     @map("event_date") @db.Date
+  eventType          String?       @map("event_type")
+  guestCount         Int?          @map("guest_count")
+  venueName          String?       @map("venue_name")
+  venueAddress       String?       @map("venue_address")
+  startTime          String?       @map("start_time") // "14:00" format
+  endTime            String?       @map("end_time")
+  additionalServices String[]      @map("additional_services")
+  specialRequests    String?       @map("special_requests") @db.Text
+  contactName        String?       @map("contact_name")
+  contactEmail       String?       @map("contact_email")
+  contactPhone       String?       @map("contact_phone")
+  hearAbout          String?       @map("hear_about") // Inquiry source tracking
+  status             BookingStatus @default(new_inquiry)
+  totalPrice         Decimal?      @map("total_price") @db.Decimal(10, 2)
+  vendorFee          Decimal?      @map("vendor_fee") @db.Decimal(10, 2) // 10%
+  customerFee        Decimal?      @map("customer_fee") @db.Decimal(10, 2) // 2%
+  paymentStatus      PaymentStatus @default(unpaid) @map("payment_status")
+  stripePaymentId    String?       @map("stripe_payment_id")
+  confirmedAt        DateTime?     @map("confirmed_at")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  event        Event?          @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  vendor       VendorProfile   @relation(fields: [vendorId], references: [id])
+  customer     CustomerProfile @relation(fields: [customerId], references: [id])
+  package      Package?        @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  conversation Conversation?
+  review       Review?
+
+  @@index([vendorId, status])
+  @@index([customerId])
+  @@index([eventDate])
+  @@map("bookings")
+}
+
+// ═══════════════════════════════════════════════════
+// MESSAGING
+// ═══════════════════════════════════════════════════
+
+model Conversation {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId     String?  @unique @map("booking_id") @db.Uuid
+  vendorId      String   @map("vendor_id") @db.Uuid
+  customerId    String   @map("customer_id") @db.Uuid
+  unreadVendor  Int      @default(0) @map("unread_vendor")   // Unread count for vendor
+  unreadCustomer Int     @default(0) @map("unread_customer") // Unread count for customer
+  lastMessageAt DateTime? @map("last_message_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  booking  Booking?        @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  vendor   VendorProfile   @relation(fields: [vendorId], references: [id])
+  customer CustomerProfile @relation(fields: [customerId], references: [id])
+  messages Message[]
+
+  @@unique([vendorId, customerId]) // One conversation per vendor-customer pair
+  @@index([vendorId])
+  @@index([customerId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  senderId       String   @map("sender_id") @db.Uuid
+  text           String   @db.Text
+  isRead         Boolean  @default(false) @map("is_read")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+// ═══════════════════════════════════════════════════
+// REVIEWS
+// ═══════════════════════════════════════════════════
+
+model Review {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vendorId   String   @map("vendor_id") @db.Uuid
+  customerId String   @map("customer_id") @db.Uuid
+  bookingId  String   @unique @map("booking_id") @db.Uuid // One review per booking
+  rating     Int      // 1-5
+  text       String   @db.Text
+  photos     String[] @default([]) // Supabase Storage URLs
+  eventDate  String?  @map("event_date") // Display string, e.g., "August 15, 2025"
+  isFlagged  Boolean  @default(false) @map("is_flagged") // Content filter flagged
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  vendor   VendorProfile   @relation(fields: [vendorId], references: [id])
+  customer CustomerProfile @relation(fields: [customerId], references: [id])
+  booking  Booking         @relation(fields: [bookingId], references: [id])
+  reply    ReviewReply?
+
+  @@index([vendorId, createdAt])
+  @@map("reviews")
+}
+
+/// Vendors can post one reply per review (enforced by unique reviewId)
+model ReviewReply {
+  id       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reviewId String   @unique @map("review_id") @db.Uuid
+  vendorId String   @map("vendor_id") @db.Uuid
+  text     String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  review Review        @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  vendor VendorProfile @relation(fields: [vendorId], references: [id])
+
+  @@map("review_replies")
+}
+
+// ═══════════════════════════════════════════════════
+// WISHLIST
+// ═══════════════════════════════════════════════════
+
+model Wishlist {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId String   @map("customer_id") @db.Uuid
+  vendorId   String   @map("vendor_id") @db.Uuid
+  eventId    String?  @map("event_id") @db.Uuid // Optional: wishlist per event
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  customer CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  vendor   VendorProfile   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  event    Event?          @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@unique([customerId, vendorId, eventId]) // No duplicate wishlists
+  @@map("wishlists")
+}
+
+model WishlistGroup {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId String   @map("customer_id") @db.Uuid
+  name       String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  customer CustomerProfile       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  vendors  WishlistGroupVendor[]
+
+  @@map("wishlist_groups")
+}
+
+model WishlistGroupVendor {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupId   String   @map("group_id") @db.Uuid
+  vendorId  String   @map("vendor_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  group  WishlistGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, vendorId])
+  @@map("wishlist_group_vendors")
+}
+
+// ═══════════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════════
+
+model Notification {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  type         String   // e.g., "new_inquiry", "booking_confirmed", "message_received"
+  title        String
+  body         String?  @db.Text
+  link         String?  // In-app route, e.g., "/messages"
+  isRead       Boolean  @default(false) @map("is_read")
+  channelsSent String[] @map("channels_sent") // ["email", "sms", "push"]
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
+  @@map("notifications")
+}
+
+// ═══════════════════════════════════════════════════
+// ANALYTICS
+// ═══════════════════════════════════════════════════
+
+/// Tracks each time a customer views a vendor profile
+model ProfileView {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vendorId   String   @map("vendor_id") @db.Uuid
+  source     String?  // "search", "category_browse", "direct_link", "wishlist"
+  viewedAt   DateTime @default(now()) @map("viewed_at")
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId, viewedAt])
+  @@map("profile_views")
+}
