@@ -138,6 +138,24 @@ export async function POST(request, { params }) {
       }),
     ])
 
+    // Notify the other party about the new message
+    const recipientUserId = isVendor
+      ? conversation.customer.userId
+      : conversation.vendor.userId
+    const recipientLink = isVendor
+      ? `/customer-messages?conv=${id}`
+      : `/messages?conv=${id}`
+
+    await prisma.notification.create({
+      data: {
+        userId: recipientUserId,
+        type: 'message_received',
+        title: 'New message',
+        body: text.trim().slice(0, 100),
+        link: recipientLink,
+      },
+    }).catch(() => {}) // fire-and-forget, don't fail the request
+
     return NextResponse.json({
       message: {
         id: message.id,

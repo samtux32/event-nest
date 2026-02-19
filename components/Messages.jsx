@@ -13,6 +13,13 @@ import { MessageCircle } from 'lucide-react';
 export default function Messages() {
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
+
+  // Read ?conv= param on mount to deep-link from notifications
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const convId = params.get('conv');
+    if (convId) setSelectedConversation(convId);
+  }, []);
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,8 +36,8 @@ export default function Messages() {
         const data = await res.json();
         if (res.ok) {
           setConversations(data.conversations);
-          if (data.conversations.length > 0 && !selectedConversation) {
-            setSelectedConversation(data.conversations[0].id);
+          if (data.conversations.length > 0) {
+            setSelectedConversation(prev => prev || data.conversations[0].id);
           }
         }
       } catch (err) {

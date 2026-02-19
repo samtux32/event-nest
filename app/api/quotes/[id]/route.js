@@ -128,7 +128,7 @@ export async function PATCH(request, { params }) {
         type: 'quote_accepted',
         title: 'Quote accepted!',
         body: `${dbUser?.customerProfile?.fullName || 'A customer'} has accepted your quote and created a booking.`,
-        link: '/',
+        link: `/messages?conv=${quote.conversationId}`,
       },
     })
 

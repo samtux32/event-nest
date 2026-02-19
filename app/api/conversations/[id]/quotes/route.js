@@ -84,7 +84,7 @@ export async function POST(request, { params }) {
         type: 'quote_received',
         title: 'New custom quote received',
         body: `${conversation.vendor.businessName} has sent you a custom quote: ${title.trim()}`,
-        link: '/customer-messages',
+        link: `/customer-messages?conv=${id}`,
       },
     })
 
