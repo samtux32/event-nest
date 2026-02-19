@@ -655,7 +655,7 @@ export default function VendorPublicProfile({ vendorId }) {
                 <button
                   onClick={handleRequestQuote}
                   disabled={requestingQuote}
-                  className="w-full relative overflow-hidden bg-gradient-to-r from-violet-500 to-purple-600 text-white py-4 rounded-xl font-bold hover:from-violet-600 hover:to-purple-700 transition-all flex items-center justify-center gap-2 disabled:opacity-60 shadow-md shadow-purple-200"
+                  className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors mt-3 flex items-center justify-center gap-2 disabled:opacity-60"
                 >
                   {requestingQuote
                     ? <Loader2 size={18} className="animate-spin" />

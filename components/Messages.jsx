@@ -8,7 +8,7 @@ import MessageBubble from '@/components/MessageBubble';
 import MessageInput from '@/components/MessageInput';
 import EventDetailsSidebar from '@/components/EventDetailsSidebar';
 import QuoteForm from '@/components/QuoteForm';
-import { MessageCircle, FileText } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 
 export default function Messages() {
   const [conversations, setConversations] = useState([]);
@@ -52,6 +52,7 @@ export default function Messages() {
       try {
         const res = await fetch(`/api/conversations/${selectedConversation}/messages`);
         const data = await res.json();
+        console.log('[Messages] fetch status:', res.status, 'count:', data.messages?.length, 'error:', data.error);
         if (res.ok) {
           setMessages(data.messages);
           setConversations(prev =>
@@ -182,7 +183,7 @@ export default function Messages() {
         <div className="flex-1 flex flex-col bg-gray-50">
           {selectedConv ? (
             <>
-              <ChatHeader conversation={selectedConv} role="vendor" />
+              <ChatHeader conversation={selectedConv} role="vendor" onSendQuote={() => setShowQuoteForm(true)} />
 
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
@@ -209,16 +210,6 @@ export default function Messages() {
                 )}
               </div>
 
-              {/* Toolbar above input */}
-              <div className="bg-white border-t border-gray-200 px-4 pt-2 pb-0 flex items-center gap-2">
-                <button
-                  onClick={() => setShowQuoteForm(true)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors"
-                >
-                  <FileText size={13} />
-                  Send Quote
-                </button>
-              </div>
               <MessageInput
                 value={messageInput}
                 onChange={setMessageInput}
