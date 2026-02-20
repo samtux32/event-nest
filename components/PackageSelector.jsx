@@ -5,7 +5,7 @@ export default function PackageSelector({ packages, selectedPackage, onSelectPac
   return (
     <div className="bg-white rounded-2xl p-6 border border-gray-200">
       <h2 className="text-xl font-bold mb-4">Select a Package</h2>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {packages.map((pkg) => (
           <div
             key={pkg.id}
@@ -22,7 +22,7 @@ export default function PackageSelector({ packages, selectedPackage, onSelectPac
               </div>
             )}
             <h3 className="font-bold text-lg mb-1">{pkg.name}</h3>
-            <p className="text-2xl font-bold text-purple-600 mb-2">{pkg.price}</p>
+            <p className="text-lg sm:text-2xl font-bold text-purple-600 mb-2">{pkg.price}</p>
             <p className="text-sm text-gray-500">{pkg.duration}</p>
           </div>
         ))}
