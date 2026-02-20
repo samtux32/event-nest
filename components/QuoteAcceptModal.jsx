@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Check, Loader2 } from 'lucide-react';
+import { X, Check, Loader2, CalendarDays } from 'lucide-react';
+
+function formatPrice(num) {
+  return `£${Number(num).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
 
 export default function QuoteAcceptModal({ quote, onClose, onAccepted }) {
-  const [eventDate, setEventDate] = useState('');
-  const [eventType, setEventType] = useState('');
-  const [guestCount, setGuestCount] = useState('');
-  const [venueName, setVenueName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [confirmed, setConfirmed] = useState(false);
@@ -19,13 +19,7 @@ export default function QuoteAcceptModal({ quote, onClose, onAccepted }) {
       const res = await fetch(`/api/quotes/${quote.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'accept',
-          eventDate: eventDate || undefined,
-          eventType: eventType || undefined,
-          guestCount: guestCount || undefined,
-          venueName: venueName || undefined,
-        }),
+        body: JSON.stringify({ action: 'accept' }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -34,7 +28,7 @@ export default function QuoteAcceptModal({ quote, onClose, onAccepted }) {
       }
       setConfirmed(true);
       onAccepted(data.bookingId);
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);
@@ -43,15 +37,14 @@ export default function QuoteAcceptModal({ quote, onClose, onAccepted }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
         {confirmed ? (
           <div className="p-8 text-center">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Check size={32} className="text-purple-600" />
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Check size={32} className="text-green-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Request sent!</h2>
-            <p className="text-gray-600 mb-2">The vendor has been notified of your booking request.</p>
-            <p className="text-sm text-gray-500 mb-6">Once the vendor confirms, your booking will be fully confirmed. You can track it in My Bookings.</p>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Booking confirmed!</h2>
+            <p className="text-gray-600 mb-6">Your booking is confirmed. You can track it in My Bookings.</p>
             <button
               onClick={onClose}
               className="px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors"
@@ -69,54 +62,14 @@ export default function QuoteAcceptModal({ quote, onClose, onAccepted }) {
             </div>
 
             <div className="px-6 py-5 space-y-4">
+              <div className="bg-purple-50 rounded-xl p-4">
+                <p className="text-sm font-semibold text-purple-900">{quote.title}</p>
+                <p className="text-2xl font-bold text-purple-600 mt-1">{formatPrice(quote.price)}</p>
+              </div>
+
               <p className="text-sm text-gray-600">
-                Fill in your event details to complete the booking for <strong>{quote.title}</strong>.
+                By accepting, your booking will be confirmed and the vendor will be notified.
               </p>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Event Date</label>
-                <input
-                  type="date"
-                  value={eventDate}
-                  min={new Date().toISOString().split('T')[0]}
-                  onChange={e => setEventDate(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Event Type</label>
-                <input
-                  type="text"
-                  value={eventType}
-                  onChange={e => setEventType(e.target.value)}
-                  placeholder="e.g. Wedding, Birthday, Corporate"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Guest Count</label>
-                <input
-                  type="number"
-                  value={guestCount}
-                  onChange={e => setGuestCount(e.target.value)}
-                  placeholder="Approximate number of guests"
-                  min="1"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Venue Name</label>
-                <input
-                  type="text"
-                  value={venueName}
-                  onChange={e => setVenueName(e.target.value)}
-                  placeholder="e.g. The Grand Hotel"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all"
-                />
-              </div>
 
               {error && (
                 <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>

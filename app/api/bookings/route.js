@@ -69,7 +69,7 @@ export async function POST(request) {
 
     // Upsert conversation for this vendor-customer pair
     // If conversation already exists, link it to this booking (so date proposals work)
-    await prisma.conversation.upsert({
+    const conversation = await prisma.conversation.upsert({
       where: {
         vendorId_customerId: {
           vendorId: body.vendorId,
@@ -101,7 +101,7 @@ export async function POST(request) {
       })
     }
 
-    return NextResponse.json({ booking })
+    return NextResponse.json({ booking, conversationId: conversation.id })
   } catch (err) {
     console.error('Create booking error:', err)
     return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 })
