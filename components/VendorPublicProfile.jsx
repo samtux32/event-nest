@@ -623,10 +623,12 @@ export default function VendorPublicProfile({ vendorId }) {
           <div className="space-y-6">
             <div className="bg-white rounded-2xl p-6 border border-gray-200 sticky top-24">
               {vendor.packages?.length > 0 && (
-                <>
-                  <h3 className="text-xl font-bold mb-4">Packages & Pricing</h3>
+                <h3 className="text-xl font-bold mb-4">Packages & Pricing</h3>
+              )}
 
-                  <div className="space-y-3 mb-6 max-h-[36rem] overflow-y-auto pr-1">
+              <div className="max-h-[36rem] overflow-y-auto pr-1">
+                {vendor.packages?.length > 0 && (
+                  <div className="space-y-3 mb-6">
                     {vendor.packages.map((pkg) => (
                       <div
                         key={pkg.id}
@@ -664,33 +666,35 @@ export default function VendorPublicProfile({ vendorId }) {
                       </div>
                     ))}
                   </div>
-                </>
-              )}
+                )}
 
-              <Link href={`/booking/${vendorId}`} className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors mb-3 flex items-center justify-center gap-2">
-                <Calendar size={20} />
-                Request Quote
-              </Link>
+                <div className="space-y-3">
+                  <Link href={`/booking/${vendorId}`} className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                    <Calendar size={20} />
+                    Request Quote
+                  </Link>
 
-              <button
-                onClick={handleSendMessage}
-                disabled={sendingMessage}
-                className="w-full border-2 border-purple-600 text-purple-600 py-4 rounded-xl font-bold hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {sendingMessage ? <Loader2 size={20} className="animate-spin" /> : <MessageCircle size={20} />}
-                {sendingMessage ? 'Opening...' : 'Send Message'}
-              </button>
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={sendingMessage}
+                    className="w-full border-2 border-purple-600 text-purple-600 py-4 rounded-xl font-bold hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {sendingMessage ? <Loader2 size={20} className="animate-spin" /> : <MessageCircle size={20} />}
+                    {sendingMessage ? 'Opening...' : 'Send Message'}
+                  </button>
 
-              {vendor.customQuotesEnabled && (
-                <button
-                  onClick={handleRequestQuote}
-                  disabled={requestingQuote}
-                  className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors mt-3 flex items-center justify-center gap-2 disabled:opacity-60"
-                >
-                  {requestingQuote ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
-                  {requestingQuote ? 'Opening...' : 'Request Custom Quote'}
-                </button>
-              )}
+                  {vendor.customQuotesEnabled && (
+                    <button
+                      onClick={handleRequestQuote}
+                      disabled={requestingQuote}
+                      className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                    >
+                      {requestingQuote ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                      {requestingQuote ? 'Opening...' : 'Request Custom Quote'}
+                    </button>
+                  )}
+                </div>
+              </div>
 
               {vendor.responseTime && (
                 <p className="text-center text-sm text-gray-500 mt-4">
