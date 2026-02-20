@@ -172,6 +172,17 @@ export default function CustomerMessages() {
             <>
               <ChatHeader conversation={selectedConv} role="customer" />
 
+              {/* No-date reminder banner */}
+              {selectedConv.inquiryStatus === 'Confirmed' && !selectedConv.eventDate && (
+                <div className="flex items-start gap-3 bg-amber-50 border-b border-amber-200 px-5 py-3">
+                  <span className="text-xl leading-none mt-0.5">📅</span>
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800">Your booking is confirmed — no date set yet</p>
+                    <p className="text-xs text-amber-700 mt-0.5">Let <strong>{selectedConv.name}</strong> know your preferred event date so they can add it to their calendar.</p>
+                  </div>
+                </div>
+              )}
+
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 {loadingMessages ? (
