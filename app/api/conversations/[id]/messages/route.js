@@ -72,6 +72,9 @@ export async function GET(request, { params }) {
         sender: isMe ? 'me' : 'them',
         text: msg.text,
         type: msg.type,
+        attachmentUrl: msg.attachmentUrl || null,
+        attachmentName: msg.attachmentName || null,
+        attachmentType: msg.attachmentType || null,
         avatar,
         senderName,
         quote: msg.quote ? {
@@ -114,10 +117,10 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  const { text } = await request.json()
+  const { text, attachmentUrl, attachmentName, attachmentType } = await request.json()
 
-  if (!text?.trim()) {
-    return NextResponse.json({ error: 'Message text is required' }, { status: 400 })
+  if (!text?.trim() && !attachmentUrl) {
+    return NextResponse.json({ error: 'Message text or attachment is required' }, { status: 400 })
   }
 
   try {
@@ -147,7 +150,11 @@ export async function POST(request, { params }) {
         data: {
           conversationId: id,
           senderId: user.id,
-          text: text.trim(),
+          text: text?.trim() || '',
+          type: attachmentUrl ? 'attachment' : 'text',
+          attachmentUrl: attachmentUrl || null,
+          attachmentName: attachmentName || null,
+          attachmentType: attachmentType || null,
         },
       }),
       prisma.conversation.update({
@@ -175,7 +182,7 @@ export async function POST(request, { params }) {
         userId: recipientUserId,
         type: 'message_received',
         title: 'New message',
-        body: text.trim().slice(0, 100),
+        body: text?.trim() ? text.trim().slice(0, 100) : `📎 Sent an attachment: ${attachmentName || 'file'}`,
         link: recipientLink,
       },
     }).catch(() => {}) // fire-and-forget, don't fail the request
@@ -185,6 +192,10 @@ export async function POST(request, { params }) {
         id: message.id,
         sender: 'me',
         text: message.text,
+        type: message.type,
+        attachmentUrl: message.attachmentUrl || null,
+        attachmentName: message.attachmentName || null,
+        attachmentType: message.attachmentType || null,
         timestamp: new Date(message.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
       },
     })

@@ -52,6 +52,7 @@ enum MessageType {
   text
   quote
   date_proposal
+  attachment
 }
 
 enum QuoteStatus {
@@ -313,6 +314,9 @@ model Message {
   text           String      @db.Text
   type           MessageType @default(text)
   quoteId        String?     @map("quote_id") @db.Uuid
+  attachmentUrl  String?     @map("attachment_url")
+  attachmentName String?     @map("attachment_name")
+  attachmentType String?     @map("attachment_type") // "image" | "pdf"
   isRead         Boolean     @default(false) @map("is_read")
   createdAt      DateTime    @default(now()) @map("created_at")
 

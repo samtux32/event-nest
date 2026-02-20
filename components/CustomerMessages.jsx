@@ -111,24 +111,29 @@ export default function CustomerMessages() {
     );
   };
 
-  const handleSendMessage = async () => {
-    if (!messageInput.trim() || !selectedConversation) return;
+  const handleSendMessage = async (text, attachment) => {
+    if (!selectedConversation) return;
+    if (!text?.trim() && !attachment) return;
 
-    const text = messageInput.trim();
     setMessageInput('');
 
     // Optimistic update
     const tempMessage = {
       id: 'temp-' + Date.now(),
       sender: 'me',
-      text,
+      text: text?.trim() || '',
+      type: attachment ? 'attachment' : 'text',
+      attachmentUrl: attachment?.url || null,
+      attachmentName: attachment?.name || null,
+      attachmentType: attachment?.attachmentType || null,
       timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
     };
     setMessages(prev => [...prev, tempMessage]);
 
+    const preview = attachment ? `📎 ${attachment.name}` : text.trim();
     setConversations(prev =>
       prev.map(c => c.id === selectedConversation
-        ? { ...c, lastMessage: text, timestamp: 'Just now' }
+        ? { ...c, lastMessage: preview, timestamp: 'Just now' }
         : c
       )
     );
@@ -137,7 +142,12 @@ export default function CustomerMessages() {
       const res = await fetch(`/api/conversations/${selectedConversation}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({
+          text: text?.trim() || '',
+          attachmentUrl: attachment?.url || null,
+          attachmentName: attachment?.name || null,
+          attachmentType: attachment?.attachmentType || null,
+        }),
       });
       const data = await res.json();
       if (res.ok) {
