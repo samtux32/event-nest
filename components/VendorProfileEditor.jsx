@@ -65,6 +65,7 @@ export default function EditVendorProfile() {
     instagram: '',
     facebook: '',
     twitter: '',
+    tiktok: '',
 
     // Portfolio
     portfolioImages: [],
@@ -122,6 +123,7 @@ export default function EditVendorProfile() {
       instagram: authProfile.instagram || '',
       facebook: authProfile.facebook || '',
       twitter: authProfile.twitter || '',
+      tiktok: authProfile.tiktok || '',
       coverImagePreview: authProfile.coverImageUrl || '',
       profileImagePreview: authProfile.profileImageUrl || '',
       packages: authProfile.packages?.length > 0
@@ -335,6 +337,7 @@ export default function EditVendorProfile() {
           instagram: profile.instagram,
           facebook: profile.facebook,
           twitter: profile.twitter,
+          tiktok: profile.tiktok,
           packages: profile.packages,
           coverImageUrl,
           profileImageUrl,
@@ -951,6 +954,18 @@ export default function EditVendorProfile() {
                         type="text"
                         value={profile.twitter}
                         onChange={(e) => updateProfile('twitter', e.target.value)}
+                        placeholder="@yourbusiness"
+                        className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all text-gray-900"
+                      />
+                    </div>
+                    <div className="relative">
+                      <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-[18px] h-[18px]" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.95a8.16 8.16 0 0 0 4.77 1.52V7.02a4.85 4.85 0 0 1-1-.33z"/>
+                      </svg>
+                      <input
+                        type="text"
+                        value={profile.tiktok}
+                        onChange={(e) => updateProfile('tiktok', e.target.value)}
                         placeholder="@yourbusiness"
                         className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all text-gray-900"
                       />

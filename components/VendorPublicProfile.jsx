@@ -710,7 +710,7 @@ export default function VendorPublicProfile({ vendorId }) {
             </div>
 
             {/* Social Links Card */}
-            {(vendor.instagram || vendor.facebook || vendor.twitter || vendor.website) && (
+            {(vendor.instagram || vendor.facebook || vendor.twitter || vendor.tiktok || vendor.website) && (
               <div className="bg-white rounded-2xl p-6 border border-gray-200">
                 <h3 className="font-bold text-lg mb-4">Find Us Online</h3>
                 <div className="space-y-3">
@@ -756,6 +756,23 @@ export default function VendorPublicProfile({ vendorId }) {
                       </div>
                       <span className="text-sm font-medium group-hover:underline truncate">
                         {vendor.twitter.startsWith('http') ? vendor.twitter.replace(/https?:\/\/(www\.)?(twitter|x)\.com\//, '@') : (vendor.twitter.startsWith('@') ? vendor.twitter : `@${vendor.twitter}`)}
+                      </span>
+                    </a>
+                  )}
+                  {vendor.tiktok && (
+                    <a
+                      href={vendor.tiktok.startsWith('http') ? vendor.tiktok : `https://tiktok.com/@${vendor.tiktok.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-gray-700 hover:text-gray-900 transition-colors group"
+                    >
+                      <div className="w-9 h-9 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg className="w-[18px] h-[18px] text-white" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.95a8.16 8.16 0 0 0 4.77 1.52V7.02a4.85 4.85 0 0 1-1-.33z"/>
+                        </svg>
+                      </div>
+                      <span className="text-sm font-medium group-hover:underline truncate">
+                        {vendor.tiktok.startsWith('http') ? vendor.tiktok.replace(/https?:\/\/(www\.)?tiktok\.com\/@?/, '@') : (vendor.tiktok.startsWith('@') ? vendor.tiktok : `@${vendor.tiktok}`)}
                       </span>
                     </a>
                   )}

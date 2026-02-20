@@ -92,6 +92,7 @@ export async function PUT(request) {
         instagram: body.instagram || null,
         facebook: body.facebook || null,
         twitter: body.twitter || null,
+        tiktok: body.tiktok || null,
         profileCompletion,
         ...(latitude !== undefined ? { latitude, longitude } : {}),
         ...(body.coverImageUrl ? { coverImageUrl: body.coverImageUrl } : {}),
