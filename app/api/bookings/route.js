@@ -154,6 +154,9 @@ export async function GET() {
         package: {
           select: { id: true, name: true, price: true },
         },
+        conversation: {
+          select: { id: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
     })

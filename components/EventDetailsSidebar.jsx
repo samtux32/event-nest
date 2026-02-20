@@ -34,8 +34,10 @@ export default function EventDetailsSidebar({ conversation, role = 'vendor' }) {
           </div>
           <div>
             <p className="text-sm text-gray-500">Venue</p>
-            <p className="font-medium">The Grand Ballroom</p>
-            <p className="text-sm text-gray-500">London, UK</p>
+            <p className="font-medium">{conversation.venueName || 'Not specified'}</p>
+            {conversation.venueAddress && (
+              <p className="text-sm text-gray-500">{conversation.venueAddress}</p>
+            )}
           </div>
         </div>
       </div>

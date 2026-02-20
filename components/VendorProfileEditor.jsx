@@ -366,7 +366,7 @@ export default function EditVendorProfile() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-    < VendorHeader />
+    <VendorHeader />
 
       {/* Saved Toast */}
       {showSavedToast && (

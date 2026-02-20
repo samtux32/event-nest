@@ -29,9 +29,9 @@ export default function ChatHeader({ conversation, role, onSendQuote }) {
           <div>
             <h2 className="font-bold text-lg">{conversation.name}</h2>
             <div className="flex items-center gap-3 text-sm text-gray-600">
-              <span>{conversation.eventType}</span>
+              <span>{conversation.eventType || '—'}</span>
               <span>•</span>
-              <span>{conversation.eventDate}</span>
+              <span>{conversation.eventDate || '—'}</span>
               {conversation.online && (
                 <>
                   <span>•</span>

@@ -47,7 +47,7 @@ export async function GET() {
           select: { id: true, fullName: true, avatarUrl: true },
         },
         booking: {
-          select: { id: true, eventDate: true, eventType: true, status: true },
+          select: { id: true, eventDate: true, eventType: true, status: true, venueName: true, venueAddress: true },
         },
         messages: {
           take: 1,
@@ -90,6 +90,8 @@ export async function GET() {
           : null,
         eventType: conv.booking?.eventType || conv.vendor.category,
         inquiryStatus: statusMap[conv.booking?.status] || 'Active',
+        venueName: conv.booking?.venueName || null,
+        venueAddress: conv.booking?.venueAddress || null,
       }
     })
 

@@ -9,7 +9,7 @@ export default function ConversationList({
   onSearchChange 
 }) {
   const filteredConversations = conversations.filter(conv =>
-    conv.name.toLowerCase().includes(searchQuery.toLowerCase())
+    (conv.name || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (

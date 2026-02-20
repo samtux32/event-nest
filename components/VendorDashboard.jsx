@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import React from 'react';
 import Link from 'next/link';
+
 import VendorHeader from '@/components/VendorHeader';
 import { useAuth } from '@/components/AuthProvider';
 import {
@@ -282,9 +283,12 @@ export default function VendorDashboard() {
             )}
 
             <div className="flex gap-3">
-              <button className="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 transition-colors">
+              <Link
+                href={selectedInquiry.conversation?.id ? `/messages?conv=${selectedInquiry.conversation.id}` : '/messages'}
+                className="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 transition-colors text-center"
+              >
                 Send Message
-              </button>
+              </Link>
               <button
                 onClick={() => acceptBooking(selectedInquiry)}
                 disabled={updatingId === selectedInquiry.id}

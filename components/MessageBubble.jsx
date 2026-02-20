@@ -20,11 +20,17 @@ export default function MessageBubble({ message, isCustomer, onQuoteUpdated }) {
   return (
     <div className={`flex gap-3 ${message.sender === 'me' ? 'flex-row-reverse' : ''}`}>
       {message.sender === 'them' && (
-        <img
-          src={message.avatar}
-          alt="Avatar"
-          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-        />
+        message.avatar ? (
+          <img
+            src={message.avatar}
+            alt="Avatar"
+            className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+            ?
+          </div>
+        )
       )}
       <div className={`flex flex-col ${message.sender === 'me' ? 'items-end' : ''}`}>
         <div

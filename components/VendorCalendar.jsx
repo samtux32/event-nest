@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import VendorHeader from '@/components/VendorHeader';
 import {
   CalendarDays,
@@ -53,8 +52,13 @@ function mapBooking(b) {
 }
 
 export default function VendorCalendar() {
-  const searchParams = useSearchParams();
-  const deepLinkBookingId = searchParams.get('bookingId');
+  const [deepLinkBookingId, setDeepLinkBookingId] = useState(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('bookingId');
+    if (id) setDeepLinkBookingId(id);
+  }, []);
 
   const [currentDate, setCurrentDate] = useState(() => {
     const d = new Date();
