@@ -17,8 +17,8 @@ export async function GET(request, { params }) {
     const conversation = await prisma.conversation.findUnique({
       where: { id },
       include: {
-        vendor: { select: { userId: true } },
-        customer: { select: { userId: true } },
+        vendor: { select: { userId: true, profileImageUrl: true, businessName: true } },
+        customer: { select: { userId: true, avatarUrl: true, fullName: true } },
       },
     })
 
@@ -56,22 +56,35 @@ export async function GET(request, { params }) {
       })
     }
 
-    const mapped = messages.map((msg) => ({
-      id: msg.id,
-      sender: msg.senderId === user.id ? 'me' : 'them',
-      text: msg.text,
-      type: msg.type,
-      quote: msg.quote ? {
-        id: msg.quote.id,
-        title: msg.quote.title,
-        description: msg.quote.description,
-        price: Number(msg.quote.price),
-        features: msg.quote.features,
-        status: msg.quote.status,
-        bookingId: msg.quote.bookingId,
-      } : null,
-      timestamp: new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-    }))
+    const mapped = messages.map((msg) => {
+      const isMe = msg.senderId === user.id
+      const senderIsVendor = msg.senderId === conversation.vendor.userId
+      const avatar = !isMe
+        ? (senderIsVendor ? conversation.vendor.profileImageUrl : conversation.customer.avatarUrl) || null
+        : null
+      const senderName = !isMe
+        ? (senderIsVendor ? conversation.vendor.businessName : conversation.customer.fullName) || null
+        : null
+
+      return {
+        id: msg.id,
+        sender: isMe ? 'me' : 'them',
+        text: msg.text,
+        type: msg.type,
+        avatar,
+        senderName,
+        quote: msg.quote ? {
+          id: msg.quote.id,
+          title: msg.quote.title,
+          description: msg.quote.description,
+          price: Number(msg.quote.price),
+          features: msg.quote.features,
+          status: msg.quote.status,
+          bookingId: msg.quote.bookingId,
+        } : null,
+        timestamp: new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+      }
+    })
 
     return NextResponse.json({ messages: mapped })
   } catch (err) {
