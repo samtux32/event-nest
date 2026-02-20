@@ -59,7 +59,7 @@ export default function EventDetailsForm({ formData, onFormChange }) {
             value={formData.startTime}
             onChange={onFormChange}
             required
-            className="w-full px-2 py-3 border border-gray-200 rounded-xl outline-none focus:border-purple-600 text-sm"
+            className="w-full px-2 py-4 border border-gray-200 rounded-xl outline-none focus:border-purple-600 text-base"
           />
         </div>
 
@@ -73,7 +73,7 @@ export default function EventDetailsForm({ formData, onFormChange }) {
             value={formData.endTime}
             onChange={onFormChange}
             required
-            className="w-full px-2 py-3 border border-gray-200 rounded-xl outline-none focus:border-purple-600 text-sm"
+            className="w-full px-2 py-4 border border-gray-200 rounded-xl outline-none focus:border-purple-600 text-base"
           />
         </div>
       </div>
