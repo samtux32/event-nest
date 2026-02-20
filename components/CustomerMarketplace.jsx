@@ -2,9 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Heart, Star, MapPin, SlidersHorizontal } from 'lucide-react';
+import { Search, Heart, Star, MapPin, SlidersHorizontal, X } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import CustomerHeader from './CustomerHeader';
+
+function parsePrice(str) {
+  if (!str) return null;
+  return Number(str.replace(/[£,]/g, ''));
+}
 
 export default function CustomerMarketplace() {
   const { profile } = useAuth();
@@ -13,6 +18,12 @@ export default function CustomerMarketplace() {
   const [searchQuery, setSearchQuery] = useState('');
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Sort & filter state
+  const [sortBy, setSortBy] = useState('rating');
+  const [showFilters, setShowFilters] = useState(false);
+  const [minRating, setMinRating] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(10000);
 
   const categories = [
     'All Categories',
@@ -60,7 +71,6 @@ export default function CustomerMarketplace() {
 
   const toggleWishlist = async (vendorId) => {
     const isWishlisted = wishlist.includes(vendorId);
-    // Optimistic update
     setWishlist(prev => isWishlisted ? prev.filter(id => id !== vendorId) : [...prev, vendorId]);
     try {
       await fetch('/api/wishlist', {
@@ -69,16 +79,45 @@ export default function CustomerMarketplace() {
         body: JSON.stringify({ vendorId }),
       });
     } catch {
-      // Revert on failure
       setWishlist(prev => isWishlisted ? [...prev, vendorId] : prev.filter(id => id !== vendorId));
     }
   };
 
-  const filteredVendors = vendors.filter(vendor => {
-    const matchesSearch = vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         vendor.category.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  const clearFilters = () => {
+    setMinRating(0);
+    setMaxPrice(10000);
+  };
+
+  const activeFilterCount = (minRating > 0 ? 1 : 0) + (maxPrice < 10000 ? 1 : 0);
+
+  const filteredVendors = vendors
+    .filter(vendor => {
+      const matchesSearch = vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            vendor.category.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesRating = minRating === 0 || (vendor.rating !== null && vendor.rating >= minRating);
+      const price = parsePrice(vendor.startingPrice);
+      const matchesPrice = price === null || price <= maxPrice;
+      return matchesSearch && matchesRating && matchesPrice;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'rating') {
+        return (b.rating ?? -1) - (a.rating ?? -1);
+      }
+      if (sortBy === 'price_asc') {
+        const pa = parsePrice(a.startingPrice) ?? Infinity;
+        const pb = parsePrice(b.startingPrice) ?? Infinity;
+        return pa - pb;
+      }
+      if (sortBy === 'price_desc') {
+        const pa = parsePrice(a.startingPrice) ?? -1;
+        const pb = parsePrice(b.startingPrice) ?? -1;
+        return pb - pa;
+      }
+      if (sortBy === 'reviews') {
+        return (b.reviews ?? 0) - (a.reviews ?? 0);
+      }
+      return 0;
+    });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -115,10 +154,76 @@ export default function CustomerMarketplace() {
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
-              <button className="p-3 hover:bg-gray-50 rounded-lg">
-                <SlidersHorizontal className="text-gray-600" size={20} />
+              <button
+                onClick={() => setShowFilters(prev => !prev)}
+                className={`relative p-3 rounded-lg transition-colors ${showFilters ? 'bg-purple-600 text-white' : 'hover:bg-gray-50 text-gray-600'}`}
+              >
+                <SlidersHorizontal size={20} />
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
               </button>
             </div>
+
+            {/* Filter Panel */}
+            {showFilters && (
+              <div className="border-t border-gray-100 mt-4 pt-4 px-4 pb-2">
+                <div className="flex items-start gap-10">
+                  {/* Min Rating */}
+                  <div>
+                    <p className="text-sm font-semibold text-gray-700 mb-2">Minimum Rating</p>
+                    <div className="flex gap-2">
+                      {[0, 3, 4, 4.5].map(r => (
+                        <button
+                          key={r}
+                          onClick={() => setMinRating(r)}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                            minRating === r
+                              ? 'bg-purple-600 text-white border-purple-600'
+                              : 'border-gray-200 text-gray-700 hover:border-purple-400'
+                          }`}
+                        >
+                          {r === 0 ? 'Any' : `${r}★+`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Max Price */}
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-700 mb-2">
+                      Max Starting Price: <span className="text-purple-600">{maxPrice >= 10000 ? 'Any' : `£${maxPrice.toLocaleString()}`}</span>
+                    </p>
+                    <input
+                      type="range"
+                      min={500}
+                      max={10000}
+                      step={500}
+                      value={maxPrice}
+                      onChange={e => setMaxPrice(Number(e.target.value))}
+                      className="w-full accent-purple-600"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400 mt-1">
+                      <span>£500</span>
+                      <span>£10,000+</span>
+                    </div>
+                  </div>
+
+                  {/* Clear */}
+                  {activeFilterCount > 0 && (
+                    <button
+                      onClick={clearFilters}
+                      className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700 mt-6 whitespace-nowrap"
+                    >
+                      <X size={14} />
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -129,11 +234,15 @@ export default function CustomerMarketplace() {
           <p className="text-gray-600">
             <span className="font-semibold text-gray-900">{filteredVendors.length}</span> vendors found
           </p>
-          <select className="px-4 py-2 border border-gray-200 rounded-lg outline-none cursor-pointer">
-            <option>Highest Rated</option>
-            <option>Price: Low to High</option>
-            <option>Price: High to Low</option>
-            <option>Most Reviews</option>
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value)}
+            className="px-4 py-2 border border-gray-200 rounded-lg outline-none cursor-pointer"
+          >
+            <option value="rating">Highest Rated</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+            <option value="reviews">Most Reviews</option>
           </select>
         </div>
 
@@ -221,7 +330,7 @@ export default function CustomerMarketplace() {
                   <div className="flex items-center gap-4 mb-3">
                     <div className="flex items-center gap-1">
                       <Star className="text-yellow-400 fill-yellow-400" size={16} />
-                      <span className="font-semibold text-gray-900">{vendor.rating}</span>
+                      <span className="font-semibold text-gray-900">{vendor.rating ?? '—'}</span>
                       <span className="text-gray-500 text-sm">({vendor.reviews})</span>
                     </div>
                     {vendor.location && (
