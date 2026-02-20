@@ -707,93 +707,93 @@ export default function VendorPublicProfile({ vendorId }) {
                   Response time: ~{vendor.responseTime}
                 </p>
               )}
-            </div>
 
-            {/* Social Links Card */}
-            {(vendor.instagram || vendor.facebook || vendor.twitter || vendor.tiktok || vendor.website) && (
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <h3 className="font-bold text-lg mb-4">Find Us Online</h3>
-                <div className="space-y-3">
-                  {vendor.instagram && (
-                    <a
-                      href={vendor.instagram.startsWith('http') ? vendor.instagram : `https://instagram.com/${vendor.instagram.replace('@', '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-gray-700 hover:text-pink-600 transition-colors group"
-                    >
-                      <div className="w-9 h-9 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Instagram size={18} className="text-white" />
-                      </div>
-                      <span className="text-sm font-medium group-hover:underline truncate">
-                        {vendor.instagram.startsWith('http') ? vendor.instagram.replace(/https?:\/\/(www\.)?instagram\.com\//, '@') : (vendor.instagram.startsWith('@') ? vendor.instagram : `@${vendor.instagram}`)}
-                      </span>
-                    </a>
-                  )}
-                  {vendor.facebook && (
-                    <a
-                      href={vendor.facebook.startsWith('http') ? vendor.facebook : `https://facebook.com/${vendor.facebook}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition-colors group"
-                    >
-                      <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Facebook size={18} className="text-white" />
-                      </div>
-                      <span className="text-sm font-medium group-hover:underline truncate">
-                        {vendor.facebook.startsWith('http') ? vendor.facebook.replace(/https?:\/\/(www\.)?facebook\.com\//, '') : vendor.facebook}
-                      </span>
-                    </a>
-                  )}
-                  {vendor.twitter && (
-                    <a
-                      href={vendor.twitter.startsWith('http') ? vendor.twitter : `https://x.com/${vendor.twitter.replace('@', '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-gray-700 hover:text-gray-900 transition-colors group"
-                    >
-                      <div className="w-9 h-9 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Twitter size={18} className="text-white" />
-                      </div>
-                      <span className="text-sm font-medium group-hover:underline truncate">
-                        {vendor.twitter.startsWith('http') ? vendor.twitter.replace(/https?:\/\/(www\.)?(twitter|x)\.com\//, '@') : (vendor.twitter.startsWith('@') ? vendor.twitter : `@${vendor.twitter}`)}
-                      </span>
-                    </a>
-                  )}
-                  {vendor.tiktok && (
-                    <a
-                      href={vendor.tiktok.startsWith('http') ? vendor.tiktok : `https://tiktok.com/@${vendor.tiktok.replace('@', '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-gray-700 hover:text-gray-900 transition-colors group"
-                    >
-                      <div className="w-9 h-9 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg className="w-[18px] h-[18px] text-white" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.95a8.16 8.16 0 0 0 4.77 1.52V7.02a4.85 4.85 0 0 1-1-.33z"/>
-                        </svg>
-                      </div>
-                      <span className="text-sm font-medium group-hover:underline truncate">
-                        {vendor.tiktok.startsWith('http') ? vendor.tiktok.replace(/https?:\/\/(www\.)?tiktok\.com\/@?/, '@') : (vendor.tiktok.startsWith('@') ? vendor.tiktok : `@${vendor.tiktok}`)}
-                      </span>
-                    </a>
-                  )}
-                  {vendor.website && (
-                    <a
-                      href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-gray-700 hover:text-purple-600 transition-colors group"
-                    >
-                      <div className="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Globe size={18} className="text-purple-600" />
-                      </div>
-                      <span className="text-sm font-medium group-hover:underline truncate">
-                        {vendor.website.replace(/https?:\/\/(www\.)?/, '')}
-                      </span>
-                    </a>
-                  )}
+              {/* Social Links — inside sticky card so always visible */}
+              {(vendor.instagram || vendor.facebook || vendor.twitter || vendor.tiktok || vendor.website) && (
+                <div className="mt-5 pt-5 border-t border-gray-100">
+                  <p className="text-sm font-semibold text-gray-700 mb-3">Find Us Online</p>
+                  <div className="space-y-2.5">
+                    {vendor.instagram && (
+                      <a
+                        href={vendor.instagram.startsWith('http') ? vendor.instagram : `https://instagram.com/${vendor.instagram.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 text-gray-700 hover:text-pink-600 transition-colors group"
+                      >
+                        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Instagram size={16} className="text-white" />
+                        </div>
+                        <span className="text-sm group-hover:underline truncate">
+                          {vendor.instagram.startsWith('http') ? vendor.instagram.replace(/https?:\/\/(www\.)?instagram\.com\//, '@') : (vendor.instagram.startsWith('@') ? vendor.instagram : `@${vendor.instagram}`)}
+                        </span>
+                      </a>
+                    )}
+                    {vendor.facebook && (
+                      <a
+                        href={vendor.facebook.startsWith('http') ? vendor.facebook : `https://facebook.com/${vendor.facebook}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition-colors group"
+                      >
+                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Facebook size={16} className="text-white" />
+                        </div>
+                        <span className="text-sm group-hover:underline truncate">
+                          {vendor.facebook.startsWith('http') ? vendor.facebook.replace(/https?:\/\/(www\.)?facebook\.com\//, '') : vendor.facebook}
+                        </span>
+                      </a>
+                    )}
+                    {vendor.twitter && (
+                      <a
+                        href={vendor.twitter.startsWith('http') ? vendor.twitter : `https://x.com/${vendor.twitter.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 text-gray-700 hover:text-gray-900 transition-colors group"
+                      >
+                        <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Twitter size={16} className="text-white" />
+                        </div>
+                        <span className="text-sm group-hover:underline truncate">
+                          {vendor.twitter.startsWith('http') ? vendor.twitter.replace(/https?:\/\/(www\.)?(twitter|x)\.com\//, '@') : (vendor.twitter.startsWith('@') ? vendor.twitter : `@${vendor.twitter}`)}
+                        </span>
+                      </a>
+                    )}
+                    {vendor.tiktok && (
+                      <a
+                        href={vendor.tiktok.startsWith('http') ? vendor.tiktok : `https://tiktok.com/@${vendor.tiktok.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 text-gray-700 hover:text-gray-900 transition-colors group"
+                      >
+                        <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.95a8.16 8.16 0 0 0 4.77 1.52V7.02a4.85 4.85 0 0 1-1-.33z"/>
+                          </svg>
+                        </div>
+                        <span className="text-sm group-hover:underline truncate">
+                          {vendor.tiktok.startsWith('http') ? vendor.tiktok.replace(/https?:\/\/(www\.)?tiktok\.com\/@?/, '@') : (vendor.tiktok.startsWith('@') ? vendor.tiktok : `@${vendor.tiktok}`)}
+                        </span>
+                      </a>
+                    )}
+                    {vendor.website && (
+                      <a
+                        href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 text-gray-700 hover:text-purple-600 transition-colors group"
+                      >
+                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Globe size={16} className="text-purple-600" />
+                        </div>
+                        <span className="text-sm group-hover:underline truncate">
+                          {vendor.website.replace(/https?:\/\/(www\.)?/, '')}
+                        </span>
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
