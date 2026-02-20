@@ -109,7 +109,7 @@ export default function BookingRequest({ vendorId }) {
     e.preventDefault();
 
     if (!user) {
-      router.push('/login');
+      router.push(`/login?redirectTo=/booking/${vendorId}`);
       return;
     }
 
@@ -229,7 +229,7 @@ export default function BookingRequest({ vendorId }) {
             </div>
 
             <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-medium">
-              S
+              {user?.email?.[0]?.toUpperCase() || 'U'}
             </div>
           </div>
         </div>

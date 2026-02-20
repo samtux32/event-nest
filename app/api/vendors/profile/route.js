@@ -104,25 +104,27 @@ export async function PUT(request) {
       }
     }
 
-    // Delete + recreate packages (simpler than diffing)
-    await prisma.package.deleteMany({
-      where: { vendorId: vendorProfile.id },
-    })
+    // Delete + recreate packages only if packages were explicitly sent
+    if (Array.isArray(body.packages)) {
+      await prisma.package.deleteMany({
+        where: { vendorId: vendorProfile.id },
+      })
 
-    const packagesToCreate = (body.packages || [])
-      .filter(pkg => pkg.name && pkg.price)
-      .map((pkg, index) => ({
-        vendorId: vendorProfile.id,
-        name: pkg.name,
-        price: parseFloat(pkg.price),
-        features: pkg.details
-          ? pkg.details.split('\n').map(f => f.trim()).filter(Boolean)
-          : [],
-        sortOrder: index,
-      }))
+      const packagesToCreate = body.packages
+        .filter(pkg => pkg.name && pkg.price)
+        .map((pkg, index) => ({
+          vendorId: vendorProfile.id,
+          name: pkg.name,
+          price: parseFloat(pkg.price),
+          features: pkg.details
+            ? pkg.details.split('\n').map(f => f.trim()).filter(Boolean)
+            : [],
+          sortOrder: index,
+        }))
 
-    if (packagesToCreate.length > 0) {
-      await prisma.package.createMany({ data: packagesToCreate })
+      if (packagesToCreate.length > 0) {
+        await prisma.package.createMany({ data: packagesToCreate })
+      }
     }
 
     // Fetch updated profile with packages

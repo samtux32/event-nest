@@ -3,12 +3,12 @@ import { Check } from 'lucide-react';
 
 export default function AdditionalServices({ selectedServices, onToggleService }) {
   const serviceOptions = [
-    'Engagement photo session',
-    'Drone photography',
-    'Photo booth',
-    'Same-day highlights',
-    'Physical photo album',
-    'Canvas prints'
+    'Early setup / late breakdown',
+    'Travel to venue',
+    'Express / rush booking',
+    'Additional hours',
+    'Weekend / bank holiday',
+    'Custom extras'
   ];
 
   return (

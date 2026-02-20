@@ -183,11 +183,17 @@ export default function CustomerMarketplace() {
                 className="bg-white rounded-2xl overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer group"
               >
                 <div className="relative h-64">
-                  <img
-                    src={vendor.image}
-                    alt={vendor.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+                  {vendor.image ? (
+                    <img
+                      src={vendor.image}
+                      alt={vendor.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-purple-100 flex items-center justify-center">
+                      <span className="text-6xl font-bold text-purple-300">{vendor.name?.[0] || 'V'}</span>
+                    </div>
+                  )}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

@@ -7,11 +7,17 @@ export default function BookingSummary({ vendor, selectedPackage }) {
   return (
     <div className="bg-white rounded-2xl p-6 border border-gray-200 sticky top-24">
       <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
-        <img 
-          src={vendor.profileImage}
-          alt={vendor.name}
-          className="w-16 h-16 rounded-xl object-cover"
-        />
+        {vendor.profileImage ? (
+          <img
+            src={vendor.profileImage}
+            alt={vendor.name}
+            className="w-16 h-16 rounded-xl object-cover"
+          />
+        ) : (
+          <div className="w-16 h-16 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+            <span className="text-2xl font-bold text-purple-600">{vendor.name?.[0] || 'V'}</span>
+          </div>
+        )}
         <div>
           <h3 className="font-bold text-lg">{vendor.name}</h3>
           <p className="text-sm text-purple-600 font-medium">{vendor.category}</p>
@@ -28,10 +34,12 @@ export default function BookingSummary({ vendor, selectedPackage }) {
           <MapPin size={16} className="text-gray-400" />
           {vendor.location}
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Clock size={16} className="text-gray-400" />
-          Responds in ~{vendor.responseTime}
-        </div>
+        {vendor.responseTime && (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Clock size={16} className="text-gray-400" />
+            Responds in ~{vendor.responseTime}
+          </div>
+        )}
       </div>
 
       <div className="bg-purple-50 rounded-xl p-4 mb-4">
@@ -57,7 +65,7 @@ export default function BookingSummary({ vendor, selectedPackage }) {
             What happens next?
           </p>
           <p className="text-xs text-blue-700">
-            The vendor will review your request and send you a detailed quote within {vendor.responseTime}. You can then discuss details via message before confirming.
+            The vendor will review your request and respond{vendor.responseTime ? ` within ${vendor.responseTime}` : ' soon'}. You can then discuss details via message before confirming.
           </p>
         </div>
       </div>
