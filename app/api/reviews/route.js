@@ -2,6 +2,38 @@ import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
+// Public endpoint: fetch all reviews for a vendor (no auth required)
+export async function GET(request) {
+  const { searchParams } = new URL(request.url)
+  const vendorId = searchParams.get('vendorId')
+  const rating = searchParams.get('rating')
+
+  if (!vendorId) {
+    return NextResponse.json({ error: 'vendorId is required' }, { status: 400 })
+  }
+
+  try {
+    const where = {
+      vendorId,
+      ...(rating ? { rating: parseInt(rating) } : {}),
+    }
+
+    const reviews = await prisma.review.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        customer: { select: { fullName: true } },
+        reply: true,
+      },
+    })
+
+    return NextResponse.json({ reviews })
+  } catch (err) {
+    console.error('Reviews fetch error:', err)
+    return NextResponse.json({ error: 'Failed to fetch reviews' }, { status: 500 })
+  }
+}
+
 export async function POST(request) {
   const supabase = await createClient()
   const { data: { user }, error } = await supabase.auth.getUser()

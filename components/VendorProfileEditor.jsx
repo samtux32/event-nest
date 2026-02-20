@@ -1009,13 +1009,16 @@ export default function EditVendorProfile() {
 
             {/* ── Save Button (bottom) ── */}
             <div className="flex items-center justify-between py-6">
-              <Link href="/" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
-                Back to Dashboard
-              </Link>
+              <p className="text-xs text-gray-400">Save your changes before previewing.</p>
               <div className="flex items-center gap-4">
-                <Link href={`/vendor-profile/${authProfile?.id || ''}`} className="px-6 py-3 border border-gray-200 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-                  Preview Profile
-                </Link>
+                <a
+                  href={`/vendor-profile/${authProfile?.id || ''}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 border border-gray-200 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  View Profile
+                </a>
                 <button
                   onClick={handleSave}
                   disabled={isSaving}

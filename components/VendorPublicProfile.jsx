@@ -9,7 +9,6 @@ import {
   Star,
   MapPin,
   Heart,
-  Share2,
   Check,
   Calendar,
   MessageCircle,
@@ -44,6 +43,10 @@ export default function VendorPublicProfile({ vendorId }) {
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [submittingReply, setSubmittingReply] = useState(false);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [allReviews, setAllReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [starFilter, setStarFilter] = useState(null);
 
   // Load wishlist state for this vendor
   useEffect(() => {
@@ -130,6 +133,29 @@ export default function VendorPublicProfile({ vendorId }) {
   };
 
   const isOwner = user && vendor && user.id === vendor.userId;
+
+  const loadAllReviews = async (rating = null) => {
+    setReviewsLoading(true);
+    try {
+      const url = `/api/reviews?vendorId=${vendorId}${rating ? `&rating=${rating}` : ''}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.reviews) setAllReviews(data.reviews);
+    } catch {}
+    setReviewsLoading(false);
+  };
+
+  const handleViewAllReviews = () => {
+    setShowReviewsModal(true);
+    setStarFilter(null);
+    loadAllReviews(null);
+  };
+
+  const handleStarFilter = (rating) => {
+    const next = starFilter === rating ? null : rating;
+    setStarFilter(next);
+    loadAllReviews(next);
+  };
 
   const handleReply = async (reviewId) => {
     if (!replyText.trim()) return;
@@ -290,33 +316,26 @@ export default function VendorPublicProfile({ vendorId }) {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/marketplace" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <ArrowLeft size={20} className="text-gray-600" />
-              </Link>
-              <div className="flex items-center gap-3">
-                <img src="/logo.png" alt="Event Nest" className="w-12 h-12 rounded-xl object-cover" />
-                <div className="font-bold text-sm leading-tight">Event<br/>Nest</div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <button
-                onClick={toggleWishlist}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <Heart
-                  size={20}
-                  className={isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}
-                />
-              </button>
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <Share2 size={20} className="text-gray-600" />
-              </button>
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/marketplace" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <ArrowLeft size={20} className="text-gray-600" />
+            </Link>
+            <div className="flex items-center gap-2.5">
+              <img src="/logo.png" alt="Event Nest" className="w-9 h-9 rounded-lg object-cover" />
+              <span className="font-bold text-gray-900 text-base">Event Nest</span>
             </div>
           </div>
+
+          <button
+            onClick={toggleWishlist}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <Heart
+              size={20}
+              className={isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}
+            />
+          </button>
         </div>
       </header>
 
@@ -580,8 +599,11 @@ export default function VendorPublicProfile({ vendorId }) {
                   ))}
                 </div>
 
-                {vendor.totalReviews > vendor.reviews.length && (
-                  <button className="w-full mt-6 py-3 border-2 border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                {vendor.totalReviews > 0 && (
+                  <button
+                    onClick={handleViewAllReviews}
+                    className="w-full mt-6 py-3 border-2 border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
                     View all {vendor.totalReviews} reviews
                   </button>
                 )}
@@ -596,16 +618,16 @@ export default function VendorPublicProfile({ vendorId }) {
                 <>
                   <h3 className="text-xl font-bold mb-4">Packages & Pricing</h3>
 
-                  <div className="space-y-4 mb-6">
+                  <div className="space-y-3 mb-6 max-h-72 overflow-y-auto pr-1">
                     {vendor.packages.map((pkg) => (
                       <div
                         key={pkg.id}
-                        onClick={() => setSelectedPackage(pkg.id)}
+                        onClick={() => setSelectedPackage(prev => prev === pkg.id ? null : pkg.id)}
                         className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
                           selectedPackage === pkg.id
                             ? 'border-purple-600 bg-purple-50'
-                            : 'border-gray-200 hover:border-purple-300'
-                        } ${pkg.isPopular ? 'ring-2 ring-purple-600 ring-offset-2' : ''}`}
+                            : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'
+                        }`}
                       >
                         {pkg.isPopular && (
                           <div className="inline-block px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full mb-2">
@@ -674,6 +696,98 @@ export default function VendorPublicProfile({ vendorId }) {
           </div>
         </div>
       </div>
+
+      {/* All Reviews Modal */}
+      {showReviewsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">All Reviews</h2>
+                <p className="text-sm text-gray-500">{vendor.totalReviews} review{vendor.totalReviews !== 1 ? 's' : ''}</p>
+              </div>
+              <button
+                onClick={() => setShowReviewsModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Star filter */}
+            <div className="flex items-center gap-2 px-6 py-3 border-b border-gray-100 flex-shrink-0">
+              <span className="text-sm font-medium text-gray-600 mr-1">Filter:</span>
+              {[5, 4, 3, 2, 1].map(star => (
+                <button
+                  key={star}
+                  onClick={() => handleStarFilter(star)}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    starFilter === star
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {star}<Star size={12} className={starFilter === star ? 'fill-white text-white' : 'fill-yellow-400 text-yellow-400'} />
+                </button>
+              ))}
+              {starFilter && (
+                <button
+                  onClick={() => handleStarFilter(null)}
+                  className="text-xs text-purple-600 hover:underline ml-1"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {/* Reviews list */}
+            <div className="overflow-y-auto flex-1 px-6 py-4 space-y-6">
+              {reviewsLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="animate-spin text-purple-600" size={32} />
+                </div>
+              ) : allReviews.length === 0 ? (
+                <div className="text-center py-16 text-gray-400">
+                  <Star className="mx-auto mb-3" size={32} />
+                  <p>No reviews{starFilter ? ` with ${starFilter} star${starFilter !== 1 ? 's' : ''}` : ''}</p>
+                </div>
+              ) : (
+                allReviews.map(review => (
+                  <div key={review.id} className="border-b border-gray-100 last:border-0 pb-6 last:pb-0">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <p className="font-bold text-gray-900">{review.customer?.fullName || 'Anonymous'}</p>
+                        {review.eventDate && <p className="text-sm text-gray-500">Event: {review.eventDate}</p>}
+                      </div>
+                      <div className="flex items-center gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} size={14} className={i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-gray-700 leading-relaxed mb-2">{review.text}</p>
+                    {review.photos?.length > 0 && (
+                      <div className="flex gap-2 mb-2">
+                        {review.photos.map((url, i) => (
+                          <img key={i} src={url} alt="Review photo" className="w-16 h-16 rounded-lg object-cover" />
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-400">{formatDate(review.createdAt)}</p>
+                    {review.reply && (
+                      <div className="mt-3 ml-4 pl-4 border-l-2 border-purple-200 bg-purple-50 rounded-r-xl p-3">
+                        <p className="text-xs font-semibold text-purple-700 mb-1">Business response</p>
+                        <p className="text-sm text-gray-700">{review.reply.text}</p>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

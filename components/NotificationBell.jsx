@@ -69,10 +69,19 @@ export default function NotificationBell() {
     setUnreadCount(prev => Math.max(0, prev - 1));
   }
 
+  const handleBellClick = () => {
+    const opening = !open;
+    setOpen(opening);
+    // Mark all as read when opening the dropdown
+    if (opening && unreadCount > 0) {
+      markAllRead();
+    }
+  };
+
   return (
     <div className="relative" ref={ref}>
       <button
-        onClick={() => setOpen(prev => !prev)}
+        onClick={handleBellClick}
         className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
         title="Notifications"
       >
@@ -88,11 +97,6 @@ export default function NotificationBell() {
         <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-xl border border-gray-200 z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <h3 className="font-semibold text-gray-900">Notifications</h3>
-            {unreadCount > 0 && (
-              <button onClick={markAllRead} className="text-xs text-purple-600 hover:underline font-medium">
-                Mark all read
-              </button>
-            )}
           </div>
 
           <div className="max-h-80 overflow-y-auto">

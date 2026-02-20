@@ -65,16 +65,26 @@ export default function VendorHeader() {
         <div className="flex items-center gap-3 flex-shrink-0">
           <Link
             href={`/vendor-profile/${profile?.id || ''}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-1 text-xs text-gray-500 hover:text-purple-600 transition-colors"
-            title="Preview your public profile"
+            title="View your public profile"
           >
             <ExternalLink size={14} />
-            Preview
+            View Profile
           </Link>
           <NotificationBell />
-          <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-            {initial}
-          </div>
+          {profile?.profileImageUrl ? (
+            <img
+              src={profile.profileImageUrl}
+              alt={profile.businessName || 'Profile'}
+              className="w-8 h-8 rounded-full object-cover flex-shrink-0 border-2 border-gray-200"
+            />
+          ) : (
+            <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+              {initial}
+            </div>
+          )}
           <button onClick={signOut} className="text-gray-400 hover:text-gray-600 transition-colors" title="Sign out">
             <LogOut size={18} />
           </button>

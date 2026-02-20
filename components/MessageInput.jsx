@@ -1,5 +1,5 @@
 import React from 'react';
-import { Send, Paperclip, Smile } from 'lucide-react';
+import { Send, Paperclip } from 'lucide-react';
 
 export default function MessageInput({ value, onChange, onSend }) {
   const handleSubmit = (e) => {
@@ -34,13 +34,6 @@ export default function MessageInput({ value, onChange, onSend }) {
             }}
           />
         </div>
-
-        <button
-          type="button"
-          className="p-3 hover:bg-gray-100 rounded-xl transition-colors flex-shrink-0"
-        >
-          <Smile size={20} className="text-gray-600" />
-        </button>
 
         <button
           type="submit"
