@@ -439,7 +439,7 @@ export default function VendorPublicProfile({ vendorId }) {
               <section className="bg-white rounded-2xl p-8 border border-gray-200">
                 <h2 className="text-2xl font-bold mb-4">About</h2>
                 {vendor.description && (
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-line mb-6">
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-line break-words mb-6">
                     {vendor.description}
                   </p>
                 )}

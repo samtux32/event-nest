@@ -391,10 +391,10 @@ export default function EditVendorProfile() {
       )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div className="flex gap-8">
+        <div className="flex flex-col md:flex-row gap-8">
           {/* ── Sidebar Navigation ── */}
-          <div className="w-64 flex-shrink-0">
-            <div className="sticky top-28">
+          <div className="w-full md:w-64 md:flex-shrink-0">
+            <div className="md:sticky md:top-28">
               <nav className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
                 {sections.map((section, index) => {
                   const isComplete = isSectionComplete(section.id);
