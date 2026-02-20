@@ -33,6 +33,32 @@ export async function PUT(request) {
       both: 'both',
     }
 
+    // Geocode location to lat/lng when location changes or coordinates are missing
+    let latitude = undefined;
+    let longitude = undefined;
+    const shouldGeocode = body.location && (
+      body.location !== vendorProfile.location || vendorProfile.latitude === null
+    );
+    if (shouldGeocode) {
+      try {
+        const geo = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(body.location)}&format=json&limit=1`,
+          { headers: { 'User-Agent': 'EventNest/1.0' } }
+        );
+        const geoData = await geo.json();
+        if (geoData[0]) {
+          latitude = parseFloat(geoData[0].lat);
+          longitude = parseFloat(geoData[0].lon);
+        }
+      } catch {
+        // Geocoding failed — coordinates unchanged
+      }
+    } else if ('location' in body && !body.location) {
+      // Location explicitly cleared — wipe coordinates too
+      latitude = null;
+      longitude = null;
+    }
+
     // Calculate profile completion
     const fields = [
       body.businessName,
@@ -67,6 +93,7 @@ export async function PUT(request) {
         facebook: body.facebook || null,
         twitter: body.twitter || null,
         profileCompletion,
+        ...(latitude !== undefined ? { latitude, longitude } : {}),
         ...(body.coverImageUrl ? { coverImageUrl: body.coverImageUrl } : {}),
         ...(body.profileImageUrl ? { profileImageUrl: body.profileImageUrl } : {}),
       },
