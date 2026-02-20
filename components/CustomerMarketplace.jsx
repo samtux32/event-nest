@@ -11,6 +11,31 @@ function parsePrice(str) {
   return Number(str.replace(/[£,]/g, ''));
 }
 
+function RangeSlider({ min, max, step, minVal, maxVal, onMinChange, onMaxChange }) {
+  const pct = (v) => max === min ? 0 : ((v - min) / (max - min)) * 100;
+  return (
+    <div className="range-slider relative h-5 w-full">
+      <div className="absolute top-1/2 -translate-y-1/2 w-full h-1.5 bg-gray-200 rounded-full" />
+      <div
+        className="absolute top-1/2 -translate-y-1/2 h-1.5 bg-purple-600 rounded-full"
+        style={{ left: `${pct(minVal)}%`, width: `${pct(maxVal) - pct(minVal)}%` }}
+      />
+      <input
+        type="range" min={min} max={max} step={step} value={minVal}
+        onChange={e => onMinChange(Math.min(Number(e.target.value), maxVal - step))}
+        className="absolute inset-0 w-full h-full"
+        style={{ zIndex: minVal >= maxVal - step ? 5 : 3 }}
+      />
+      <input
+        type="range" min={min} max={max} step={step} value={maxVal}
+        onChange={e => onMaxChange(Math.max(Number(e.target.value), minVal + step))}
+        className="absolute inset-0 w-full h-full"
+        style={{ zIndex: 4 }}
+      />
+    </div>
+  );
+}
+
 export default function CustomerMarketplace() {
   const { profile } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
@@ -23,19 +48,22 @@ export default function CustomerMarketplace() {
   const [sortBy, setSortBy] = useState('rating');
   const [showFilters, setShowFilters] = useState(false);
   const [minRating, setMinRating] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(null); // null = unset, tracks slider
+  const [minPriceFilter, setMinPriceFilter] = useState(null); // null = unset
+  const [maxPriceFilter, setMaxPriceFilter] = useState(null); // null = unset
 
   // Derive price range from current vendor set (vendors with a starting price)
   const vendorPrices = vendors.map(v => parsePrice(v.startingPrice)).filter(p => p !== null);
   const priceRangeMin = vendorPrices.length > 0 ? Math.min(...vendorPrices) : 0;
   const priceRangeMax = vendorPrices.length > 0 ? Math.max(...vendorPrices) : 1000;
   const priceStep = (priceRangeMax - priceRangeMin) <= 1000 ? 50 : (priceRangeMax - priceRangeMin) <= 5000 ? 100 : 500;
-  // Effective slider value — default to max (= no filter)
-  const sliderValue = maxPrice ?? priceRangeMax;
+  // Effective slider values — default to range bounds when unset
+  const sliderMin = minPriceFilter ?? priceRangeMin;
+  const sliderMax = maxPriceFilter ?? priceRangeMax;
 
   // Reset price slider whenever the vendor list changes (e.g. category switch)
   useEffect(() => {
-    setMaxPrice(null);
+    setMinPriceFilter(null);
+    setMaxPriceFilter(null);
   }, [vendors]);
 
   const categories = [
@@ -98,10 +126,11 @@ export default function CustomerMarketplace() {
 
   const clearFilters = () => {
     setMinRating(0);
-    setMaxPrice(null);
+    setMinPriceFilter(null);
+    setMaxPriceFilter(null);
   };
 
-  const isPriceFiltered = maxPrice !== null && maxPrice < priceRangeMax;
+  const isPriceFiltered = sliderMin > priceRangeMin || sliderMax < priceRangeMax;
   const activeFilterCount = (minRating > 0 ? 1 : 0) + (isPriceFiltered ? 1 : 0);
 
   const filteredVendors = vendors
@@ -110,7 +139,7 @@ export default function CustomerMarketplace() {
                             vendor.category.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesRating = minRating === 0 || (vendor.rating !== null && vendor.rating >= minRating);
       const price = parsePrice(vendor.startingPrice);
-      const matchesPrice = !isPriceFiltered || price === null || price <= sliderValue;
+      const matchesPrice = !isPriceFiltered || price === null || (price >= sliderMin && price <= sliderMax);
       return matchesSearch && matchesRating && matchesPrice;
     })
     .sort((a, b) => {
@@ -205,26 +234,28 @@ export default function CustomerMarketplace() {
                     </div>
                   </div>
 
-                  {/* Max Price */}
+                  {/* Price Range */}
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-700 mb-2">
-                      Max Starting Price:{' '}
+                    <p className="text-sm font-semibold text-gray-700 mb-3">
+                      Price Range:{' '}
                       <span className="text-purple-600">
-                        {!isPriceFiltered ? 'Any' : `£${sliderValue.toLocaleString()}`}
+                        {!isPriceFiltered
+                          ? 'Any'
+                          : `£${sliderMin.toLocaleString()} – £${sliderMax.toLocaleString()}`}
                       </span>
                     </p>
                     {vendorPrices.length > 0 && priceRangeMin < priceRangeMax ? (
                       <>
-                        <input
-                          type="range"
+                        <RangeSlider
                           min={priceRangeMin}
                           max={priceRangeMax}
                           step={priceStep}
-                          value={sliderValue}
-                          onChange={e => setMaxPrice(Number(e.target.value))}
-                          className="w-full accent-purple-600"
+                          minVal={sliderMin}
+                          maxVal={sliderMax}
+                          onMinChange={setMinPriceFilter}
+                          onMaxChange={setMaxPriceFilter}
                         />
-                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                        <div className="flex justify-between text-xs text-gray-400 mt-2">
                           <span>£{priceRangeMin.toLocaleString()}</span>
                           <span>£{priceRangeMax.toLocaleString()}</span>
                         </div>
