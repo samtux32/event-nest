@@ -124,10 +124,13 @@ export default function Messages() {
       });
       const data = await res.json();
       if (res.ok) {
-        // Merge server response with temp message — server wins but temp is fallback
-        // so attachment fields are never lost even if server omits them
+        // Only update the ID and timestamp from the server — keep all other data
+        // from tempMessage so attachment fields are never overwritten by a null response
         setMessages(prev =>
-          prev.map(m => m.id === tempMessage.id ? { ...tempMessage, ...data.message } : m)
+          prev.map(m => m.id === tempMessage.id
+            ? { ...tempMessage, id: data.message.id, timestamp: data.message.timestamp }
+            : m
+          )
         );
       }
     } catch (err) {

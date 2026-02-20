@@ -152,7 +152,10 @@ export default function CustomerMessages() {
       const data = await res.json();
       if (res.ok) {
         setMessages(prev =>
-          prev.map(m => m.id === tempMessage.id ? { ...tempMessage, ...data.message } : m)
+          prev.map(m => m.id === tempMessage.id
+            ? { ...tempMessage, id: data.message.id, timestamp: data.message.timestamp }
+            : m
+          )
         );
       }
     } catch (err) {
