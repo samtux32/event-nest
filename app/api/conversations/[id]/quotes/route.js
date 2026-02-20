@@ -41,7 +41,9 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
     }
 
-    const dbUser = await prisma.user.findUnique({ where: { id: user.id } })
+    const totalPrice = parseFloat(price)
+    const vendorFee = Math.round(totalPrice * 0.10 * 100) / 100
+    const customerFee = Math.round(totalPrice * 0.02 * 100) / 100
 
     const [quote] = await prisma.$transaction(async (tx) => {
       const q = await tx.quote.create({
@@ -51,7 +53,7 @@ export async function POST(request, { params }) {
           customerId: conversation.customer.id,
           title: title.trim(),
           description: description?.trim() || null,
-          price: parseFloat(price),
+          price: totalPrice,
           features: features || [],
           status: 'pending',
         },
@@ -75,11 +77,29 @@ export async function POST(request, { params }) {
         },
       })
 
-      // Update the booking's eventDate to the vendor's confirmed date
+      // Create or update the booking when vendor sends a quote
       if (conversation.booking?.id) {
+        // Existing booking — update the confirmed date and price
         await tx.booking.update({
           where: { id: conversation.booking.id },
-          data: { eventDate: new Date(eventDate) },
+          data: { eventDate: new Date(eventDate), totalPrice, vendorFee, customerFee },
+        })
+      } else {
+        // No booking yet — create a pending one (shows in calendar as Pending)
+        const booking = await tx.booking.create({
+          data: {
+            vendorId: conversation.vendor.id,
+            customerId: conversation.customer.id,
+            eventDate: new Date(eventDate),
+            status: 'new_inquiry',
+            totalPrice,
+            vendorFee,
+            customerFee,
+          },
+        })
+        await tx.conversation.update({
+          where: { id },
+          data: { bookingId: booking.id },
         })
       }
 

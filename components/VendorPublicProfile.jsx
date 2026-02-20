@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
-import CustomQuoteRequestModal from '@/components/CustomQuoteRequestModal';
 import {
   ArrowLeft,
   Star,
@@ -44,7 +43,7 @@ export default function VendorPublicProfile({ vendorId }) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [sendingMessage, setSendingMessage] = useState(false);
-  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [requestingQuote, setRequestingQuote] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [submittingReply, setSubmittingReply] = useState(false);
@@ -104,12 +103,30 @@ export default function VendorPublicProfile({ vendorId }) {
     }
   };
 
-  const handleRequestQuote = () => {
+  const handleRequestQuote = async () => {
     if (!user) {
       router.push(`/login?redirectTo=/vendor-profile/${vendorId}`);
       return;
     }
-    setShowQuoteModal(true);
+    setRequestingQuote(true);
+    try {
+      const res = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendorId }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || 'Failed to start conversation');
+        return;
+      }
+      const { conversation } = await res.json();
+      router.push(`/customer-messages?conv=${conversation.id}`);
+    } catch {
+      alert('Something went wrong. Please try again.');
+    } finally {
+      setRequestingQuote(false);
+    }
   };
 
   const isOwner = user && vendor && user.id === vendor.userId;
@@ -667,10 +684,11 @@ export default function VendorPublicProfile({ vendorId }) {
               {vendor.customQuotesEnabled && (
                 <button
                   onClick={handleRequestQuote}
-                  className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors mt-3 flex items-center justify-center gap-2"
+                  disabled={requestingQuote}
+                  className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors mt-3 flex items-center justify-center gap-2 disabled:opacity-60"
                 >
-                  <Sparkles size={18} />
-                  Request Custom Quote
+                  {requestingQuote ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                  {requestingQuote ? 'Opening...' : 'Request Custom Quote'}
                 </button>
               )}
 
@@ -769,14 +787,6 @@ export default function VendorPublicProfile({ vendorId }) {
           </div>
         </div>
       </div>
-
-      {/* Custom Quote Request Modal */}
-      {showQuoteModal && vendor && (
-        <CustomQuoteRequestModal
-          vendor={vendor}
-          onClose={() => setShowQuoteModal(false)}
-        />
-      )}
 
       {/* All Reviews Modal */}
       {showReviewsModal && (
