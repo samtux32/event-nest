@@ -152,7 +152,7 @@ export default function CustomerMessages() {
       const data = await res.json();
       if (res.ok) {
         setMessages(prev =>
-          prev.map(m => m.id === tempMessage.id ? data.message : m)
+          prev.map(m => m.id === tempMessage.id ? { ...tempMessage, ...data.message } : m)
         );
       }
     } catch (err) {
@@ -261,7 +261,7 @@ export default function CustomerMessages() {
 
         {/* Right Sidebar - Event Details */}
         {selectedConv && (
-          <EventDetailsSidebar conversation={selectedConv} role="customer" />
+          <EventDetailsSidebar conversation={selectedConv} role="customer" messages={messages} />
         )}
       </div>
     </div>

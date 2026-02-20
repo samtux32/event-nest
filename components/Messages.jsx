@@ -124,8 +124,10 @@ export default function Messages() {
       });
       const data = await res.json();
       if (res.ok) {
+        // Merge server response with temp message — server wins but temp is fallback
+        // so attachment fields are never lost even if server omits them
         setMessages(prev =>
-          prev.map(m => m.id === tempMessage.id ? data.message : m)
+          prev.map(m => m.id === tempMessage.id ? { ...tempMessage, ...data.message } : m)
         );
       }
     } catch (err) {
@@ -249,7 +251,7 @@ export default function Messages() {
 
         {/* Right Sidebar - Event Details */}
         {selectedConv && (
-          <EventDetailsSidebar conversation={selectedConv} />
+          <EventDetailsSidebar conversation={selectedConv} messages={messages} />
         )}
       </div>
 
