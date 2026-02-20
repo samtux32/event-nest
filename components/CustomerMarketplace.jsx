@@ -23,7 +23,20 @@ export default function CustomerMarketplace() {
   const [sortBy, setSortBy] = useState('rating');
   const [showFilters, setShowFilters] = useState(false);
   const [minRating, setMinRating] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(10000);
+  const [maxPrice, setMaxPrice] = useState(null); // null = unset, tracks slider
+
+  // Derive price range from current vendor set (vendors with a starting price)
+  const vendorPrices = vendors.map(v => parsePrice(v.startingPrice)).filter(p => p !== null);
+  const priceRangeMin = vendorPrices.length > 0 ? Math.min(...vendorPrices) : 0;
+  const priceRangeMax = vendorPrices.length > 0 ? Math.max(...vendorPrices) : 1000;
+  const priceStep = (priceRangeMax - priceRangeMin) <= 1000 ? 50 : (priceRangeMax - priceRangeMin) <= 5000 ? 100 : 500;
+  // Effective slider value — default to max (= no filter)
+  const sliderValue = maxPrice ?? priceRangeMax;
+
+  // Reset price slider whenever the vendor list changes (e.g. category switch)
+  useEffect(() => {
+    setMaxPrice(null);
+  }, [vendors]);
 
   const categories = [
     'All Categories',
@@ -85,10 +98,11 @@ export default function CustomerMarketplace() {
 
   const clearFilters = () => {
     setMinRating(0);
-    setMaxPrice(10000);
+    setMaxPrice(null);
   };
 
-  const activeFilterCount = (minRating > 0 ? 1 : 0) + (maxPrice < 10000 ? 1 : 0);
+  const isPriceFiltered = maxPrice !== null && maxPrice < priceRangeMax;
+  const activeFilterCount = (minRating > 0 ? 1 : 0) + (isPriceFiltered ? 1 : 0);
 
   const filteredVendors = vendors
     .filter(vendor => {
@@ -96,7 +110,7 @@ export default function CustomerMarketplace() {
                             vendor.category.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesRating = minRating === 0 || (vendor.rating !== null && vendor.rating >= minRating);
       const price = parsePrice(vendor.startingPrice);
-      const matchesPrice = price === null || price <= maxPrice;
+      const matchesPrice = !isPriceFiltered || price === null || price <= sliderValue;
       return matchesSearch && matchesRating && matchesPrice;
     })
     .sort((a, b) => {
@@ -194,21 +208,30 @@ export default function CustomerMarketplace() {
                   {/* Max Price */}
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-gray-700 mb-2">
-                      Max Starting Price: <span className="text-purple-600">{maxPrice >= 10000 ? 'Any' : `£${maxPrice.toLocaleString()}`}</span>
+                      Max Starting Price:{' '}
+                      <span className="text-purple-600">
+                        {!isPriceFiltered ? 'Any' : `£${sliderValue.toLocaleString()}`}
+                      </span>
                     </p>
-                    <input
-                      type="range"
-                      min={500}
-                      max={10000}
-                      step={500}
-                      value={maxPrice}
-                      onChange={e => setMaxPrice(Number(e.target.value))}
-                      className="w-full accent-purple-600"
-                    />
-                    <div className="flex justify-between text-xs text-gray-400 mt-1">
-                      <span>£500</span>
-                      <span>£10,000+</span>
-                    </div>
+                    {vendorPrices.length > 0 && priceRangeMin < priceRangeMax ? (
+                      <>
+                        <input
+                          type="range"
+                          min={priceRangeMin}
+                          max={priceRangeMax}
+                          step={priceStep}
+                          value={sliderValue}
+                          onChange={e => setMaxPrice(Number(e.target.value))}
+                          className="w-full accent-purple-600"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>£{priceRangeMin.toLocaleString()}</span>
+                          <span>£{priceRangeMax.toLocaleString()}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-xs text-gray-400 mt-1">No pricing data for this category</p>
+                    )}
                   </div>
 
                   {/* Clear */}
