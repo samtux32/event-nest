@@ -1,18 +1,29 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { Search, MessageSquare, LogOut, Heart, Settings } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Search, MessageSquare, LogOut, Heart, Settings, Menu, X } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import NotificationBell from './NotificationBell';
 
 export default function CustomerHeader() {
   const { profile, signOut } = useAuth();
+  const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const initial = profile?.fullName?.[0] || profile?.email?.[0]?.toUpperCase() || 'C';
+
+  const navLinks = [
+    { href: '/marketplace', icon: Search, label: 'Discover' },
+    { href: '/my-bookings', icon: null, label: 'Bookings' },
+    { href: '/wishlist', icon: Heart, label: 'Wishlist' },
+    { href: '/customer-messages', icon: MessageSquare, label: 'Messages' },
+    { href: '/customer-settings', icon: Settings, label: 'Settings' },
+  ];
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 
         {/* Logo */}
         <Link href="/marketplace" className="flex items-center gap-2.5 flex-shrink-0">
@@ -20,27 +31,25 @@ export default function CustomerHeader() {
           <span className="font-bold text-gray-900 text-base">Event Nest</span>
         </Link>
 
-        {/* Nav */}
-        <nav className="flex items-center gap-1">
-          <Link href="/marketplace" className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors">
-            <Search size={16} />
-            Discover
-          </Link>
-          <Link href="/my-bookings" className="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors">
-            Bookings
-          </Link>
-          <Link href="/wishlist" className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors">
-            <Heart size={16} />
-            Wishlist
-          </Link>
-          <Link href="/customer-messages" className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors">
-            <MessageSquare size={16} />
-            Messages
-          </Link>
-          <Link href="/customer-settings" className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors">
-            <Settings size={16} />
-            Settings
-          </Link>
+        {/* Desktop Nav */}
+        <nav className="hidden md:flex items-center gap-1">
+          {navLinks.map(({ href, icon: Icon, label }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  active
+                    ? 'bg-purple-50 text-purple-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                {Icon && <Icon size={16} />}
+                {label}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Right side */}
@@ -57,12 +66,51 @@ export default function CustomerHeader() {
               {initial}
             </div>
           )}
-          <button onClick={signOut} className="text-gray-400 hover:text-gray-600 transition-colors" title="Sign out">
+          <button onClick={signOut} className="hidden md:block text-gray-400 hover:text-gray-600 transition-colors" title="Sign out">
             <LogOut size={18} />
+          </button>
+
+          {/* Hamburger */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors"
+          >
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
 
       </div>
+
+      {/* Mobile Menu */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
+          {navLinks.map(({ href, icon: Icon, label }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  active
+                    ? 'bg-purple-50 text-purple-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                {Icon && <Icon size={18} />}
+                {label}
+              </Link>
+            );
+          })}
+          <button
+            onClick={() => { signOut(); setMobileOpen(false); }}
+            className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 w-full transition-colors"
+          >
+            <LogOut size={18} />
+            Sign Out
+          </button>
+        </div>
+      )}
     </header>
   );
 }

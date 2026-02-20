@@ -132,11 +132,11 @@ export default function VendorAnalytics() {
     <div className="min-h-screen bg-gray-50">
       <VendorHeader />
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Title & Time Period */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold mb-1">Analytics Dashboard</h1>
+            <h1 className="text-2xl sm:text-4xl font-bold mb-1">Analytics Dashboard</h1>
             <p className="text-gray-600">Track your business performance and insights</p>
           </div>
           <div className="flex bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -167,7 +167,7 @@ export default function VendorAnalytics() {
         ) : (
           <>
             {/* STAT CARDS */}
-            <div className="grid grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
               <div className="bg-white rounded-2xl p-6 border border-gray-200 border-l-4 border-l-purple-500">
                 <div className="flex items-start justify-between">
                   <div>
@@ -306,7 +306,7 @@ export default function VendorAnalytics() {
             </div>
 
             {/* INQUIRY SOURCES + PEAK DAYS */}
-            <div className="grid grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
               {/* Inquiry Sources */}
               <div className="bg-white rounded-2xl p-6 border border-gray-200">
                 <div className="flex items-center gap-3 mb-6">
@@ -373,7 +373,7 @@ export default function VendorAnalytics() {
             </div>
 
             {/* TOP EVENT TYPES + PERFORMANCE */}
-            <div className="grid grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
               {/* Top Event Types */}
               <div className="bg-white rounded-2xl p-6 border border-gray-200">
                 <div className="flex items-center gap-3 mb-6">

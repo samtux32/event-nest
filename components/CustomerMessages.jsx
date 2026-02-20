@@ -12,6 +12,7 @@ import EventDetailsSidebar from '@/components/EventDetailsSidebar';
 export default function CustomerMessages() {
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
+  const [mobileView, setMobileView] = useState('list'); // 'list' | 'chat'
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -175,7 +176,7 @@ export default function CustomerMessages() {
       <div className="flex-1 flex overflow-hidden max-w-screen-2xl mx-auto w-full">
         {/* Conversations Sidebar */}
         {loadingConvos ? (
-          <div className="w-96 bg-white border-r border-gray-200 flex flex-col">
+          <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 bg-white border-r border-gray-200 flex-col flex-shrink-0`}>
             <div className="p-6 border-b border-gray-200">
               <div className="h-8 bg-gray-200 rounded w-32 mb-4 animate-pulse" />
               <div className="h-12 bg-gray-200 rounded-xl animate-pulse" />
@@ -193,19 +194,26 @@ export default function CustomerMessages() {
             </div>
           </div>
         ) : (
-          <ConversationList
-            conversations={conversations}
-            selectedConversation={selectedConversation}
-            onSelectConversation={setSelectedConversation}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-          />
+          <div className={mobileView === 'chat' ? 'hidden md:flex md:flex-col w-full md:w-80 lg:w-96 flex-shrink-0' : 'flex flex-col w-full md:w-80 lg:w-96 flex-shrink-0'}>
+            <ConversationList
+              conversations={conversations}
+              selectedConversation={selectedConversation}
+              onSelectConversation={(id) => { setSelectedConversation(id); setMobileView('chat'); }}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+            />
+          </div>
         )}
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col bg-gray-50">
+        <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 flex-col bg-gray-50`}>
           {selectedConv ? (
             <>
+              <div className="md:hidden flex items-center gap-2 px-4 py-2 bg-white border-b border-gray-200">
+                <button onClick={() => setMobileView('list')} className="flex items-center gap-1 text-purple-600 text-sm font-medium py-1">
+                  ← Back
+                </button>
+              </div>
               <ChatHeader conversation={selectedConv} role="customer" />
 
               {/* No-date reminder banner */}

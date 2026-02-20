@@ -102,15 +102,15 @@ export default function VendorDashboard() {
     <div className="min-h-screen bg-gray-50">
     <VendorHeader />
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2">
             Welcome back, {authProfile?.businessName || 'Vendor'} 👋
           </h1>
           <p className="text-gray-600">Here's what's happening with your business</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-2xl p-6 border border-gray-200">
             <div className="flex items-start justify-between mb-4">
               <div>
@@ -196,8 +196,8 @@ export default function VendorDashboard() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="text-right hidden sm:block">
                       <p className="font-semibold text-gray-900">{iq.totalPrice ? formatPrice(iq.totalPrice) : '—'}</p>
                       <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[iq.status] || 'bg-gray-100 text-gray-600'}`}>
                         {statusLabels[iq.status] || iq.status}
@@ -210,7 +210,7 @@ export default function VendorDashboard() {
                         acceptBooking(iq);
                       }}
                       disabled={updatingId === iq.id}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-1"
+                      className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-1"
                     >
                       {updatingId === iq.id && <Loader2 size={14} className="animate-spin" />}
                       Accept
@@ -246,7 +246,7 @@ export default function VendorDashboard() {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               {selectedInquiry.eventType && (
                 <div className="bg-gray-50 p-3 rounded-xl">
                   <p className="text-xs text-gray-500 mb-1">Event Type</p>

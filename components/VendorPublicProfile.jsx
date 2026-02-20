@@ -231,7 +231,7 @@ export default function VendorPublicProfile({ vendorId }) {
 
         <div className="h-96 bg-gray-200 animate-pulse" />
 
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="relative -mt-32 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-xl">
               <div className="flex items-start gap-6">
@@ -249,7 +249,7 @@ export default function VendorPublicProfile({ vendorId }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-8 mb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
             <div className="col-span-2 space-y-8">
               {[1, 2, 3].map(i => (
                 <div key={i} className="bg-white rounded-2xl p-8 border border-gray-200">
@@ -351,10 +351,10 @@ export default function VendorPublicProfile({ vendorId }) {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Profile Header */}
         <div className="relative -mt-32 mb-8">
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-xl">
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-8 shadow-xl">
             <div className="flex items-start gap-6">
               {vendor.profileImageUrl ? (
                 <img
@@ -373,7 +373,7 @@ export default function VendorPublicProfile({ vendorId }) {
               <div className="flex-1">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                    <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-2">
                       {vendor.businessName}
                       {vendor.verificationStatus === 'verified' && (
                         <BadgeCheck className="text-blue-500 flex-shrink-0" size={28} title="Verified vendor" />
@@ -431,7 +431,7 @@ export default function VendorPublicProfile({ vendorId }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           {/* Left Column - Main Content */}
           <div className="col-span-2 space-y-8">
             {/* About */}
@@ -497,7 +497,7 @@ export default function VendorPublicProfile({ vendorId }) {
             {vendor.portfolioImages?.length > 0 && (
               <section className="bg-white rounded-2xl p-8 border border-gray-200">
                 <h2 className="text-2xl font-bold mb-6">Portfolio</h2>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {vendor.portfolioImages.map((image) => (
                     <div
                       key={image.id}

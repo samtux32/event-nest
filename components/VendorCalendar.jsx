@@ -174,9 +174,9 @@ export default function VendorCalendar() {
     <div className="min-h-screen bg-gray-50">
       <VendorHeader />
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Calendar</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2">Calendar</h1>
           <p className="text-gray-600">Manage your upcoming events and bookings</p>
         </div>
 
@@ -185,7 +185,7 @@ export default function VendorCalendar() {
             <Loader2 className="animate-spin text-purple-600" size={40} />
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Calendar — 2 columns */}
             <div className="col-span-2 bg-white rounded-2xl p-6 border border-gray-200">
               {/* Calendar Header */}
@@ -360,7 +360,7 @@ export default function VendorCalendar() {
         {/* Date Proposal Modal */}
         {proposingFor && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-6">
-            <div className="bg-white rounded-2xl p-8 max-w-md w-full">
+            <div className="bg-white rounded-2xl p-4 sm:p-8 w-[95vw] sm:w-full max-w-md">
               <h2 className="text-xl font-bold text-gray-900 mb-1">Propose a Date</h2>
               <p className="text-sm text-gray-500 mb-6">
                 Proposing a date for <strong>{proposingFor.clientName}</strong>. They will receive a notification to accept or decline.
@@ -397,7 +397,7 @@ export default function VendorCalendar() {
         {/* Booking Details Modal */}
         {selectedBooking && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-6">
-            <div className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-2xl p-4 sm:p-8 w-[95vw] sm:w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-1">{selectedBooking.clientName}</h2>

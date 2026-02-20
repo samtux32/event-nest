@@ -220,19 +220,19 @@ export default function CustomerMarketplace() {
       <CustomerHeader />
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-purple-600 to-purple-700 py-20">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h1 className="text-5xl font-bold text-white mb-4">
+      <div className="bg-gradient-to-br from-purple-600 to-purple-700 py-10 sm:py-16 md:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
             Find the perfect vendors for your event
           </h1>
-          <p className="text-xl text-purple-100 mb-8">
+          <p className="text-base sm:text-xl text-purple-100 mb-8">
             Discover trusted professionals to make your special day unforgettable
           </p>
 
           <div className="bg-white rounded-2xl p-4 max-w-4xl mx-auto shadow-xl">
-            <div className="flex items-center gap-4">
-              <div className="flex-1 flex items-center gap-3 px-4">
-                <Search className="text-gray-400" size={20} />
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <div className="flex-1 flex items-center gap-3 px-4 border border-gray-200 sm:border-0 rounded-xl sm:rounded-none py-1 sm:py-0">
+                <Search className="text-gray-400 flex-shrink-0" size={20} />
                 <input
                   type="text"
                   placeholder="Search vendors..."
@@ -241,32 +241,34 @@ export default function CustomerMarketplace() {
                   className="w-full py-2 outline-none text-gray-700"
                 />
               </div>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-6 py-3 border-l border-gray-200 outline-none text-gray-700 cursor-pointer"
-              >
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-              <button
-                onClick={() => setShowFilters(prev => !prev)}
-                className={`relative p-3 rounded-lg transition-colors ${showFilters ? 'bg-purple-600 text-white' : 'hover:bg-gray-50 text-gray-600'}`}
-              >
-                <SlidersHorizontal size={20} />
-                {activeFilterCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="flex-1 sm:flex-none px-4 py-3 border border-gray-200 sm:border-l sm:border-t-0 sm:border-b-0 sm:border-r-0 rounded-xl sm:rounded-none outline-none text-gray-700 cursor-pointer"
+                >
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setShowFilters(prev => !prev)}
+                  className={`relative p-3 rounded-lg transition-colors flex-shrink-0 ${showFilters ? 'bg-purple-600 text-white' : 'hover:bg-gray-50 text-gray-600 border border-gray-200 sm:border-0'}`}
+                >
+                  <SlidersHorizontal size={20} />
+                  {activeFilterCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Filter Panel */}
             {showFilters && (
               <div className="border-t border-gray-100 mt-4 pt-4 px-4 pb-2">
-                <div className="flex items-start gap-10">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-6 sm:gap-10">
                   {/* Min Rating */}
                   <div>
                     <p className="text-sm font-semibold text-gray-700 mb-2">Minimum Rating</p>
@@ -338,8 +340,8 @@ export default function CustomerMarketplace() {
       </div>
 
       {/* Results Section */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <div className="flex items-center gap-3 flex-wrap">
             <p className="text-gray-600">
               <span className="font-semibold text-gray-900">{filteredVendors.length}</span> vendors found
@@ -386,7 +388,7 @@ export default function CustomerMarketplace() {
 
         {/* Loading Skeleton */}
         {loading && (
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map(i => (
               <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-200">
                 <div className="h-64 bg-gray-200 animate-pulse" />
@@ -406,7 +408,7 @@ export default function CustomerMarketplace() {
 
         {/* Vendor Grid */}
         {!loading && (
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredVendors.map(vendor => (
               <div
                 key={vendor.id}

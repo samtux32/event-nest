@@ -80,7 +80,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/logo.png" alt="Event Nest" className="w-14 h-14 rounded-xl object-cover" />
             <span className="font-bold text-xl text-gray-900">Event Nest</span>
@@ -101,24 +101,24 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 text-white">
-        <div className="max-w-7xl mx-auto px-6 py-24 text-center">
-          <h1 className="text-5xl font-bold tracking-tight leading-tight">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 text-center">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-tight">
             Find the Perfect Vendors<br />for Your Event
           </h1>
-          <p className="mt-6 text-xl text-purple-100 max-w-2xl mx-auto">
+          <p className="mt-6 text-base sm:text-xl text-purple-100 max-w-2xl mx-auto">
             Browse top-rated caterers, photographers, DJs, florists and more — all in one place.
             Plan your dream event with confidence.
           </p>
-          <div className="mt-10 flex items-center justify-center gap-4 flex-wrap">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <Link
               href="/marketplace"
-              className="bg-white text-purple-700 px-8 py-3 rounded-lg font-semibold text-lg hover:bg-gray-50 transition-colors"
+              className="w-full sm:w-auto bg-white text-purple-700 px-8 py-3 rounded-lg font-semibold text-lg hover:bg-gray-50 transition-colors text-center"
             >
               Browse Vendors
             </Link>
             <Link
               href="/register"
-              className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-white/10 transition-colors"
+              className="w-full sm:w-auto border-2 border-white text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-white/10 transition-colors text-center"
             >
               Sign Up Free
             </Link>
@@ -128,10 +128,10 @@ export default function LandingPage() {
 
       {/* How it works */}
       <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center text-gray-900">How It Works</h2>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900">How It Works</h2>
           <p className="text-center text-gray-500 mt-2 mb-12">Book your perfect vendor in three simple steps</p>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {[
               { icon: <Search size={32} />, title: 'Discover', desc: 'Browse vendors by category, location and ratings to find your perfect match.' },
               { icon: <Calendar size={32} />, title: 'Book', desc: 'Choose a package, pick your date, and send a booking request directly.' },
@@ -151,17 +151,17 @@ export default function LandingPage() {
 
       {/* Featured Vendors */}
       <section className="py-20">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center text-gray-900">Featured Vendors</h2>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900">Featured Vendors</h2>
           <p className="text-center text-gray-500 mt-2 mb-12">Top-rated professionals ready to make your event unforgettable</p>
           {loading ? (
-            <div className="grid md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="bg-gray-100 rounded-2xl h-72 animate-pulse" />
               ))}
             </div>
           ) : featuredVendors.length > 0 ? (
-            <div className="grid md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {featuredVendors.map((vendor) => (
                 <Link key={vendor.id} href={`/vendor-profile/${vendor.id}`}>
                   <VendorCard vendor={vendor} />
@@ -184,10 +184,10 @@ export default function LandingPage() {
 
       {/* Category Browse */}
       <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center text-gray-900">Browse by Category</h2>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900">Browse by Category</h2>
           <p className="text-center text-gray-500 mt-2 mb-12">Find exactly what you need for your event</p>
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
             {categories.map((cat) => (
               <Link
                 key={cat.name}
@@ -204,21 +204,21 @@ export default function LandingPage() {
 
       {/* CTA Footer */}
       <section className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white py-16">
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold">Ready to Plan Your Event?</h2>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold">Ready to Plan Your Event?</h2>
           <p className="mt-4 text-purple-100 text-lg">
             Join thousands of happy customers who found their perfect vendors on Event Nest.
           </p>
-          <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <Link
               href="/register"
-              className="bg-white text-purple-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+              className="w-full sm:w-auto bg-white text-purple-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors text-center"
             >
               Get Started Free
             </Link>
             <Link
               href="/login"
-              className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors"
+              className="w-full sm:w-auto border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors text-center"
             >
               Log In
             </Link>

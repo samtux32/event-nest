@@ -13,7 +13,7 @@ export default function ConversationList({
   );
 
   return (
-    <div className="w-96 bg-white border-r border-gray-200 flex flex-col">
+    <div className="w-full md:w-80 lg:w-96 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
       {/* Sidebar Header */}
       <div className="p-6 border-b border-gray-200">
         <h1 className="text-2xl font-bold mb-4">Messages</h1>

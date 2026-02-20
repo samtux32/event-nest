@@ -6,7 +6,7 @@ export default function EventDetailsSidebar({ conversation, role = 'vendor', mes
   const sharedFiles = messages.filter(m => m.type === 'attachment' && m.attachmentUrl);
 
   return (
-    <div className="w-80 bg-white border-l border-gray-200 p-6 overflow-y-auto">
+    <div className="hidden xl:block w-80 bg-white border-l border-gray-200 p-6 overflow-y-auto flex-shrink-0">
       <h3 className="font-bold text-lg mb-4">Event Details</h3>
 
       <div className="space-y-4 mb-6">

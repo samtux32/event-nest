@@ -159,7 +159,7 @@ export default function BookingRequest({ vendorId }) {
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="h-8 bg-gray-200 rounded w-64 mb-4 animate-pulse" />
           <div className="h-5 bg-gray-200 rounded w-96 mb-8 animate-pulse" />
-          <div className="grid grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="col-span-2 space-y-6">
               {[1, 2, 3].map(i => (
                 <div key={i} className="bg-white rounded-2xl p-6 border border-gray-200">
@@ -236,13 +236,13 @@ export default function BookingRequest({ vendorId }) {
       </header>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Request a Quote</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2">Request a Quote</h1>
           <p className="text-gray-600">Tell us about your event and we'll get back to you soon</p>
         </div>
 
-        <div className="grid grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Form */}
           <div className="col-span-2">
             <form onSubmit={handleSubmit} className="space-y-6">

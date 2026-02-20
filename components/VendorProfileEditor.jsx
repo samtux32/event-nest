@@ -390,7 +390,7 @@ export default function EditVendorProfile() {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex gap-8">
           {/* ── Sidebar Navigation ── */}
           <div className="w-64 flex-shrink-0">
@@ -674,7 +674,7 @@ export default function EditVendorProfile() {
                 </div>
 
                 {/* Price Fields */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {(profile.pricingModel === 'perDay' || profile.pricingModel === 'both') && (
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Starting Price (Per Day)</label>
@@ -771,7 +771,7 @@ export default function EditVendorProfile() {
                           )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                           <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1.5">Package Name</label>
                             <input
@@ -829,7 +829,7 @@ export default function EditVendorProfile() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                 {profile.portfolioImages.map((img) => (
                   <div key={img.id} className="relative aspect-square rounded-xl overflow-hidden group">
                     <img
@@ -881,7 +881,7 @@ export default function EditVendorProfile() {
               </div>
 
               <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Phone *</label>
                     <div className="relative">

@@ -258,9 +258,9 @@ export default function CustomerBookings() {
 
       <CustomerHeader />
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">My Bookings</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2">My Bookings</h1>
           <p className="text-gray-600">Track your vendor inquiries and confirmed bookings</p>
         </div>
 
@@ -289,7 +289,7 @@ export default function CustomerBookings() {
               const canCancel = ['new_inquiry', 'pending'].includes(booking.status);
               return (
                 <div key={booking.id} className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between flex-wrap gap-3">
                     <div className="flex items-start gap-4">
                       {booking.vendor?.profileImageUrl ? (
                         <img
