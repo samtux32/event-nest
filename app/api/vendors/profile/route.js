@@ -59,6 +59,7 @@ export async function PUT(request) {
         pricePerDay: body.pricePerDay ? parseFloat(body.pricePerDay) : null,
         pricePerHead: body.pricePerHead ? parseFloat(body.pricePerHead) : null,
         customQuotesEnabled: body.customQuotes ?? true,
+        cancellationPolicy: body.cancellationPolicy !== undefined ? (body.cancellationPolicy || null) : undefined,
         phone: body.phone || null,
         email: body.email || null,
         website: body.website || null,

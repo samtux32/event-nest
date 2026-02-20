@@ -121,6 +121,7 @@ model VendorProfile {
   pricePerDay          Decimal?     @map("price_per_day") @db.Decimal(10, 2)
   pricePerHead         Decimal?     @map("price_per_head") @db.Decimal(10, 2)
   customQuotesEnabled  Boolean      @default(true) @map("custom_quotes_enabled")
+  cancellationPolicy   String?      @map("cancellation_policy") @db.Text
   phone                String?
   email                String?
   website              String?

@@ -232,6 +232,20 @@ export default function CustomerBookings() {
     setReviewedIds(prev => new Set([...prev, bookingId]));
   };
 
+  const handleCancelBooking = async (bookingId) => {
+    if (!confirm('Are you sure you want to cancel this booking? Please check the vendor\'s cancellation policy before proceeding.')) return;
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}/cancel`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'cancelled' } : b));
+      }
+    } catch (err) {
+      console.error('Cancel booking error:', err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {reviewingBooking && (
@@ -272,6 +286,7 @@ export default function CustomerBookings() {
             {bookings.map((booking) => {
               const status = statusConfig[booking.status] || statusConfig.new_inquiry;
               const canReview = booking.status === 'completed' && !reviewedIds.has(booking.id);
+              const canCancel = ['new_inquiry', 'pending'].includes(booking.status);
               return (
                 <div key={booking.id} className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between">
@@ -336,6 +351,14 @@ export default function CustomerBookings() {
                       )}
                       {reviewedIds.has(booking.id) && (
                         <span className="text-xs text-gray-500">Review submitted ✓</span>
+                      )}
+                      {canCancel && (
+                        <button
+                          onClick={() => handleCancelBooking(booking.id)}
+                          className="text-xs text-red-500 hover:text-red-700 hover:underline transition-colors"
+                        >
+                          Cancel booking
+                        </button>
                       )}
                     </div>
                   </div>

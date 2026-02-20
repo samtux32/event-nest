@@ -115,6 +115,7 @@ export default function EditVendorProfile() {
       pricePerDay: authProfile.pricePerDay ? String(authProfile.pricePerDay) : '',
       pricePerHead: authProfile.pricePerHead ? String(authProfile.pricePerHead) : '',
       customQuotes: authProfile.customQuotesEnabled ?? true,
+      cancellationPolicy: authProfile.cancellationPolicy || '',
       phone: authProfile.phone || '',
       email: authProfile.email || '',
       website: authProfile.website || '',
@@ -327,6 +328,7 @@ export default function EditVendorProfile() {
           pricePerDay: profile.pricePerDay,
           pricePerHead: profile.pricePerHead,
           customQuotes: profile.customQuotes,
+          cancellationPolicy: profile.cancellationPolicy,
           phone: profile.phone,
           email: profile.email,
           website: profile.website,
@@ -718,6 +720,19 @@ export default function EditVendorProfile() {
                       profile.customQuotes ? 'translate-x-5' : 'translate-x-0'
                     }`} />
                   </button>
+                </div>
+
+                {/* Cancellation Policy */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Cancellation Policy</label>
+                  <p className="text-xs text-gray-500 mb-2">Let customers know your refund terms before booking.</p>
+                  <textarea
+                    value={profile.cancellationPolicy || ''}
+                    onChange={e => updateProfile('cancellationPolicy', e.target.value)}
+                    placeholder={`e.g.\n• Cancel 60+ days before: full refund\n• Cancel 30–60 days before: 50% refund\n• Cancel within 30 days: no refund`}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-purple-500 resize-none"
+                  />
                 </div>
 
                 {/* Packages */}

@@ -463,6 +463,17 @@ export default function VendorPublicProfile({ vendorId }) {
               </section>
             )}
 
+            {/* Cancellation Policy */}
+            {vendor.cancellationPolicy && (
+              <section className="bg-white rounded-2xl p-8 border border-gray-200">
+                <div className="flex items-center gap-3 mb-4">
+                  <AlertCircle className="text-amber-500" size={24} />
+                  <h2 className="text-2xl font-bold">Cancellation Policy</h2>
+                </div>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-line">{vendor.cancellationPolicy}</p>
+              </section>
+            )}
+
             {/* Awards & Recognition */}
             {vendor.awards?.length > 0 && (
               <section className="bg-white rounded-2xl p-8 border border-gray-200">
