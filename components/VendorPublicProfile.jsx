@@ -617,12 +617,12 @@ export default function VendorPublicProfile({ vendorId }) {
 
           {/* Right Column - Packages & CTA */}
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl p-6 border border-gray-200 sticky top-24">
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 lg:sticky lg:top-24">
               {vendor.packages?.length > 0 && (
                 <h3 className="text-xl font-bold mb-4">Packages & Pricing</h3>
               )}
 
-              <div className="max-h-[36rem] overflow-y-auto pr-1">
+              <div className="lg:max-h-[36rem] lg:overflow-y-auto lg:pr-1">
                 {vendor.packages?.length > 0 && (
                   <div className="space-y-3 mb-6">
                     {vendor.packages.map((pkg) => (
