@@ -8,6 +8,7 @@ import {
   Calendar,
   User,
   MessageSquare,
+  Settings,
   LogOut
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
@@ -46,6 +47,10 @@ export default function VendorHeader() {
             <Link href="/messages" className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
               <MessageSquare size={20} />
               Messages
+            </Link>
+            <Link href="/vendor-settings" className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+              <Settings size={20} />
+              Settings
             </Link>
           </nav>
 

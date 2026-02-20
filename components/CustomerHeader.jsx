@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Search, MessageSquare, LogOut, Heart } from 'lucide-react';
+import { Search, MessageSquare, LogOut, Heart, Settings } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import NotificationBell from './NotificationBell';
 
@@ -32,6 +32,10 @@ export default function CustomerHeader() {
             <Link href="/customer-messages" className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
               <MessageSquare size={20} />
               Messages
+            </Link>
+            <Link href="/customer-settings" className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+              <Settings size={20} />
+              Settings
             </Link>
           </nav>
 

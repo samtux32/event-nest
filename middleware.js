@@ -4,10 +4,10 @@ import { NextResponse } from 'next/server'
 const publicPrefixes = ['/login', '/register', '/auth/callback', '/vendor-profile', '/api/auth', '/api/vendors', '/booking']
 
 // Routes only vendors can access
-const vendorOnlyPrefixes = ['/profile-editor', '/messages', '/calendar', '/analytics']
+const vendorOnlyPrefixes = ['/profile-editor', '/messages', '/calendar', '/analytics', '/vendor-settings']
 
 // Routes only customers can access
-const customerOnlyPrefixes = ['/marketplace', '/my-bookings', '/customer-messages', '/wishlist']
+const customerOnlyPrefixes = ['/marketplace', '/my-bookings', '/customer-messages', '/wishlist', '/customer-settings']
 
 // Routes only admins can access
 const adminOnlyPrefixes = ['/admin']
