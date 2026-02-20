@@ -310,7 +310,7 @@ export default function VendorPublicProfile({ vendorId }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -355,74 +355,70 @@ export default function VendorPublicProfile({ vendorId }) {
         {/* Profile Header */}
         <div className="relative -mt-32 mb-8">
           <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-8 shadow-xl">
-            <div className="flex items-start gap-6">
+            <div className="flex items-start gap-4">
               {vendor.profileImageUrl ? (
                 <img
                   src={vendor.profileImageUrl}
                   alt={vendor.businessName}
-                  className="w-32 h-32 rounded-2xl object-cover border-4 border-white shadow-lg"
+                  className="w-20 h-20 sm:w-32 sm:h-32 rounded-2xl object-cover border-4 border-white shadow-lg flex-shrink-0"
                 />
               ) : (
-                <div className="w-32 h-32 rounded-2xl bg-purple-100 border-4 border-white shadow-lg flex items-center justify-center">
-                  <span className="text-4xl font-bold text-purple-600">
+                <div className="w-20 h-20 sm:w-32 sm:h-32 rounded-2xl bg-purple-100 border-4 border-white shadow-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-2xl sm:text-4xl font-bold text-purple-600">
                     {vendor.businessName?.[0] || 'V'}
                   </span>
                 </div>
               )}
 
-              <div className="flex-1">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                      {vendor.businessName}
-                      {vendor.verificationStatus === 'verified' && (
-                        <BadgeCheck className="text-blue-500 flex-shrink-0" size={28} title="Verified vendor" />
-                      )}
-                    </h1>
-                    <p className="text-lg text-purple-600 font-medium mb-1">{vendor.category}</p>
-                    {vendor.tagline && <p className="text-gray-600">{vendor.tagline}</p>}
-                  </div>
-                </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-4xl font-bold text-gray-900 mb-1 flex items-center gap-2 flex-wrap">
+                  <span className="truncate">{vendor.businessName}</span>
+                  {vendor.verificationStatus === 'verified' && (
+                    <BadgeCheck className="text-blue-500 flex-shrink-0" size={24} title="Verified vendor" />
+                  )}
+                </h1>
+                <p className="text-base sm:text-lg text-purple-600 font-medium mb-1">{vendor.category}</p>
+                {vendor.tagline && <p className="text-gray-600 text-sm sm:text-base break-words">{vendor.tagline}</p>}
 
-                <div className="flex items-center gap-6 mb-4">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-6 mt-3 mb-3">
                   {vendor.averageRating && (
-                    <div className="flex items-center gap-2">
-                      <Star className="text-yellow-400 fill-yellow-400" size={20} />
-                      <span className="font-bold text-gray-900">{Number(vendor.averageRating).toFixed(1)}</span>
-                      <span className="text-gray-500">({vendor.totalReviews} reviews)</span>
+                    <div className="flex items-center gap-1.5">
+                      <Star className="text-yellow-400 fill-yellow-400" size={16} />
+                      <span className="font-bold text-gray-900 text-sm">{Number(vendor.averageRating).toFixed(1)}</span>
+                      <span className="text-gray-500 text-sm">({vendor.totalReviews})</span>
                     </div>
                   )}
                   {vendor.location && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin size={18} />
-                      {vendor.location}
+                    <div className="flex items-center gap-1.5 text-gray-600 text-sm">
+                      <MapPin size={14} />
+                      <span className="truncate max-w-[140px] sm:max-w-none">{vendor.location}</span>
                     </div>
                   )}
                   {vendor.responseTime && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Clock size={18} />
-                      Responds in ~{vendor.responseTime}
+                    <div className="flex items-center gap-1.5 text-gray-600 text-sm">
+                      <Clock size={14} />
+                      <span className="whitespace-nowrap">~{vendor.responseTime}</span>
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center gap-8">
+                <div className="flex flex-wrap items-center gap-4 sm:gap-8">
                   {vendor.completedEventsCount > 0 && (
                     <div>
-                      <p className="text-2xl font-bold text-gray-900">{vendor.completedEventsCount}</p>
-                      <p className="text-sm text-gray-500">Events completed</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900">{vendor.completedEventsCount}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">Events completed</p>
                     </div>
                   )}
                   {vendor.yearsExperience && (
                     <div>
-                      <p className="text-2xl font-bold text-gray-900">{vendor.yearsExperience}</p>
-                      <p className="text-sm text-gray-500">Years experience</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900">{vendor.yearsExperience}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">Years experience</p>
                     </div>
                   )}
                   {vendor.isAvailable && (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-full">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm font-medium text-green-700">Available for bookings</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-full">
+                      <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                      <span className="text-xs sm:text-sm font-medium text-green-700 whitespace-nowrap">Available</span>
                     </div>
                   )}
                 </div>
@@ -433,7 +429,7 @@ export default function VendorPublicProfile({ vendorId }) {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           {/* Left Column - Main Content */}
-          <div className="col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-8 min-w-0">
             {/* About */}
             {(vendor.description || services.length > 0) && (
               <section className="bg-white rounded-2xl p-4 sm:p-8 border border-gray-200">
