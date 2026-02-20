@@ -38,6 +38,7 @@ function mapBooking(b) {
   const location = [b.venueName, b.venueAddress].filter(Boolean).join(', ') || '—';
   return {
     id: b.id,
+    conversationId: b.conversation?.id || null,
     date: b.eventDate ? new Date(b.eventDate) : null,
     clientName: b.contactName || b.customer?.fullName || 'Customer',
     eventType: b.eventType || 'Event',
@@ -67,6 +68,10 @@ export default function VendorCalendar() {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [proposingFor, setProposingFor] = useState(null); // booking being proposed for
+  const [proposeDateInput, setProposeDateInput] = useState('');
+  const [proposalSubmitting, setProposalSubmitting] = useState(false);
+  const [proposalSentIds, setProposalSentIds] = useState(new Set()); // bookingIds with pending proposals
 
   useEffect(() => {
     fetch('/api/bookings')
@@ -143,6 +148,27 @@ export default function VendorCalendar() {
     .slice(0, 5);
 
   const unscheduledBookings = bookings.filter(b => !b.date);
+
+  const handleProposeDate = async () => {
+    if (!proposingFor || !proposeDateInput || proposalSubmitting) return;
+    setProposalSubmitting(true);
+    try {
+      const res = await fetch(`/api/bookings/${proposingFor.id}/propose-date`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proposedDate: proposeDateInput }),
+      });
+      if (res.ok) {
+        setProposalSentIds(prev => new Set([...prev, proposingFor.id]));
+        setProposingFor(null);
+        setProposeDateInput('');
+      }
+    } catch (err) {
+      console.error('Failed to propose date:', err);
+    } finally {
+      setProposalSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -294,27 +320,76 @@ export default function VendorCalendar() {
 
               {/* Unscheduled bookings */}
               {unscheduledBookings.length > 0 && (
-                <div className="bg-white rounded-2xl p-6 border border-amber-200 bg-amber-50">
+                <div className="rounded-2xl p-6 border border-amber-200 bg-amber-50">
                   <h3 className="text-base font-bold text-amber-800 mb-1">No date set</h3>
-                  <p className="text-xs text-amber-600 mb-4">These bookings aren't on the calendar yet — ask the customer to confirm a date.</p>
+                  <p className="text-xs text-amber-600 mb-4">Propose a date to the customer — they can accept or decline.</p>
                   <div className="space-y-3">
-                    {unscheduledBookings.map(booking => (
-                      <div
-                        key={booking.id}
-                        className="p-3 bg-white rounded-xl border border-amber-200"
-                      >
-                        <div className="flex items-center justify-between">
-                          <p className="font-semibold text-gray-900 text-sm">{booking.clientName}</p>
-                          <span className={`px-2 py-0.5 text-xs rounded-full text-white ${statusColors[booking.status] || 'bg-gray-400'}`}>
-                            {booking.status}
-                          </span>
+                    {unscheduledBookings.map(booking => {
+                      const proposalSent = proposalSentIds.has(booking.id);
+                      return (
+                        <div key={booking.id} className="p-3 bg-white rounded-xl border border-amber-200">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="font-semibold text-gray-900 text-sm">{booking.clientName}</p>
+                            <span className={`px-2 py-0.5 text-xs rounded-full text-white ${statusColors[booking.status] || 'bg-gray-400'}`}>
+                              {booking.status}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 mb-2">{booking.eventType}</p>
+                          {proposalSent ? (
+                            <p className="text-xs font-medium text-amber-700 flex items-center gap-1">
+                              <CalendarDays size={12} /> Proposal sent — awaiting customer response
+                            </p>
+                          ) : (
+                            <button
+                              onClick={() => { setProposingFor(booking); setProposeDateInput(''); }}
+                              className="w-full text-xs font-semibold bg-amber-600 text-white py-1.5 rounded-lg hover:bg-amber-700 transition-colors"
+                            >
+                              Set Date
+                            </button>
+                          )}
                         </div>
-                        <p className="text-xs text-gray-500 mt-0.5">{booking.eventType}</p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Date Proposal Modal */}
+        {proposingFor && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-6">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full">
+              <h2 className="text-xl font-bold text-gray-900 mb-1">Propose a Date</h2>
+              <p className="text-sm text-gray-500 mb-6">
+                Proposing a date for <strong>{proposingFor.clientName}</strong>. They will receive a notification to accept or decline.
+              </p>
+
+              <label className="block text-sm font-medium text-gray-700 mb-2">Event Date</label>
+              <input
+                type="date"
+                value={proposeDateInput}
+                min={new Date().toISOString().split('T')[0]}
+                onChange={e => setProposeDateInput(e.target.value)}
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent mb-6"
+              />
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleProposeDate}
+                  disabled={!proposeDateInput || proposalSubmitting}
+                  className="flex-1 bg-amber-600 text-white py-3 rounded-xl font-semibold hover:bg-amber-700 transition-colors disabled:opacity-60"
+                >
+                  {proposalSubmitting ? 'Sending...' : 'Send Proposal'}
+                </button>
+                <button
+                  onClick={() => setProposingFor(null)}
+                  className="flex-1 border-2 border-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -355,13 +430,15 @@ export default function VendorCalendar() {
                   <div className="flex items-center gap-2 text-gray-900">
                     <CalendarDays size={18} />
                     <span className="font-semibold">
-                      {selectedBooking.date.toLocaleDateString('en-GB', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                      {selectedBooking.time !== '—' && ` at ${selectedBooking.time}`}
+                      {selectedBooking.date
+                        ? selectedBooking.date.toLocaleDateString('en-GB', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })
+                        : 'No date set'}
+                      {selectedBooking.date && selectedBooking.time !== '—' && ` at ${selectedBooking.time}`}
                     </span>
                   </div>
                 </div>

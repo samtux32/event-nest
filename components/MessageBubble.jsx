@@ -1,7 +1,8 @@
 import React from 'react';
 import QuoteCard from '@/components/QuoteCard';
+import DateProposalCard from '@/components/DateProposalCard';
 
-export default function MessageBubble({ message, isCustomer, onQuoteUpdated }) {
+export default function MessageBubble({ message, isCustomer, onQuoteUpdated, onDateAccepted }) {
   if (message.type === 'quote' && message.quote) {
     return (
       <div className={`flex gap-3 ${message.sender === 'me' ? 'flex-row-reverse' : ''}`}>
@@ -10,6 +11,21 @@ export default function MessageBubble({ message, isCustomer, onQuoteUpdated }) {
             quote={message.quote}
             isCustomer={isCustomer}
             onQuoteUpdated={onQuoteUpdated}
+          />
+          <span className="text-xs text-gray-500 mt-1 px-2">{message.timestamp}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (message.type === 'date_proposal') {
+    return (
+      <div className={`flex gap-3 ${message.sender === 'me' ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex flex-col ${message.sender === 'me' ? 'items-end' : ''}`}>
+          <DateProposalCard
+            message={message}
+            isCustomer={isCustomer}
+            onDateAccepted={onDateAccepted}
           />
           <span className="text-xs text-gray-500 mt-1 px-2">{message.timestamp}</span>
         </div>

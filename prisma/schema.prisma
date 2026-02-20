@@ -51,6 +51,7 @@ enum PaymentStatus {
 enum MessageType {
   text
   quote
+  date_proposal
 }
 
 enum QuoteStatus {
@@ -259,6 +260,7 @@ model Booking {
   customerFee        Decimal?      @map("customer_fee") @db.Decimal(10, 2) // 2%
   paymentStatus      PaymentStatus @default(unpaid) @map("payment_status")
   stripePaymentId    String?       @map("stripe_payment_id")
+  proposedDate       DateTime?     @map("proposed_date") @db.Date
   confirmedAt        DateTime?     @map("confirmed_at")
   createdAt          DateTime      @default(now()) @map("created_at")
   updatedAt          DateTime      @updatedAt @map("updated_at")

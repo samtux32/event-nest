@@ -92,6 +92,25 @@ export default function CustomerMessages() {
     );
   };
 
+  // When customer accepts a date proposal, update the conversation's eventDate locally
+  const handleDateAccepted = (acceptedDate) => {
+    setConversations(prev =>
+      prev.map(c => {
+        if (c.id !== selectedConversation) return c;
+        const formatted = new Date(acceptedDate).toLocaleDateString('en-GB', { month: 'short', day: '2-digit', year: 'numeric' });
+        return { ...c, eventDate: formatted };
+      })
+    );
+    // Also clear the "no date set" banner by reflecting eventDate in the messages
+    setMessages(prev =>
+      prev.map(m =>
+        m.type === 'date_proposal'
+          ? { ...m, proposedDate: null, bookingEventDate: acceptedDate }
+          : m
+      )
+    );
+  };
+
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedConversation) return;
 
@@ -201,6 +220,7 @@ export default function CustomerMessages() {
                         message={message}
                         isCustomer={true}
                         onQuoteUpdated={handleQuoteUpdated}
+                        onDateAccepted={handleDateAccepted}
                       />
                     ))}
                     <div ref={messagesEndRef} />

@@ -19,6 +19,7 @@ export async function GET(request, { params }) {
       include: {
         vendor: { select: { userId: true, profileImageUrl: true, businessName: true } },
         customer: { select: { userId: true, avatarUrl: true, fullName: true } },
+        booking: { select: { id: true, proposedDate: true, eventDate: true } },
       },
     })
 
@@ -82,6 +83,16 @@ export async function GET(request, { params }) {
           status: msg.quote.status,
           bookingId: msg.quote.bookingId,
         } : null,
+        // For date_proposal messages, include booking date info
+        ...(msg.type === 'date_proposal' && conversation.booking ? {
+          bookingId: conversation.booking.id,
+          proposedDate: conversation.booking.proposedDate
+            ? conversation.booking.proposedDate.toISOString().split('T')[0]
+            : null,
+          bookingEventDate: conversation.booking.eventDate
+            ? conversation.booking.eventDate.toISOString().split('T')[0]
+            : null,
+        } : {}),
         timestamp: new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
       }
     })
