@@ -157,9 +157,13 @@ export default function CustomerMessages() {
             : m
           )
         );
+      } else {
+        console.error('Send message failed:', data);
+        setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
       }
     } catch (err) {
       console.error('Failed to send message:', err);
+      setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
     }
   };
 

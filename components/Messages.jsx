@@ -132,9 +132,14 @@ export default function Messages() {
             : m
           )
         );
+      } else {
+        console.error('Send message failed:', data);
+        // Remove the temp message so the user knows it didn't send
+        setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
       }
     } catch (err) {
       console.error('Failed to send message:', err);
+      setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
     }
   };
 
