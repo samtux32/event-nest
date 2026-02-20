@@ -244,7 +244,11 @@ export default function CustomerMarketplace() {
                           : `£${sliderMin.toLocaleString()} – £${sliderMax.toLocaleString()}`}
                       </span>
                     </p>
-                    {vendorPrices.length > 0 && priceRangeMin < priceRangeMax ? (
+                    {vendorPrices.length === 0 ? (
+                      <p className="text-xs text-gray-400 mt-1">No pricing data for this category</p>
+                    ) : priceRangeMin === priceRangeMax ? (
+                      <p className="text-xs text-gray-500 mt-1">All vendors start at <span className="font-medium">£{priceRangeMin.toLocaleString()}</span></p>
+                    ) : (
                       <>
                         <RangeSlider
                           min={priceRangeMin}
@@ -260,8 +264,6 @@ export default function CustomerMarketplace() {
                           <span>£{priceRangeMax.toLocaleString()}</span>
                         </div>
                       </>
-                    ) : (
-                      <p className="text-xs text-gray-400 mt-1">No pricing data for this category</p>
                     )}
                   </div>
 
