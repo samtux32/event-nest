@@ -74,7 +74,7 @@ export default function VendorCalendar() {
       .then(data => {
         if (data.bookings) {
           const mapped = data.bookings
-            .filter(b => b.eventDate && b.status !== 'cancelled')
+            .filter(b => b.status !== 'cancelled')
             .map(mapBooking);
           setBookings(mapped);
         }
@@ -141,6 +141,8 @@ export default function VendorCalendar() {
     .filter(b => b.date && b.date >= new Date() && b.status !== 'Cancelled')
     .sort((a, b) => a.date - b.date)
     .slice(0, 5);
+
+  const unscheduledBookings = bookings.filter(b => !b.date);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -289,6 +291,30 @@ export default function VendorCalendar() {
                   )}
                 </div>
               </div>
+
+              {/* Unscheduled bookings */}
+              {unscheduledBookings.length > 0 && (
+                <div className="bg-white rounded-2xl p-6 border border-amber-200 bg-amber-50">
+                  <h3 className="text-base font-bold text-amber-800 mb-1">No date set</h3>
+                  <p className="text-xs text-amber-600 mb-4">These bookings aren't on the calendar yet — ask the customer to confirm a date.</p>
+                  <div className="space-y-3">
+                    {unscheduledBookings.map(booking => (
+                      <div
+                        key={booking.id}
+                        className="p-3 bg-white rounded-xl border border-amber-200"
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="font-semibold text-gray-900 text-sm">{booking.clientName}</p>
+                          <span className={`px-2 py-0.5 text-xs rounded-full text-white ${statusColors[booking.status] || 'bg-gray-400'}`}>
+                            {booking.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">{booking.eventType}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
