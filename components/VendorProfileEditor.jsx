@@ -507,6 +507,7 @@ export default function EditVendorProfile() {
                     onChange={(e) => updateProfile('description', e.target.value)}
                     placeholder="Tell potential clients about your business, experience, and what makes you unique..."
                     rows={5}
+                    maxLength={500}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all text-gray-900 resize-none"
                   />
                   <p className="text-xs text-gray-400 mt-1">{profile.description.length}/500 characters</p>

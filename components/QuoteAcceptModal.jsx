@@ -77,6 +77,7 @@ export default function QuoteAcceptModal({ quote, onClose, onAccepted }) {
                 <input
                   type="date"
                   value={eventDate}
+                  min={new Date().toISOString().split('T')[0]}
                   onChange={e => setEventDate(e.target.value)}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all"
                 />
