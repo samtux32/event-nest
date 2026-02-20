@@ -6,6 +6,7 @@ import { X, Plus, Trash2, Loader2, Send } from 'lucide-react';
 export default function QuoteForm({ conversationId, onClose, onSent }) {
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
+  const [eventDate, setEventDate] = useState('');
   const [description, setDescription] = useState('');
   const [features, setFeatures] = useState(['']);
   const [submitting, setSubmitting] = useState(false);
@@ -16,8 +17,8 @@ export default function QuoteForm({ conversationId, onClose, onSent }) {
   const updateFeature = (i, val) => setFeatures(prev => prev.map((f, idx) => idx === i ? val : f));
 
   const handleSubmit = async () => {
-    if (!title.trim() || !price) {
-      setError('Title and price are required.');
+    if (!title.trim() || !price || !eventDate) {
+      setError('Title, price and event date are required.');
       return;
     }
     setError('');
@@ -29,6 +30,7 @@ export default function QuoteForm({ conversationId, onClose, onSent }) {
         body: JSON.stringify({
           title: title.trim(),
           price: parseFloat(price),
+          eventDate,
           description: description.trim() || undefined,
           features: features.map(f => f.trim()).filter(Boolean),
         }),
@@ -88,6 +90,18 @@ export default function QuoteForm({ conversationId, onClose, onSent }) {
                 className="w-full pl-8 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all"
               />
             </div>
+          </div>
+
+          {/* Event Date */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Event Date *</label>
+            <input
+              type="date"
+              value={eventDate}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={e => setEventDate(e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all"
+            />
           </div>
 
           {/* Description */}

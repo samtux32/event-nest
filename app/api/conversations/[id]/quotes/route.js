@@ -17,10 +17,10 @@ export async function POST(request, { params }) {
   }
 
   const body = await request.json()
-  const { title, description, price, features } = body
+  const { title, description, price, features, eventDate } = body
 
-  if (!title?.trim() || !price) {
-    return NextResponse.json({ error: 'title and price are required' }, { status: 400 })
+  if (!title?.trim() || !price || !eventDate) {
+    return NextResponse.json({ error: 'title, price and eventDate are required' }, { status: 400 })
   }
 
   try {
@@ -29,6 +29,7 @@ export async function POST(request, { params }) {
       include: {
         vendor: { select: { id: true, userId: true, businessName: true } },
         customer: { select: { id: true, userId: true } },
+        booking: { select: { id: true } },
       },
     })
 
@@ -73,6 +74,14 @@ export async function POST(request, { params }) {
           unreadCustomer: { increment: 1 },
         },
       })
+
+      // Update the booking's eventDate to the vendor's confirmed date
+      if (conversation.booking?.id) {
+        await tx.booking.update({
+          where: { id: conversation.booking.id },
+          data: { eventDate: new Date(eventDate) },
+        })
+      }
 
       return [q, msg]
     })
