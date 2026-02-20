@@ -252,7 +252,7 @@ export default function VendorPublicProfile({ vendorId }) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
             <div className="col-span-2 space-y-8">
               {[1, 2, 3].map(i => (
-                <div key={i} className="bg-white rounded-2xl p-8 border border-gray-200">
+                <div key={i} className="bg-white rounded-2xl p-4 sm:p-8 border border-gray-200">
                   <div className="h-6 bg-gray-200 rounded w-32 mb-4 animate-pulse" />
                   <div className="space-y-3">
                     <div className="h-4 bg-gray-200 rounded w-full animate-pulse" />
@@ -436,7 +436,7 @@ export default function VendorPublicProfile({ vendorId }) {
           <div className="col-span-2 space-y-8">
             {/* About */}
             {(vendor.description || services.length > 0) && (
-              <section className="bg-white rounded-2xl p-8 border border-gray-200">
+              <section className="bg-white rounded-2xl p-4 sm:p-8 border border-gray-200">
                 <h2 className="text-2xl font-bold mb-4">About</h2>
                 {vendor.description && (
                   <p className="text-gray-700 leading-relaxed whitespace-pre-line break-words mb-6">
@@ -462,7 +462,7 @@ export default function VendorPublicProfile({ vendorId }) {
 
             {/* Cancellation Policy */}
             {vendor.cancellationPolicy && (
-              <section className="bg-white rounded-2xl p-8 border border-gray-200">
+              <section className="bg-white rounded-2xl p-4 sm:p-8 border border-gray-200">
                 <div className="flex items-center gap-3 mb-4">
                   <AlertCircle className="text-amber-500" size={24} />
                   <h2 className="text-2xl font-bold">Cancellation Policy</h2>
@@ -473,7 +473,7 @@ export default function VendorPublicProfile({ vendorId }) {
 
             {/* Awards & Recognition */}
             {vendor.awards?.length > 0 && (
-              <section className="bg-white rounded-2xl p-8 border border-gray-200">
+              <section className="bg-white rounded-2xl p-4 sm:p-8 border border-gray-200">
                 <div className="flex items-center gap-3 mb-4">
                   <Award className="text-purple-600" size={24} />
                   <h2 className="text-2xl font-bold">Awards & Recognition</h2>
@@ -495,7 +495,7 @@ export default function VendorPublicProfile({ vendorId }) {
 
             {/* Portfolio */}
             {vendor.portfolioImages?.length > 0 && (
-              <section className="bg-white rounded-2xl p-8 border border-gray-200">
+              <section className="bg-white rounded-2xl p-4 sm:p-8 border border-gray-200">
                 <h2 className="text-2xl font-bold mb-6">Portfolio</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {vendor.portfolioImages.map((image) => (
@@ -516,7 +516,7 @@ export default function VendorPublicProfile({ vendorId }) {
 
             {/* Reviews */}
             {vendor.reviews?.length > 0 && (
-              <section className="bg-white rounded-2xl p-8 border border-gray-200">
+              <section className="bg-white rounded-2xl p-4 sm:p-8 border border-gray-200">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold">Reviews ({vendor.totalReviews})</h2>
                   {vendor.averageRating && (
