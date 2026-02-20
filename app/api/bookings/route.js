@@ -157,6 +157,9 @@ export async function GET() {
         conversation: {
           select: { id: true },
         },
+        review: {
+          select: { id: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
     })

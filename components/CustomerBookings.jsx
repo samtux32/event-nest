@@ -213,7 +213,12 @@ export default function CustomerBookings() {
       try {
         const res = await fetch('/api/bookings');
         const data = await res.json();
-        if (res.ok) setBookings(data.bookings);
+        if (res.ok) {
+          setBookings(data.bookings);
+          // Seed reviewedIds from server data so the button doesn't reappear on refresh
+          const alreadyReviewed = new Set(data.bookings.filter(b => b.review).map(b => b.id));
+          setReviewedIds(alreadyReviewed);
+        }
       } catch (err) {
         console.error('Failed to fetch bookings:', err);
       } finally {
