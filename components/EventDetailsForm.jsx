@@ -15,7 +15,7 @@ export default function EventDetailsForm({ formData, onFormChange }) {
     <div className="bg-white rounded-2xl p-6 border border-gray-200">
       <h2 className="text-xl font-bold mb-4">Event Details</h2>
       
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Event Type *
@@ -48,7 +48,7 @@ export default function EventDetailsForm({ formData, onFormChange }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-2 gap-3 mb-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Start Time *
@@ -59,7 +59,7 @@ export default function EventDetailsForm({ formData, onFormChange }) {
             value={formData.startTime}
             onChange={onFormChange}
             required
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-purple-600"
+            className="w-full px-2 py-3 border border-gray-200 rounded-xl outline-none focus:border-purple-600 text-sm"
           />
         </div>
 
@@ -73,7 +73,7 @@ export default function EventDetailsForm({ formData, onFormChange }) {
             value={formData.endTime}
             onChange={onFormChange}
             required
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-purple-600"
+            className="w-full px-2 py-3 border border-gray-200 rounded-xl outline-none focus:border-purple-600 text-sm"
           />
         </div>
       </div>
