@@ -11,6 +11,18 @@ function parsePrice(str) {
   return Number(str.replace(/[£,]/g, ''));
 }
 
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 function RangeSlider({ min, max, step, minVal, maxVal, onMinChange, onMaxChange }) {
   const pct = (v) => max === min ? 0 : ((v - min) / (max - min)) * 100;
   return (
@@ -43,6 +55,9 @@ export default function CustomerMarketplace() {
   const [searchQuery, setSearchQuery] = useState('');
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Location state
+  const [userLocation, setUserLocation] = useState(null); // { lat, lng, city }
 
   // Sort & filter state
   const [sortBy, setSortBy] = useState('rating');
@@ -110,6 +125,39 @@ export default function CustomerMarketplace() {
     fetchWishlist();
   }, []);
 
+  // Geolocation detection — silent on mount, stored in localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('userLocation');
+    if (saved) {
+      try { setUserLocation(JSON.parse(saved)); return; } catch {}
+    }
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        let city = null;
+        try {
+          const r = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+            { headers: { 'User-Agent': 'EventNest/1.0' } }
+          );
+          const d = await r.json();
+          city = d.address?.city || d.address?.town || d.address?.village || d.address?.county || null;
+        } catch {}
+        const loc = { lat, lng, city };
+        setUserLocation(loc);
+        localStorage.setItem('userLocation', JSON.stringify(loc));
+      },
+      () => {} // permission denied — silent
+    );
+  }, []);
+
+  const clearLocation = () => {
+    setUserLocation(null);
+    localStorage.removeItem('userLocation');
+    if (sortBy === 'nearest') setSortBy('rating');
+  };
+
   const toggleWishlist = async (vendorId) => {
     const isWishlisted = wishlist.includes(vendorId);
     setWishlist(prev => isWishlisted ? prev.filter(id => id !== vendorId) : [...prev, vendorId]);
@@ -158,6 +206,11 @@ export default function CustomerMarketplace() {
       }
       if (sortBy === 'reviews') {
         return (b.reviews ?? 0) - (a.reviews ?? 0);
+      }
+      if (sortBy === 'nearest' && userLocation) {
+        const distA = (a.lat && a.lng) ? haversineKm(userLocation.lat, userLocation.lng, a.lat, a.lng) : Infinity;
+        const distB = (b.lat && b.lng) ? haversineKm(userLocation.lat, userLocation.lng, b.lat, b.lng) : Infinity;
+        return distA - distB;
       }
       return 0;
     });
@@ -287,9 +340,20 @@ export default function CustomerMarketplace() {
       {/* Results Section */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
-          <p className="text-gray-600">
-            <span className="font-semibold text-gray-900">{filteredVendors.length}</span> vendors found
-          </p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <p className="text-gray-600">
+              <span className="font-semibold text-gray-900">{filteredVendors.length}</span> vendors found
+            </p>
+            {userLocation?.city && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-50 text-purple-700 text-sm rounded-full border border-purple-200">
+                <MapPin size={12} />
+                Near {userLocation.city}
+                <button onClick={clearLocation} className="ml-1 hover:text-purple-900" title="Clear location">
+                  <X size={10} />
+                </button>
+              </span>
+            )}
+          </div>
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value)}
@@ -299,6 +363,7 @@ export default function CustomerMarketplace() {
             <option value="price_asc">Price: Low to High</option>
             <option value="price_desc">Price: High to Low</option>
             <option value="reviews">Most Reviews</option>
+            <option value="nearest">Nearest First</option>
           </select>
         </div>
 
@@ -383,7 +448,7 @@ export default function CustomerMarketplace() {
 
                   <p className="text-gray-600 text-sm mb-3">{vendor.description}</p>
 
-                  <div className="flex items-center gap-4 mb-3">
+                  <div className="flex items-center gap-4 mb-3 flex-wrap">
                     <div className="flex items-center gap-1">
                       <Star className="text-yellow-400 fill-yellow-400" size={16} />
                       <span className="font-semibold text-gray-900">{vendor.rating ?? '—'}</span>
@@ -394,6 +459,11 @@ export default function CustomerMarketplace() {
                         <MapPin size={14} />
                         {vendor.location}
                       </div>
+                    )}
+                    {userLocation && vendor.lat && vendor.lng && (
+                      <span className="text-xs text-purple-600 font-medium bg-purple-50 px-2 py-0.5 rounded-full">
+                        ~{Math.round(haversineKm(userLocation.lat, userLocation.lng, vendor.lat, vendor.lng))} km away
+                      </span>
                     )}
                   </div>
 

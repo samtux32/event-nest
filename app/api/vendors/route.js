@@ -28,6 +28,8 @@ export async function GET(request) {
       rating: v.averageRating ? Number(v.averageRating) : null,
       reviews: v.totalReviews,
       location: v.location,
+      lat: v.latitude,
+      lng: v.longitude,
       startingPrice: v.packages[0]
         ? `£${Number(v.packages[0].price).toLocaleString('en-GB')}`
         : null,
