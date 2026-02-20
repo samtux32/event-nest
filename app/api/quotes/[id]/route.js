@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { sendQuoteAcceptedEmail, sendQuoteDeclinedEmail } from '@/lib/email'
 
 export async function PATCH(request, { params }) {
   const { id } = await params
@@ -86,15 +87,25 @@ export async function PATCH(request, { params }) {
           where: { id: user.id },
           include: { customerProfile: true },
         })
+        const customerName = dbUser?.customerProfile?.fullName || 'A customer'
         await prisma.notification.create({
           data: {
             userId: quote.vendor.user.id,
             type: 'quote_declined',
             title: 'Quote declined',
-            body: `${dbUser?.customerProfile?.fullName || 'A customer'} declined your quote.`,
+            body: `${customerName} declined your quote.`,
             link: `/messages?conv=${quote.conversationId}`,
           },
         }).catch(() => {})
+
+        if (quote.vendor.user.email) {
+          sendQuoteDeclinedEmail({
+            vendorEmail: quote.vendor.user.email,
+            vendorName: quote.vendor.businessName,
+            customerName,
+            quoteTitle: quote.title,
+          }).catch(() => {})
+        }
       }
 
       return NextResponse.json({ status: 'declined' })
@@ -163,15 +174,25 @@ export async function PATCH(request, { params }) {
     })
 
     // Notify vendor — booking is confirmed
+    const customerName = dbUser?.customerProfile?.fullName || 'A customer'
     await prisma.notification.create({
       data: {
         userId: quote.vendor.userId,
         type: 'quote_accepted',
         title: '🎉 Booking confirmed!',
-        body: `${dbUser?.customerProfile?.fullName || 'A customer'} accepted your quote. The booking is confirmed.`,
+        body: `${customerName} accepted your quote. The booking is confirmed.`,
         link: `/`,
       },
     }).catch(() => {})
+
+    if (quote.vendor.user?.email) {
+      sendQuoteAcceptedEmail({
+        vendorEmail: quote.vendor.user.email,
+        vendorName: quote.vendor.businessName,
+        customerName,
+        quoteTitle: quote.title,
+      }).catch(() => {})
+    }
 
     return NextResponse.json({ bookingId: booking.id })
   } catch (err) {

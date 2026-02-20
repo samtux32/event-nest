@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { sendQuoteReceivedEmail } from '@/lib/email'
 
 export async function POST(request, { params }) {
   const { id } = await params
@@ -28,7 +29,7 @@ export async function POST(request, { params }) {
       where: { id },
       include: {
         vendor: { select: { id: true, userId: true, businessName: true } },
-        customer: { select: { id: true, userId: true } },
+        customer: { select: { id: true, userId: true, fullName: true, user: { select: { email: true } } } },
         booking: { select: { id: true } },
       },
     })
@@ -116,6 +117,16 @@ export async function POST(request, { params }) {
         link: `/customer-messages?conv=${id}`,
       },
     })
+
+    if (conversation.customer.user?.email) {
+      sendQuoteReceivedEmail({
+        customerEmail: conversation.customer.user.email,
+        customerName: conversation.customer.fullName || 'there',
+        vendorName: conversation.vendor.businessName,
+        quoteTitle: title.trim(),
+        price,
+      }).catch(() => {})
+    }
 
     return NextResponse.json({ quote })
   } catch (err) {

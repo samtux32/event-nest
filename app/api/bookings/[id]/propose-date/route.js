@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { sendDateProposedEmail, sendDateAcceptedEmail } from '@/lib/email'
 
 // POST — vendor proposes a date for the booking
 export async function POST(request, { params }) {
@@ -102,6 +103,16 @@ export async function POST(request, { params }) {
       }).catch(() => {})
     }
 
+    if (booking.customer?.user?.email) {
+      sendDateProposedEmail({
+        customerEmail: booking.customer.user.email,
+        customerName: booking.customer.fullName || 'there',
+        vendorName: dbUser.vendorProfile.businessName,
+        proposedDate: formatted,
+        conversationUrl: `/customer-messages?conv=${conversation.id}`,
+      }).catch(() => {})
+    }
+
     return NextResponse.json({ message: { id: message.id } })
   } catch (err) {
     console.error('Propose date error:', err)
@@ -189,6 +200,15 @@ export async function PATCH(request, { params }) {
           body,
           link: conversationId ? `/messages?conv=${conversationId}` : '/calendar',
         },
+      }).catch(() => {})
+    }
+
+    if (action === 'accept' && booking.vendor?.user?.email) {
+      sendDateAcceptedEmail({
+        vendorEmail: booking.vendor.user.email,
+        customerName: dbUser.customerProfile.fullName || 'The customer',
+        eventDate: formatted,
+        conversationUrl: booking.conversation?.id ? `/messages?conv=${booking.conversation.id}` : '/calendar',
       }).catch(() => {})
     }
 

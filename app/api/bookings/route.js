@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { sendNewInquiryEmail, sendBookingConfirmedEmail } from '@/lib/email'
 
 export async function POST(request) {
   const supabase = await createClient()
@@ -99,6 +100,16 @@ export async function POST(request) {
           link: '/',
         },
       })
+
+      sendNewInquiryEmail({
+        vendorEmail: vendor.user.email,
+        vendorName: vendor.businessName,
+        customerName: dbUser.customerProfile.fullName || 'A customer',
+        eventType: body.eventType || null,
+        eventDate: body.eventDate
+          ? new Date(body.eventDate).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+          : null,
+      }).catch(() => {})
     }
 
     return NextResponse.json({ booking, conversationId: conversation.id })
@@ -231,6 +242,17 @@ export async function PUT(request) {
             link: '/my-bookings',
           },
         })
+      }
+
+      if (status === 'confirmed' && updated.customer?.user?.email) {
+        sendBookingConfirmedEmail({
+          customerEmail: updated.customer.user.email,
+          customerName: updated.customer.fullName || 'there',
+          vendorName: dbUser.vendorProfile.businessName,
+          eventDate: updated.eventDate
+            ? new Date(updated.eventDate).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+            : null,
+        }).catch(() => {})
       }
     }
 

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { sendNewMessageEmail } from '@/lib/email'
 
 export async function GET(request, { params }) {
   const { id } = await params
@@ -128,8 +129,8 @@ export async function POST(request, { params }) {
     const conversation = await prisma.conversation.findUnique({
       where: { id },
       include: {
-        vendor: { select: { userId: true } },
-        customer: { select: { userId: true } },
+        vendor: { select: { userId: true, businessName: true, user: { select: { email: true } } } },
+        customer: { select: { userId: true, fullName: true, user: { select: { email: true } } } },
       },
     })
 
@@ -186,6 +187,26 @@ export async function POST(request, { params }) {
         link: recipientLink,
       },
     }).catch(() => {}) // fire-and-forget, don't fail the request
+
+    const recipientEmail = isVendor
+      ? conversation.customer.user?.email
+      : conversation.vendor.user?.email
+    const recipientName = isVendor
+      ? (conversation.customer.fullName || 'there')
+      : conversation.vendor.businessName
+    const senderName = isVendor
+      ? conversation.vendor.businessName
+      : (conversation.customer.fullName || 'Customer')
+
+    if (recipientEmail) {
+      sendNewMessageEmail({
+        recipientEmail,
+        recipientName,
+        senderName,
+        preview: text?.trim()?.slice(0, 200) || null,
+        conversationUrl: recipientLink,
+      }).catch(() => {})
+    }
 
     return NextResponse.json({
       message: {
