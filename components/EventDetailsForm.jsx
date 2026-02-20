@@ -48,7 +48,7 @@ export default function EventDetailsForm({ formData, onFormChange }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-2 gap-6 mb-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Start Time *
