@@ -46,11 +46,12 @@ export default function QuoteAcceptModal({ quote, onClose, onAccepted }) {
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
         {confirmed ? (
           <div className="p-8 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Check size={32} className="text-green-600" />
+            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Check size={32} className="text-purple-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Booking confirmed!</h2>
-            <p className="text-gray-600 mb-6">The vendor has been notified. You can view your booking in My Bookings.</p>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Request sent!</h2>
+            <p className="text-gray-600 mb-2">The vendor has been notified of your booking request.</p>
+            <p className="text-sm text-gray-500 mb-6">Once the vendor confirms, your booking will be fully confirmed. You can track it in My Bookings.</p>
             <button
               onClick={onClose}
               className="px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors"

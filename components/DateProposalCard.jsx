@@ -18,16 +18,22 @@ export default function DateProposalCard({ message, isCustomer, onDateAccepted }
 
   const { bookingId, proposedDate, bookingEventDate } = message;
 
-  // Determine display state:
-  // - proposedDate set → pending (or just acted locally)
-  // - proposedDate null + eventDate set → accepted
-  // - proposedDate null + no eventDate → declined
-  const isPending = !!proposedDate && !localAction;
-  const isAccepted = localAction === 'accept' || (!proposedDate && !!bookingEventDate);
-  const isDeclined = localAction === 'decline' || (!proposedDate && !bookingEventDate && !isPending);
+  // Parse the ISO date from message text as ground truth fallback
+  // Message text format: "📅 Date proposal: YYYY-MM-DD"
+  const textDate = message.text?.match(/(\d{4}-\d{2}-\d{2})/)?.[1] || null;
 
-  // The date to display: use proposedDate if pending, bookingEventDate if accepted
-  const displayDate = proposedDate || bookingEventDate;
+  // Determine display state:
+  // - localAction set → just acted
+  // - proposedDate set → pending (DB confirms proposal is active)
+  // - proposedDate null + bookingEventDate set → accepted
+  // - proposedDate null + bookingEventDate null + textDate exists → pending
+  //   (conversation not linked to booking yet, but proposal was created)
+  const isPending = !localAction && (!!proposedDate || (!bookingEventDate && !!textDate));
+  const isAccepted = localAction === 'accept' || (!localAction && !proposedDate && !!bookingEventDate);
+  const isDeclined = localAction === 'decline';
+
+  // The date to display: prefer DB proposedDate, then DB eventDate, then parsed from text
+  const displayDate = proposedDate || bookingEventDate || textDate;
 
   const handleResponse = async (action) => {
     if (!bookingId || loading) return;

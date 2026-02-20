@@ -107,7 +107,9 @@ export async function PATCH(request, { params }) {
         data: {
           conversationId: quote.conversationId,
           senderId: user.id,
-          text: 'Quote accepted. Booking created.',
+          text: eventDate
+            ? `✅ Quote accepted${eventDate ? ` — proposed date: ${new Date(eventDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}` : ''}. Please confirm the booking when you're ready.`
+            : '✅ Quote accepted. Please confirm the booking when you're ready.',
           type: 'text',
         },
       })
@@ -121,14 +123,14 @@ export async function PATCH(request, { params }) {
       })
     })
 
-    // Notify vendor
+    // Notify vendor — prompt them to confirm the booking
     await prisma.notification.create({
       data: {
         userId: quote.vendor.userId,
         type: 'quote_accepted',
-        title: 'Quote accepted!',
-        body: `${dbUser?.customerProfile?.fullName || 'A customer'} has accepted your quote and created a booking.`,
-        link: `/messages?conv=${quote.conversationId}`,
+        title: '🎉 Quote accepted — action needed',
+        body: `${dbUser?.customerProfile?.fullName || 'A customer'} accepted your quote. Go to your dashboard to confirm the booking.`,
+        link: `/`,
       },
     })
 

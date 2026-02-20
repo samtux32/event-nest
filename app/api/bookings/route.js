@@ -68,6 +68,7 @@ export async function POST(request) {
     })
 
     // Upsert conversation for this vendor-customer pair
+    // If conversation already exists, link it to this booking (so date proposals work)
     await prisma.conversation.upsert({
       where: {
         vendorId_customerId: {
@@ -75,7 +76,7 @@ export async function POST(request) {
           customerId,
         },
       },
-      update: {},
+      update: { bookingId: booking.id },
       create: {
         vendorId: body.vendorId,
         customerId,
