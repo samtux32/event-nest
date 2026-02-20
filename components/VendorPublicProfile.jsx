@@ -17,7 +17,11 @@ import {
   AlertCircle,
   Loader2,
   BadgeCheck,
-  Sparkles
+  Sparkles,
+  Instagram,
+  Facebook,
+  Twitter,
+  Globe
 } from 'lucide-react';
 
 function formatPrice(decimal) {
@@ -629,7 +633,7 @@ export default function VendorPublicProfile({ vendorId }) {
                 <>
                   <h3 className="text-xl font-bold mb-4">Packages & Pricing</h3>
 
-                  <div className="space-y-3 mb-6 max-h-72 overflow-y-auto pr-1">
+                  <div className="space-y-3 mb-6 max-h-[36rem] overflow-y-auto pr-1">
                     {vendor.packages.map((pkg) => (
                       <div
                         key={pkg.id}
@@ -704,6 +708,75 @@ export default function VendorPublicProfile({ vendorId }) {
                 </p>
               )}
             </div>
+
+            {/* Social Links Card */}
+            {(vendor.instagram || vendor.facebook || vendor.twitter || vendor.website) && (
+              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                <h3 className="font-bold text-lg mb-4">Find Us Online</h3>
+                <div className="space-y-3">
+                  {vendor.instagram && (
+                    <a
+                      href={vendor.instagram.startsWith('http') ? vendor.instagram : `https://instagram.com/${vendor.instagram.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-gray-700 hover:text-pink-600 transition-colors group"
+                    >
+                      <div className="w-9 h-9 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Instagram size={18} className="text-white" />
+                      </div>
+                      <span className="text-sm font-medium group-hover:underline truncate">
+                        {vendor.instagram.startsWith('http') ? vendor.instagram.replace(/https?:\/\/(www\.)?instagram\.com\//, '@') : (vendor.instagram.startsWith('@') ? vendor.instagram : `@${vendor.instagram}`)}
+                      </span>
+                    </a>
+                  )}
+                  {vendor.facebook && (
+                    <a
+                      href={vendor.facebook.startsWith('http') ? vendor.facebook : `https://facebook.com/${vendor.facebook}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition-colors group"
+                    >
+                      <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Facebook size={18} className="text-white" />
+                      </div>
+                      <span className="text-sm font-medium group-hover:underline truncate">
+                        {vendor.facebook.startsWith('http') ? vendor.facebook.replace(/https?:\/\/(www\.)?facebook\.com\//, '') : vendor.facebook}
+                      </span>
+                    </a>
+                  )}
+                  {vendor.twitter && (
+                    <a
+                      href={vendor.twitter.startsWith('http') ? vendor.twitter : `https://x.com/${vendor.twitter.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-gray-700 hover:text-gray-900 transition-colors group"
+                    >
+                      <div className="w-9 h-9 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Twitter size={18} className="text-white" />
+                      </div>
+                      <span className="text-sm font-medium group-hover:underline truncate">
+                        {vendor.twitter.startsWith('http') ? vendor.twitter.replace(/https?:\/\/(www\.)?(twitter|x)\.com\//, '@') : (vendor.twitter.startsWith('@') ? vendor.twitter : `@${vendor.twitter}`)}
+                      </span>
+                    </a>
+                  )}
+                  {vendor.website && (
+                    <a
+                      href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-gray-700 hover:text-purple-600 transition-colors group"
+                    >
+                      <div className="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Globe size={18} className="text-purple-600" />
+                      </div>
+                      <span className="text-sm font-medium group-hover:underline truncate">
+                        {vendor.website.replace(/https?:\/\/(www\.)?/, '')}
+                      </span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
