@@ -1,13 +1,13 @@
 import { updateSession } from '@/lib/supabase/middleware'
 import { NextResponse } from 'next/server'
 
-const publicPrefixes = ['/login', '/register', '/auth/callback', '/vendor-profile', '/api/auth', '/api/vendors', '/booking']
+const publicPrefixes = ['/login', '/register', '/auth/callback', '/vendor-profile', '/api/auth', '/api/vendors', '/booking', '/marketplace']
 
 // Routes only vendors can access
 const vendorOnlyPrefixes = ['/profile-editor', '/messages', '/calendar', '/analytics', '/vendor-settings']
 
 // Routes only customers can access
-const customerOnlyPrefixes = ['/marketplace', '/my-bookings', '/customer-messages', '/wishlist', '/customer-settings']
+const customerOnlyPrefixes = ['/my-bookings', '/customer-messages', '/wishlist', '/customer-settings']
 
 // Routes only admins can access
 const adminOnlyPrefixes = ['/admin']
