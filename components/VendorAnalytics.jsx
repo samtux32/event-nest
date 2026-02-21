@@ -457,7 +457,7 @@ export default function VendorAnalytics() {
                 <h2 className="text-xl font-bold text-gray-900">Booking Status Overview</h2>
                 <span className="text-sm text-gray-500 font-normal">All time</span>
               </div>
-              <div className="grid grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 {[
                   { label: 'Inquiries', key: 'new_inquiry', color: 'bg-purple-50', textColor: 'text-purple-700' },
                   { label: 'Pending', key: 'pending', color: 'bg-yellow-50', textColor: 'text-yellow-700' },

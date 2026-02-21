@@ -14,7 +14,7 @@ export default function AdditionalServices({ selectedServices, onToggleService }
   return (
     <div className="bg-white rounded-2xl p-6 border border-gray-200">
       <h2 className="text-xl font-bold mb-4">Additional Services (Optional)</h2>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {serviceOptions.map((service) => (
           <div
             key={service}
