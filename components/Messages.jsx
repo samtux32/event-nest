@@ -60,7 +60,6 @@ export default function Messages() {
       try {
         const res = await fetch(`/api/conversations/${selectedConversation}/messages`);
         const data = await res.json();
-        console.log('[Messages] fetch status:', res.status, 'count:', data.messages?.length, 'error:', data.error);
         if (res.ok) {
           setMessages(data.messages);
           setConversations(prev =>

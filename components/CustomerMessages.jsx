@@ -33,7 +33,6 @@ export default function CustomerMessages() {
       try {
         const res = await fetch('/api/conversations');
         const data = await res.json();
-        console.log('[CustomerMessages] convos status:', res.status, 'count:', data.conversations?.length, 'error:', data.error);
         if (res.ok) {
           setConversations(data.conversations);
           // Use functional update so we see the LATEST selectedConversation
@@ -61,7 +60,6 @@ export default function CustomerMessages() {
       try {
         const res = await fetch(`/api/conversations/${selectedConversation}/messages`);
         const data = await res.json();
-        console.log('[CustomerMessages] msgs status:', res.status, 'count:', data.messages?.length, 'error:', data.error);
         if (res.ok) {
           setMessages(data.messages);
           setConversations(prev =>
