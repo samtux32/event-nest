@@ -65,7 +65,7 @@ export default function VendorPublicProfile({ vendorId }) {
   }, [user, vendorId]);
 
   const toggleWishlist = async () => {
-    if (!user) { router.push(`/register?redirectTo=/vendor-profile/${vendorId}`); return; }
+    if (!user) { router.push(`/login?redirectTo=/vendor-profile/${vendorId}`); return; }
     const next = !isWishlisted;
     setIsWishlisted(next);
     try {
@@ -81,7 +81,7 @@ export default function VendorPublicProfile({ vendorId }) {
 
   const handleSendMessage = async () => {
     if (!user) {
-      router.push(`/register?redirectTo=/vendor-profile/${vendorId}`);
+      router.push(`/login?redirectTo=/vendor-profile/${vendorId}`);
       return;
     }
     setActionError(null);
@@ -107,7 +107,7 @@ export default function VendorPublicProfile({ vendorId }) {
 
   const handleRequestQuote = async () => {
     if (!user) {
-      router.push(`/register?redirectTo=/vendor-profile/${vendorId}`);
+      router.push(`/login?redirectTo=/vendor-profile/${vendorId}`);
       return;
     }
     setActionError(null);

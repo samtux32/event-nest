@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Search, Heart, Star, MapPin, SlidersHorizontal, X } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import CustomerHeader from './CustomerHeader';
@@ -50,8 +49,7 @@ function RangeSlider({ min, max, step, minVal, maxVal, onMinChange, onMaxChange 
 }
 
 export default function CustomerMarketplace() {
-  const { user, profile } = useAuth();
-  const router = useRouter();
+  const { profile } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [wishlist, setWishlist] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -115,9 +113,8 @@ export default function CustomerMarketplace() {
     fetchVendors();
   }, [selectedCategory]);
 
-  // Load persisted wishlist on mount (only when logged in)
+  // Load persisted wishlist on mount
   useEffect(() => {
-    if (!user) return;
     async function fetchWishlist() {
       try {
         const res = await fetch('/api/wishlist');
@@ -126,7 +123,7 @@ export default function CustomerMarketplace() {
       } catch {}
     }
     fetchWishlist();
-  }, [user]);
+  }, []);
 
   // Geolocation detection — silent on mount, stored in localStorage
   useEffect(() => {
@@ -162,10 +159,6 @@ export default function CustomerMarketplace() {
   };
 
   const toggleWishlist = async (vendorId) => {
-    if (!user) {
-      router.push('/register');
-      return;
-    }
     const isWishlisted = wishlist.includes(vendorId);
     setWishlist(prev => isWishlisted ? prev.filter(id => id !== vendorId) : [...prev, vendorId]);
     try {
@@ -224,24 +217,7 @@ export default function CustomerMarketplace() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {user ? <CustomerHeader /> : (
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2.5">
-              <img src="/logo.png" alt="Event Nest" className="w-9 h-9 rounded-lg object-cover" />
-              <span className="font-bold text-gray-900 text-base">Event Nest</span>
-            </Link>
-            <div className="flex items-center gap-3">
-              <Link href="/login" className="text-gray-600 hover:text-gray-900 font-medium text-sm px-3 py-2">
-                Log in
-              </Link>
-              <Link href="/register" className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-purple-700 transition-colors">
-                Sign Up
-              </Link>
-            </div>
-          </div>
-        </header>
-      )}
+      <CustomerHeader />
 
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-purple-600 to-purple-700 py-10 sm:py-16 md:py-20">

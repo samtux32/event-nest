@@ -109,7 +109,7 @@ export default function BookingRequest({ vendorId }) {
     e.preventDefault();
 
     if (!user) {
-      router.push(`/register?redirectTo=/booking/${vendorId}`);
+      router.push(`/login?redirectTo=/booking/${vendorId}`);
       return;
     }
 
