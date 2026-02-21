@@ -27,6 +27,7 @@ function RegisterForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [registered, setRegistered] = useState(false)
   const searchParams = useSearchParams()
   const isOAuth = searchParams.get('oauth') === 'true'
   const supabase = createClient()
@@ -105,11 +106,43 @@ function RegisterForm() {
         throw new Error(data.error || 'Registration failed')
       }
 
-      window.location.href = role === 'customer' ? '/marketplace' : '/'
+      setRegistered(true)
     } catch (err) {
       setError(err.message)
       setLoading(false)
     }
+  }
+
+  if (registered) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center p-4">
+        <div className="w-full max-w-md text-center">
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <img src="/logo.png" alt="Event Nest" className="w-16 h-16 rounded-xl object-cover brightness-0 invert" />
+            <div className="font-bold text-2xl text-white leading-tight">Event<br/>Nest</div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">📧</span>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Check your email</h2>
+            <p className="text-gray-600 mb-2">
+              We've sent a verification link to <span className="font-medium text-gray-900">{email}</span>
+            </p>
+            <p className="text-gray-500 text-sm mb-6">
+              Please click the link in the email to verify your account before signing in.
+            </p>
+            <Link
+              href="/login"
+              className="block w-full py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
+            >
+              Go to Login
+            </Link>
+            <p className="text-xs text-gray-400 mt-4">Didn't receive it? Check your spam folder.</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
