@@ -105,7 +105,7 @@ export default function CustomerWishlist() {
         <div className="fixed inset-0 z-10" onClick={() => setOpenDropdown(null)} />
       )}
 
-      <div className="max-w-7xl mx-auto px-6 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">My Wishlist</h1>
           <p className="text-gray-500 mt-1">Vendors you've saved for later</p>
@@ -188,7 +188,7 @@ export default function CustomerWishlist() {
 
         {/* Loading skeleton */}
         {loading && (
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map(i => (
               <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-200">
                 <div className="h-56 bg-gray-200 animate-pulse" />
@@ -238,7 +238,7 @@ export default function CustomerWishlist() {
               <span className="font-semibold text-gray-900">{displayedVendors.length}</span> vendor{displayedVendors.length !== 1 ? 's' : ''}
               {activeTab !== 'all' && <span className="text-gray-400"> in this group</span>}
             </p>
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {displayedVendors.map(vendor => (
                 <div
                   key={vendor.id}
