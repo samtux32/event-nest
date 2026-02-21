@@ -126,6 +126,9 @@ function RegisterForm() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
+        <Link href="/" className="inline-flex items-center gap-1.5 text-purple-200 hover:text-white text-sm mb-6 transition-colors">
+          ← Back to home
+        </Link>
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-2">
