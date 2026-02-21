@@ -36,7 +36,11 @@ function LoginForm() {
     })
 
     if (error) {
-      setError(error.message)
+      if (error.message?.toLowerCase().includes('email not confirmed')) {
+        setError('Please verify your email first — check your inbox for a confirmation link, then try logging in again.')
+      } else {
+        setError(error.message)
+      }
       setLoading(false)
       return
     }
