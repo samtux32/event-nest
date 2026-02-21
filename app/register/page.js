@@ -120,7 +120,7 @@ function RegisterForm() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-2">
-            <img src="/logo.png" alt="Event Nest" className="w-16 h-16 rounded-xl object-cover" />
+            <img src="/logo.png" alt="Event Nest" className="w-16 h-16 rounded-xl object-cover brightness-0 invert" />
             <div className="font-bold text-2xl text-white leading-tight">Event<br/>Nest</div>
           </div>
           <p className="text-purple-200">
