@@ -44,6 +44,7 @@ export default function VendorPublicProfile({ vendorId }) {
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [requestingQuote, setRequestingQuote] = useState(false);
+  const [actionError, setActionError] = useState(null);
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [submittingReply, setSubmittingReply] = useState(false);
@@ -83,6 +84,7 @@ export default function VendorPublicProfile({ vendorId }) {
       router.push(`/login?redirectTo=/vendor-profile/${vendorId}`);
       return;
     }
+    setActionError(null);
     setSendingMessage(true);
     try {
       const res = await fetch('/api/conversations', {
@@ -94,10 +96,10 @@ export default function VendorPublicProfile({ vendorId }) {
       if (res.ok) {
         router.push(`/customer-messages?conv=${data.conversation.id}`);
       } else {
-        alert(data.error || 'Failed to start conversation');
+        setActionError(data.error || 'Failed to start conversation');
       }
     } catch {
-      alert('Something went wrong. Please try again.');
+      setActionError('Something went wrong. Please try again.');
     } finally {
       setSendingMessage(false);
     }
@@ -108,6 +110,7 @@ export default function VendorPublicProfile({ vendorId }) {
       router.push(`/login?redirectTo=/vendor-profile/${vendorId}`);
       return;
     }
+    setActionError(null);
     setRequestingQuote(true);
     try {
       const res = await fetch('/api/conversations', {
@@ -115,15 +118,14 @@ export default function VendorPublicProfile({ vendorId }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ vendorId }),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        alert(data.error || 'Failed to start conversation');
-        return;
+      const data = await res.json();
+      if (res.ok) {
+        router.push(`/customer-messages?conv=${data.conversation.id}`);
+      } else {
+        setActionError(data.error || 'Failed to start conversation');
       }
-      const { conversation } = await res.json();
-      router.push(`/customer-messages?conv=${conversation.id}`);
     } catch {
-      alert('Something went wrong. Please try again.');
+      setActionError('Something went wrong. Please try again.');
     } finally {
       setRequestingQuote(false);
     }
@@ -665,29 +667,41 @@ export default function VendorPublicProfile({ vendorId }) {
                 )}
 
                 <div className="space-y-3">
-                  <Link href={`/booking/${vendorId}`} className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
-                    <Calendar size={20} />
-                    Request Quote
-                  </Link>
+                  {isOwner ? (
+                    <Link href="/vendor-dashboard" className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                      Go to Dashboard
+                    </Link>
+                  ) : (
+                    <>
+                      <Link href={`/booking/${vendorId}`} className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                        <Calendar size={20} />
+                        Request Quote
+                      </Link>
 
-                  <button
-                    onClick={handleSendMessage}
-                    disabled={sendingMessage}
-                    className="w-full border-2 border-purple-600 text-purple-600 py-4 rounded-xl font-bold hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    {sendingMessage ? <Loader2 size={20} className="animate-spin" /> : <MessageCircle size={20} />}
-                    {sendingMessage ? 'Opening...' : 'Send Message'}
-                  </button>
+                      <button
+                        onClick={handleSendMessage}
+                        disabled={sendingMessage}
+                        className="w-full border-2 border-purple-600 text-purple-600 py-4 rounded-xl font-bold hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {sendingMessage ? <Loader2 size={20} className="animate-spin" /> : <MessageCircle size={20} />}
+                        {sendingMessage ? 'Opening...' : 'Send Message'}
+                      </button>
 
-                  {vendor.customQuotesEnabled && (
-                    <button
-                      onClick={handleRequestQuote}
-                      disabled={requestingQuote}
-                      className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
-                    >
-                      {requestingQuote ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
-                      {requestingQuote ? 'Opening...' : 'Request Custom Quote'}
-                    </button>
+                      {vendor.customQuotesEnabled && (
+                        <button
+                          onClick={handleRequestQuote}
+                          disabled={requestingQuote}
+                          className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                        >
+                          {requestingQuote ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                          {requestingQuote ? 'Opening...' : 'Request Custom Quote'}
+                        </button>
+                      )}
+
+                      {actionError && (
+                        <p className="text-sm text-red-600 text-center bg-red-50 rounded-lg px-3 py-2">{actionError}</p>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

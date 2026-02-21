@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Check, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Check } from 'lucide-react';
 import QuoteAcceptModal from '@/components/QuoteAcceptModal';
 
 function formatPrice(num) {
@@ -22,7 +22,13 @@ const statusLabels = {
 
 export default function QuoteCard({ quote, isCustomer, onQuoteUpdated }) {
   const [showModal, setShowModal] = useState(false);
+  const [showDeclineConfirm, setShowDeclineConfirm] = useState(false);
+  const [declining, setDeclining] = useState(false);
   const [localStatus, setLocalStatus] = useState(quote.status);
+
+  useEffect(() => {
+    setLocalStatus(quote.status);
+  }, [quote.status]);
 
   const handleAccepted = (bookingId) => {
     setLocalStatus('accepted');
@@ -30,7 +36,7 @@ export default function QuoteCard({ quote, isCustomer, onQuoteUpdated }) {
   };
 
   const handleDecline = async () => {
-    if (!confirm('Are you sure you want to decline this quote?')) return;
+    setDeclining(true);
     try {
       const res = await fetch(`/api/quotes/${quote.id}`, {
         method: 'PATCH',
@@ -43,6 +49,9 @@ export default function QuoteCard({ quote, isCustomer, onQuoteUpdated }) {
       }
     } catch (err) {
       console.error('Decline quote error:', err);
+    } finally {
+      setDeclining(false);
+      setShowDeclineConfirm(false);
     }
   };
 
@@ -76,29 +85,48 @@ export default function QuoteCard({ quote, isCustomer, onQuoteUpdated }) {
           </ul>
         )}
 
-        {/* Status badge */}
         <div className="flex items-center justify-between pt-1">
           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusStyles[localStatus]}`}>
             {statusLabels[localStatus]}
           </span>
         </div>
 
-        {/* Actions — only shown to customer when pending */}
         {isCustomer && localStatus === 'pending' && (
-          <div className="flex gap-2 pt-1">
-            <button
-              onClick={() => setShowModal(true)}
-              className="flex-1 bg-purple-600 text-white py-2 rounded-xl text-sm font-semibold hover:bg-purple-700 transition-colors"
-            >
-              Accept
-            </button>
-            <button
-              onClick={handleDecline}
-              className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
-            >
-              Decline
-            </button>
-          </div>
+          showDeclineConfirm ? (
+            <div className="pt-1">
+              <p className="text-sm text-gray-700 mb-2">Decline this quote?</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowDeclineConfirm(false)}
+                  className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDecline}
+                  disabled={declining}
+                  className="flex-1 bg-red-600 text-white py-2 rounded-xl text-sm font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors"
+                >
+                  {declining ? 'Declining...' : 'Yes, Decline'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => setShowModal(true)}
+                className="flex-1 bg-purple-600 text-white py-2 rounded-xl text-sm font-semibold hover:bg-purple-700 transition-colors"
+              >
+                Accept
+              </button>
+              <button
+                onClick={() => setShowDeclineConfirm(true)}
+                className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Decline
+              </button>
+            </div>
+          )
         )}
       </div>
 
