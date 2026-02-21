@@ -279,6 +279,7 @@ export default function CustomerMessages() {
           <EventDetailsSidebar conversation={selectedConv} role="customer" messages={messages} />
         )}
       </div>
+
     </div>
   );
 }

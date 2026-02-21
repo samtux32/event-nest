@@ -150,9 +150,22 @@ export async function PATCH(request, { params }) {
         })
       }
 
+      // Decline all other pending quotes first (prevents unique constraint
+      // clash on booking_id if multiple quotes exist for the same conversation)
+      await tx.quote.updateMany({
+        where: {
+          conversationId: quote.conversationId,
+          id: { not: id },
+          status: 'pending',
+        },
+        data: { status: 'declined' },
+      })
+
+      // Mark this quote accepted — no bookingId to avoid unique constraint
+      // issues when testing/retrying (booking is reachable via conversation)
       await tx.quote.update({
         where: { id },
-        data: { status: 'accepted', bookingId: booking.id },
+        data: { status: 'accepted' },
       })
 
       await tx.message.create({

@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
-import { X, Check, Loader2, CalendarDays } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { X, Check, Loader2 } from 'lucide-react';
 
 function formatPrice(num) {
   return `£${Number(num).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
@@ -11,6 +12,9 @@ export default function QuoteAcceptModal({ quote, onClose, onAccepted }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [confirmed, setConfirmed] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const handleConfirm = async () => {
     setSubmitting(true);
@@ -35,7 +39,9 @@ export default function QuoteAcceptModal({ quote, onClose, onAccepted }) {
     }
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
         {confirmed ? (
@@ -95,6 +101,7 @@ export default function QuoteAcceptModal({ quote, onClose, onAccepted }) {
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
