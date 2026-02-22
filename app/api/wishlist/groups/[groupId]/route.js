@@ -11,10 +11,10 @@ export async function DELETE(request, { params }) {
   const { groupId } = await params
 
   try {
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      include: { customerProfile: true },
-    })
+    let dbUser = await prisma.user.findUnique({ where: { id: user.id }, include: { customerProfile: true } })
+    if (!dbUser) {
+      dbUser = await prisma.user.findUnique({ where: { email: user.email }, include: { customerProfile: true } })
+    }
     const profile = dbUser?.customerProfile
     if (!profile) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
