@@ -27,8 +27,8 @@ export async function GET() {
       },
     })
 
+    // Case 1: no DB user at all — create user + profile
     if (!dbUser) {
-      // Auth account exists but no DB record — auto-create it (handles failed registrations)
       if (!role || (role !== 'customer' && role !== 'vendor')) {
         return NextResponse.json({ error: 'User not found in database' }, { status: 404 })
       }
@@ -37,22 +37,35 @@ export async function GET() {
           id: user.id,
           email: user.email,
           role,
-          ...(role === 'vendor' ? {
-            vendorProfile: { create: { businessName: 'My Business', category: 'Other', isApproved: true } }
-          } : {
-            customerProfile: { create: { fullName: user.email.split('@')[0] } }
-          }),
+          ...(role === 'vendor'
+            ? { vendorProfile: { create: { businessName: 'My Business', category: 'Other', isApproved: true } } }
+            : { customerProfile: { create: { fullName: user.email.split('@')[0] } } }
+          ),
         },
         include: {
-          customerProfile: role === 'customer',
+          customerProfile: role === 'customer' ? true : false,
           vendorProfile: role === 'vendor' ? { include: { packages: true, portfolioImages: true, documents: true } } : false,
         },
       })
-      const profile = role === 'vendor' ? created.vendorProfile : created.customerProfile
-      return NextResponse.json({ profile: { ...profile, email: created.email, role: created.role } })
+      const createdProfile = role === 'vendor' ? created.vendorProfile : created.customerProfile
+      return NextResponse.json({ profile: { ...createdProfile, email: created.email, role: created.role } })
     }
 
-    const profile = role === 'vendor' ? dbUser.vendorProfile : dbUser.customerProfile
+    let profile = role === 'vendor' ? dbUser.vendorProfile : dbUser.customerProfile
+
+    // Case 2: user exists but profile record is missing (partial registration failure)
+    if (!profile && (role === 'vendor' || role === 'customer')) {
+      if (role === 'vendor') {
+        profile = await prisma.vendorProfile.create({
+          data: { userId: user.id, businessName: 'My Business', category: 'Other', isApproved: true },
+          include: { packages: true, portfolioImages: true, documents: true },
+        })
+      } else {
+        profile = await prisma.customerProfile.create({
+          data: { userId: user.id, fullName: user.email.split('@')[0] },
+        })
+      }
+    }
 
     return NextResponse.json({
       profile: {
