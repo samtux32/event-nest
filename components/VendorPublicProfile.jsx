@@ -124,7 +124,7 @@ export default function VendorPublicProfile({ vendorId }) {
         await fetch(`/api/conversations/${data.conversation.id}/messages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: `Hi! I'd love to discuss a custom quote with you. Could you let me know your availability and pricing for my event?` }),
+          body: JSON.stringify({ text: `Hi! I'd love to discuss a custom quote with you.` }),
         });
         router.push(`/customer-messages?conv=${data.conversation.id}`);
       } else {
