@@ -8,8 +8,14 @@ export async function GET() {
   if (error || !user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
   try {
+    let dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { id: true } })
+    if (!dbUser) {
+      dbUser = await prisma.user.findUnique({ where: { email: user.email }, select: { id: true } })
+    }
+    const dbUserId = dbUser?.id ?? user.id
+
     const notifications = await prisma.notification.findMany({
-      where: { userId: user.id },
+      where: { userId: dbUserId },
       orderBy: { createdAt: 'desc' },
       take: 20,
     })
@@ -27,16 +33,21 @@ export async function PUT(request) {
   if (error || !user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
   try {
+    let dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { id: true } })
+    if (!dbUser) {
+      dbUser = await prisma.user.findUnique({ where: { email: user.email }, select: { id: true } })
+    }
+    const dbUserId = dbUser?.id ?? user.id
+
     const { notificationId } = await request.json()
     if (notificationId) {
       await prisma.notification.update({
-        where: { id: notificationId, userId: user.id },
+        where: { id: notificationId, userId: dbUserId },
         data: { isRead: true },
       })
     } else {
-      // Mark all as read
       await prisma.notification.updateMany({
-        where: { userId: user.id, isRead: false },
+        where: { userId: dbUserId, isRead: false },
         data: { isRead: true },
       })
     }
