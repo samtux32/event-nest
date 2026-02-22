@@ -35,8 +35,12 @@ export async function GET(request, { params }) {
     if (!vendor.isApproved) {
       const supabase = await createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      const isOwner = user && user.id === vendor.userId
-
+      const isOwnerById = user && user.id === vendor.userId
+      let isOwner = isOwnerById
+      if (!isOwner && user) {
+        const dbUser = await prisma.user.findUnique({ where: { email: user.email }, select: { id: true } })
+        isOwner = dbUser?.id === vendor.userId
+      }
       if (!isOwner) {
         return NextResponse.json({ error: 'This vendor profile is not available' }, { status: 403 })
       }

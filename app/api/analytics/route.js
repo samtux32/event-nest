@@ -17,10 +17,17 @@ export async function GET(request) {
   const period = parseInt(searchParams.get('period') || '30')
 
   try {
-    const vendor = await prisma.vendorProfile.findUnique({
+    let vendor = await prisma.vendorProfile.findUnique({
       where: { userId: user.id },
       select: { id: true, averageRating: true, totalReviews: true },
     })
+    if (!vendor) {
+      const dbUser = await prisma.user.findUnique({
+        where: { email: user.email },
+        select: { vendorProfile: { select: { id: true, averageRating: true, totalReviews: true } } },
+      })
+      vendor = dbUser?.vendorProfile ?? null
+    }
     if (!vendor) return NextResponse.json({ error: 'Vendor not found' }, { status: 404 })
 
     const now = new Date()
