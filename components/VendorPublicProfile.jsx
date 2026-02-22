@@ -120,6 +120,12 @@ export default function VendorPublicProfile({ vendorId }) {
       });
       const data = await res.json();
       if (res.ok) {
+        // Auto-send an opening message so the vendor knows it's a quote request
+        await fetch(`/api/conversations/${data.conversation.id}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: `Hi! I'd love to discuss a custom quote with you. Could you let me know your availability and pricing for my event?` }),
+        });
         router.push(`/customer-messages?conv=${data.conversation.id}`);
       } else {
         setActionError(data.error || 'Failed to start conversation');
