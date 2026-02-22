@@ -26,6 +26,15 @@ import {
 
 export default function EditVendorProfile() {
   const { profile: authProfile, refreshProfile } = useAuth();
+  const [vendorProfileId, setVendorProfileId] = useState(null);
+
+  // Fetch vendor profile ID directly so View Profile link always works
+  useEffect(() => {
+    fetch('/api/vendors/profile')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.id) setVendorProfileId(data.id); })
+      .catch(() => {});
+  }, []);
 
   // Track which sections are complete
   const [completedSections, setCompletedSections] = useState([]);
@@ -1042,7 +1051,7 @@ export default function EditVendorProfile() {
               <p className="text-xs text-gray-400">Save your changes before previewing.</p>
               <div className="flex items-center gap-4">
                 <a
-                  href={`/vendor-profile/${authProfile?.id || ''}`}
+                  href={`/vendor-profile/${vendorProfileId || authProfile?.id || ''}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-6 py-3 border border-gray-200 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
