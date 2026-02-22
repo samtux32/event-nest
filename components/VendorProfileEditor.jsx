@@ -21,8 +21,12 @@ import {
   AlertCircle,
   Image as ImageIcon,
   DollarSign,
-  Save
+  Save,
+  QrCode,
+  Download,
+  Printer
 } from 'lucide-react';
+import { QRCodeCanvas } from 'qrcode.react';
 
 export default function EditVendorProfile() {
   const { profile: authProfile, refreshProfile } = useAuth();
@@ -78,6 +82,7 @@ export default function EditVendorProfile() {
   const profileInputRef = useRef(null);
   const portfolioInputRef = useRef(null);
   const documentInputRef = useRef(null);
+  const qrRef = useRef(null);
 
   const categories = [
     'Photography',
@@ -164,7 +169,8 @@ export default function EditVendorProfile() {
     { id: 'pricing', label: 'Pricing & Packages', icon: <DollarSign size={18} /> },
     { id: 'portfolio', label: 'Portfolio', icon: <ImageIcon size={18} /> },
     { id: 'contact', label: 'Contact & Socials', icon: <Phone size={18} /> },
-    { id: 'documents', label: 'Documents', icon: <FileText size={18} /> }
+    { id: 'documents', label: 'Documents', icon: <FileText size={18} /> },
+    { id: 'qrcode', label: 'QR Code', icon: <QrCode size={18} /> }
   ];
 
   // ── Handlers ──
@@ -239,6 +245,46 @@ export default function EditVendorProfile() {
     }
   };
 
+  // QR Code
+  const qrUrl = `${process.env.NEXT_PUBLIC_APP_URL || ''}/vendor-profile/${authProfile?.id || ''}`;
+
+  const downloadQR = () => {
+    const canvas = qrRef.current?.querySelector('canvas');
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `${profile.businessName || 'vendor'}-qr-code.png`;
+    a.click();
+  };
+
+  const printQR = () => {
+    const canvas = qrRef.current?.querySelector('canvas');
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL('image/png');
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html>
+<html>
+<head><title>${profile.businessName || 'Vendor'} - QR Code</title>
+<style>
+  body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; margin:0; font-family:sans-serif; }
+  img { width:280px; height:280px; }
+  h2 { margin:16px 0 4px; font-size:18px; color:#111; }
+  p { margin:0; font-size:13px; color:#666; }
+  @media print { body { justify-content:flex-start; padding-top:60px; } }
+</style>
+</head>
+<body>
+  <img src="${dataUrl}" />
+  <h2>${profile.businessName || 'Our Profile'}</h2>
+  <p>Scan to view our profile on Event Nest</p>
+</body>
+</html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 300);
+  };
+
   // Section completion check
   const isSectionComplete = (sectionId) => {
     switch (sectionId) {
@@ -254,6 +300,8 @@ export default function EditVendorProfile() {
         return profile.phone && profile.email;
       case 'documents':
         return profile.documents.length >= 1;
+      case 'qrcode':
+        return !!authProfile?.id;
       default:
         return false;
     }
@@ -1033,6 +1081,75 @@ export default function EditVendorProfile() {
               <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-xl">
                 <p className="text-sm text-blue-900">
                   <strong>Recommended documents:</strong> Public Liability Insurance, Professional Indemnity Insurance, Business License, any relevant qualifications or certifications.
+                </p>
+              </div>
+            </div>
+
+            {/* ═══════════════════════════════════ */}
+            {/* SECTION: QR Code                    */}
+            {/* ═══════════════════════════════════ */}
+            <div id="section-qrcode" className="bg-white rounded-2xl border border-gray-200 p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <QrCode className="text-purple-600" size={20} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Your QR Code</h2>
+                  <p className="text-sm text-gray-500">Share this code so customers can find you instantly</p>
+                </div>
+              </div>
+
+              {authProfile?.id ? (
+                <div className="flex flex-col sm:flex-row items-center gap-8">
+                  {/* QR Code display */}
+                  <div ref={qrRef} className="flex-shrink-0 p-4 bg-white border-2 border-gray-100 rounded-2xl shadow-sm">
+                    <QRCodeCanvas
+                      value={qrUrl}
+                      size={200}
+                      bgColor="#ffffff"
+                      fgColor="#111827"
+                      level="H"
+                      includeMargin={false}
+                    />
+                  </div>
+
+                  {/* Info + buttons */}
+                  <div className="flex-1 text-center sm:text-left">
+                    <p className="text-sm text-gray-600 mb-1">This QR code links directly to your public profile:</p>
+                    <p className="text-xs font-mono text-purple-700 bg-purple-50 px-3 py-2 rounded-lg break-all mb-6">
+                      {qrUrl}
+                    </p>
+                    <p className="text-sm text-gray-500 mb-6">
+                      The link is permanent — it will always point to your Event Nest profile even if you update your business name or details.
+                    </p>
+                    <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
+                      <button
+                        onClick={downloadQR}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors text-sm"
+                      >
+                        <Download size={16} />
+                        Download PNG
+                      </button>
+                      <button
+                        onClick={printQR}
+                        className="flex items-center gap-2 px-5 py-2.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors text-sm"
+                      >
+                        <Printer size={16} />
+                        Print
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-400">
+                  <QrCode size={48} className="mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">Save your profile first to generate your QR code.</p>
+                </div>
+              )}
+
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                <p className="text-sm text-blue-900">
+                  <strong>Tip:</strong> Print your QR code and display it at events, on business cards, or in your shop window so potential customers can instantly view your Event Nest profile.
                 </p>
               </div>
             </div>
