@@ -89,7 +89,7 @@ export async function GET() {
       profile: {
         ...profile,
         email: dbUser.email,
-        role: dbUser.role,
+        role,
       },
     })
   } catch (err) {
