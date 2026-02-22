@@ -3,6 +3,14 @@ import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendQuoteReceivedEmail } from '@/lib/email'
 
+async function getDbUserId(authUserId, email) {
+  let dbUser = await prisma.user.findUnique({ where: { id: authUserId }, select: { id: true } })
+  if (!dbUser && email) {
+    dbUser = await prisma.user.findUnique({ where: { email }, select: { id: true } })
+  }
+  return dbUser?.id ?? authUserId
+}
+
 export async function POST(request, { params }) {
   const { id } = await params
 
@@ -38,7 +46,8 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
     }
 
-    if (conversation.vendor.userId !== user.id) {
+    const dbUserId = await getDbUserId(user.id, user.email)
+    if (conversation.vendor.userId !== dbUserId) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
     }
 
@@ -63,7 +72,7 @@ export async function POST(request, { params }) {
       const msg = await tx.message.create({
         data: {
           conversationId: id,
-          senderId: user.id,
+          senderId: dbUserId,
           text: `Custom quote: ${title.trim()}`,
           type: 'quote',
           quoteId: q.id,

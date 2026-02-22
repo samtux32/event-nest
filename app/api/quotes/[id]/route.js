@@ -3,6 +3,14 @@ import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendQuoteAcceptedEmail, sendQuoteDeclinedEmail } from '@/lib/email'
 
+async function getDbUserId(authUserId, email) {
+  let dbUser = await prisma.user.findUnique({ where: { id: authUserId }, select: { id: true } })
+  if (!dbUser && email) {
+    dbUser = await prisma.user.findUnique({ where: { email }, select: { id: true } })
+  }
+  return dbUser?.id ?? authUserId
+}
+
 export async function PATCH(request, { params }) {
   const { id } = await params
 
@@ -38,7 +46,8 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
     }
 
-    if (quote.customer.userId !== user.id) {
+    const dbUserId = await getDbUserId(user.id, user.email)
+    if (quote.customer.userId !== dbUserId) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
     }
 
@@ -66,7 +75,7 @@ export async function PATCH(request, { params }) {
         await tx.message.create({
           data: {
             conversationId: quote.conversationId,
-            senderId: user.id,
+            senderId: dbUserId,
             text: 'Quote declined.',
             type: 'text',
           },
@@ -83,10 +92,10 @@ export async function PATCH(request, { params }) {
 
       // Notify vendor of decline
       if (quote.vendor?.user?.id) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          include: { customerProfile: true },
-        })
+        let dbUser = await prisma.user.findUnique({ where: { id: user.id }, include: { customerProfile: true } })
+        if (!dbUser) {
+          dbUser = await prisma.user.findUnique({ where: { email: user.email }, include: { customerProfile: true } })
+        }
         const customerName = dbUser?.customerProfile?.fullName || 'A customer'
         await prisma.notification.create({
           data: {
