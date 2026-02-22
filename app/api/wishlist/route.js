@@ -2,11 +2,17 @@ import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
-async function getCustomerProfile(userId) {
-  const dbUser = await prisma.user.findUnique({
+async function getCustomerProfile(userId, email) {
+  let dbUser = await prisma.user.findUnique({
     where: { id: userId },
     include: { customerProfile: true },
   })
+  if (!dbUser && email) {
+    dbUser = await prisma.user.findUnique({
+      where: { email },
+      include: { customerProfile: true },
+    })
+  }
   return dbUser?.customerProfile
 }
 
@@ -19,7 +25,7 @@ export async function GET(request) {
   const full = searchParams.get('full') === 'true'
 
   try {
-    const profile = await getCustomerProfile(user.id)
+    const profile = await getCustomerProfile(user.id, user.email)
     if (!profile) return NextResponse.json({ vendorIds: [], vendors: [] })
 
     if (full) {
@@ -72,7 +78,7 @@ export async function POST(request) {
 
   try {
     const { vendorId } = await request.json()
-    const profile = await getCustomerProfile(user.id)
+    const profile = await getCustomerProfile(user.id, user.email)
     if (!profile) return NextResponse.json({ error: 'Customer profile not found' }, { status: 404 })
 
     const existing = await prisma.wishlist.findFirst({
@@ -96,7 +102,7 @@ export async function DELETE(request) {
 
   try {
     const { vendorId } = await request.json()
-    const profile = await getCustomerProfile(user.id)
+    const profile = await getCustomerProfile(user.id, user.email)
     if (!profile) return NextResponse.json({ error: 'Customer profile not found' }, { status: 404 })
 
     await prisma.wishlist.deleteMany({
