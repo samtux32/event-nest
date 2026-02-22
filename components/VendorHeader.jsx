@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -22,6 +22,14 @@ export default function VendorHeader() {
   const { profile, signOut } = useAuth();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [vendorProfileId, setVendorProfileId] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/vendors/profile')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.id) setVendorProfileId(data.id); })
+      .catch(() => {});
+  }, []);
   const initial = profile?.businessName?.[0] || profile?.email?.[0]?.toUpperCase() || 'V';
 
   const navLinks = [
@@ -67,7 +75,7 @@ export default function VendorHeader() {
         {/* Right side */}
         <div className="flex items-center gap-3 flex-shrink-0">
           <Link
-            href={`/vendor-profile/${profile?.id || ''}`}
+            href={`/vendor-profile/${vendorProfileId || profile?.id || ''}`}
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex items-center gap-1 text-xs text-gray-500 hover:text-purple-600 transition-colors"
@@ -125,7 +133,7 @@ export default function VendorHeader() {
             );
           })}
           <Link
-            href={`/vendor-profile/${profile?.id || ''}`}
+            href={`/vendor-profile/${vendorProfileId || profile?.id || ''}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => setMobileOpen(false)}

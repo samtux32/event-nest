@@ -2,6 +2,24 @@ import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
+export async function GET() {
+  const supabase = await createClient()
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
+  try {
+    const vendor = await prisma.vendorProfile.findUnique({
+      where: { userId: user.id },
+      select: { id: true },
+    })
+    if (!vendor) return NextResponse.json({ error: 'No profile yet' }, { status: 404 })
+    return NextResponse.json({ id: vendor.id })
+  } catch (err) {
+    console.error('GET /api/vendors/profile error:', err)
+    return NextResponse.json({ error: 'Failed' }, { status: 500 })
+  }
+}
+
 export async function PUT(request) {
   const supabase = await createClient()
   const { data: { user }, error } = await supabase.auth.getUser()
