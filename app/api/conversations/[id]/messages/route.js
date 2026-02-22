@@ -68,7 +68,7 @@ export async function GET(request, { params }) {
     }
 
     const mapped = messages.map((msg) => {
-      const isMe = msg.senderId === user.id
+      const isMe = msg.senderId === dbUserId
       const senderIsVendor = msg.senderId === conversation.vendor.userId
       const avatar = !isMe
         ? (senderIsVendor ? conversation.vendor.profileImageUrl : conversation.customer.avatarUrl) || null
@@ -160,7 +160,7 @@ export async function POST(request, { params }) {
       prisma.message.create({
         data: {
           conversationId: id,
-          senderId: user.id,
+          senderId: dbUserId,
           text: text?.trim() || '',
           type: attachmentUrl ? 'attachment' : 'text',
           attachmentUrl: attachmentUrl || null,
