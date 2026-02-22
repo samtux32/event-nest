@@ -220,7 +220,7 @@ export default function VendorPublicProfile({ vendorId }) {
         <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex items-center gap-4">
-              <Link href="/marketplace" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <Link href={user?.user_metadata?.role === 'vendor' ? '/profile-editor' : '/marketplace'} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <ArrowLeft size={20} className="text-gray-600" />
               </Link>
               <div className="flex items-center gap-3">
@@ -284,7 +284,7 @@ export default function VendorPublicProfile({ vendorId }) {
         <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex items-center gap-4">
-              <Link href="/marketplace" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <Link href={user?.user_metadata?.role === 'vendor' ? '/profile-editor' : '/marketplace'} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <ArrowLeft size={20} className="text-gray-600" />
               </Link>
               <div className="flex items-center gap-3">
@@ -300,11 +300,11 @@ export default function VendorPublicProfile({ vendorId }) {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Profile Not Available</h1>
           <p className="text-gray-600 mb-6">{error}</p>
           <Link
-            href="/marketplace"
+            href={user?.user_metadata?.role === 'vendor' ? '/profile-editor' : '/marketplace'}
             className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
           >
             <ArrowLeft size={18} />
-            Back to Marketplace
+            {user?.user_metadata?.role === 'vendor' ? 'Back to Profile Editor' : 'Back to Marketplace'}
           </Link>
         </div>
       </div>
@@ -317,7 +317,7 @@ export default function VendorPublicProfile({ vendorId }) {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/marketplace" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <Link href={isOwner ? '/profile-editor' : '/marketplace'} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <ArrowLeft size={20} className="text-gray-600" />
             </Link>
             <div className="flex items-center gap-2.5">
