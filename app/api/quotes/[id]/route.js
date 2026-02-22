@@ -125,10 +125,10 @@ export async function PATCH(request, { params }) {
     const vendorFee = Math.round(totalPrice * 0.10 * 100) / 100
     const customerFee = Math.round(totalPrice * 0.02 * 100) / 100
 
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      include: { customerProfile: true },
-    })
+    let dbUser = await prisma.user.findUnique({ where: { id: user.id }, include: { customerProfile: true } })
+    if (!dbUser) {
+      dbUser = await prisma.user.findUnique({ where: { email: user.email }, include: { customerProfile: true } })
+    }
 
     let booking
     await prisma.$transaction(async (tx) => {
@@ -180,7 +180,7 @@ export async function PATCH(request, { params }) {
       await tx.message.create({
         data: {
           conversationId: quote.conversationId,
-          senderId: user.id,
+          senderId: dbUserId,
           text: '✅ Quote accepted — your booking is now confirmed!',
           type: 'text',
         },
