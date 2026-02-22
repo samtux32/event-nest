@@ -6,7 +6,7 @@ export async function GET(request) {
   const category = searchParams.get('category')
 
   try {
-    const where = { isApproved: true }
+    const where = {}
 
     if (category && category !== 'All Categories') {
       where.category = category

@@ -162,8 +162,12 @@ export default function VendorAnalytics() {
           <div className="flex items-center justify-center py-24">
             <Loader2 className="animate-spin text-purple-600" size={40} />
           </div>
-        ) : !data ? (
-          <div className="text-center py-24 text-gray-500">Failed to load analytics</div>
+        ) : !data || data.error ? (
+          <div className="text-center py-24 text-gray-500">
+            <BarChart3 className="mx-auto mb-4 opacity-30" size={48} />
+            <p className="font-medium">Analytics not available</p>
+            <p className="text-sm mt-1">{data?.error || 'Failed to load analytics data'}</p>
+          </div>
         ) : (
           <>
             {/* STAT CARDS */}

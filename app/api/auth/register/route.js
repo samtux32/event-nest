@@ -59,6 +59,7 @@ export async function POST(request) {
             create: {
               businessName: businessName || 'My Business',
               category: category || 'Other',
+              isApproved: true,
             },
           },
         },

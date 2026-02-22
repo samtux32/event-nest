@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
@@ -29,17 +28,6 @@ export async function GET(request, { params }) {
 
     if (!vendor) {
       return NextResponse.json({ error: 'Vendor not found' }, { status: 404 })
-    }
-
-    // Allow vendors to preview their own unapproved profile
-    if (!vendor.isApproved) {
-      const supabase = await createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      const isOwner = user && user.id === vendor.userId
-
-      if (!isOwner) {
-        return NextResponse.json({ error: 'This vendor profile is not available' }, { status: 403 })
-      }
     }
 
     return NextResponse.json({ vendor })
