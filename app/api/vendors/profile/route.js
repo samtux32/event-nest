@@ -2,6 +2,25 @@ import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
+export async function GET() {
+  const supabase = await createClient()
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
+  try {
+    let vendor = await prisma.vendorProfile.findUnique({ where: { userId: user.id }, select: { id: true } })
+    if (!vendor) {
+      const dbUser = await prisma.user.findUnique({ where: { email: user.email }, select: { vendorProfile: { select: { id: true } } } })
+      vendor = dbUser?.vendorProfile ?? null
+    }
+    if (!vendor) return NextResponse.json({ error: 'No profile yet' }, { status: 404 })
+    return NextResponse.json({ id: vendor.id })
+  } catch (err) {
+    console.error('GET /api/vendors/profile error:', err)
+    return NextResponse.json({ error: 'Failed' }, { status: 500 })
+  }
+}
+
 export async function PUT(request) {
   const supabase = await createClient()
   const { data: { user }, error } = await supabase.auth.getUser()
@@ -17,10 +36,15 @@ export async function PUT(request) {
   try {
     const body = await request.json()
 
-    // Find vendor profile
-    const vendorProfile = await prisma.vendorProfile.findUnique({
-      where: { userId: user.id },
-    })
+    // Find vendor profile — try by Supabase auth ID first, then email fallback
+    let vendorProfile = await prisma.vendorProfile.findUnique({ where: { userId: user.id } })
+    if (!vendorProfile) {
+      const dbUser = await prisma.user.findUnique({
+        where: { email: user.email },
+        include: { vendorProfile: true },
+      })
+      vendorProfile = dbUser?.vendorProfile ?? null
+    }
 
     if (!vendorProfile) {
       return NextResponse.json({ error: 'Vendor profile not found' }, { status: 404 })
