@@ -8,13 +8,22 @@ export async function GET() {
   if (error || !user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
   try {
-    const vendor = await prisma.vendorProfile.findUnique({
+    // Try by Supabase auth ID first, then fall back to email lookup
+    let vendor = await prisma.vendorProfile.findUnique({
       where: { userId: user.id },
       select: { id: true },
     })
+    if (!vendor) {
+      const dbUser = await prisma.user.findUnique({
+        where: { email: user.email },
+        select: { vendorProfile: { select: { id: true } } },
+      })
+      vendor = dbUser?.vendorProfile ?? null
+    }
     if (!vendor) return NextResponse.json({ error: 'No profile yet' }, { status: 404 })
     return NextResponse.json({ id: vendor.id })
   } catch (err) {
+    console.error('GET /api/vendors/profile error:', err)
     return NextResponse.json({ error: 'Failed' }, { status: 500 })
   }
 }

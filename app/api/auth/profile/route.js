@@ -13,7 +13,7 @@ export async function GET() {
   const role = user.user_metadata?.role
 
   try {
-    const dbUser = await prisma.user.findUnique({
+    let dbUser = await prisma.user.findUnique({
       where: { id: user.id },
       include: {
         customerProfile: role === 'customer' ? true : false,
@@ -27,7 +27,25 @@ export async function GET() {
       },
     })
 
-    // Case 1: no DB user at all — create user + profile
+    // If not found by Supabase auth ID, fall back to finding by email
+    // (handles the case where user re-registered with same email, creating a new auth account)
+    if (!dbUser) {
+      dbUser = await prisma.user.findUnique({
+        where: { email: user.email },
+        include: {
+          customerProfile: role === 'customer' ? true : false,
+          vendorProfile: role === 'vendor' ? {
+            include: {
+              packages: { orderBy: { sortOrder: 'asc' } },
+              portfolioImages: { orderBy: { sortOrder: 'asc' } },
+              documents: true,
+            },
+          } : false,
+        },
+      })
+    }
+
+    // Still no user — create one fresh
     if (!dbUser) {
       if (!role || (role !== 'customer' && role !== 'vendor')) {
         return NextResponse.json({ error: 'User not found in database' }, { status: 404 })
@@ -38,7 +56,7 @@ export async function GET() {
           email: user.email,
           role,
           ...(role === 'vendor'
-            ? { vendorProfile: { create: { businessName: 'My Business', category: 'Other', isApproved: true } } }
+            ? { vendorProfile: { create: { businessName: 'My Business', category: 'Other' } } }
             : { customerProfile: { create: { fullName: user.email.split('@')[0] } } }
           ),
         },
@@ -53,16 +71,16 @@ export async function GET() {
 
     let profile = role === 'vendor' ? dbUser.vendorProfile : dbUser.customerProfile
 
-    // Case 2: user exists but profile record is missing (partial registration failure)
+    // Profile record missing — create it now
     if (!profile && (role === 'vendor' || role === 'customer')) {
       if (role === 'vendor') {
         profile = await prisma.vendorProfile.create({
-          data: { userId: user.id, businessName: 'My Business', category: 'Other', isApproved: true },
+          data: { userId: dbUser.id, businessName: 'My Business', category: 'Other' },
           include: { packages: true, portfolioImages: true, documents: true },
         })
       } else {
         profile = await prisma.customerProfile.create({
-          data: { userId: user.id, fullName: user.email.split('@')[0] },
+          data: { userId: dbUser.id, fullName: user.email.split('@')[0] },
         })
       }
     }
