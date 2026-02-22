@@ -13,13 +13,16 @@ export async function GET() {
   const role = user.user_metadata?.role
 
   try {
-    const dbUser = await prisma.user.findUnique({
+    let dbUser = await prisma.user.findUnique({
       where: { id: user.id },
-      include: {
-        customerProfile: role === 'customer',
-        vendorProfile: role === 'vendor',
-      },
+      include: { customerProfile: role === 'customer', vendorProfile: role === 'vendor' },
     })
+    if (!dbUser) {
+      dbUser = await prisma.user.findUnique({
+        where: { email: user.email },
+        include: { customerProfile: role === 'customer', vendorProfile: role === 'vendor' },
+      })
+    }
 
     if (!dbUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })

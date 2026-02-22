@@ -3,6 +3,14 @@ import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendNewMessageEmail } from '@/lib/email'
 
+async function getDbUserId(authUserId, email) {
+  let dbUser = await prisma.user.findUnique({ where: { id: authUserId }, select: { id: true } })
+  if (!dbUser && email) {
+    dbUser = await prisma.user.findUnique({ where: { email }, select: { id: true } })
+  }
+  return dbUser?.id ?? authUserId
+}
+
 export async function GET(request, { params }) {
   const { id } = await params
 
@@ -28,8 +36,9 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
     }
 
-    const isVendor = conversation.vendor.userId === user.id
-    const isCustomer = conversation.customer.userId === user.id
+    const dbUserId = await getDbUserId(user.id, user.email)
+    const isVendor = conversation.vendor.userId === dbUserId
+    const isCustomer = conversation.customer.userId === dbUserId
 
     if (!isVendor && !isCustomer) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
@@ -138,8 +147,9 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
     }
 
-    const isVendor = conversation.vendor.userId === user.id
-    const isCustomer = conversation.customer.userId === user.id
+    const dbUserId = await getDbUserId(user.id, user.email)
+    const isVendor = conversation.vendor.userId === dbUserId
+    const isCustomer = conversation.customer.userId === dbUserId
 
     if (!isVendor && !isCustomer) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
