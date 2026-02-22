@@ -28,7 +28,28 @@ export async function GET() {
     })
 
     if (!dbUser) {
-      return NextResponse.json({ error: 'User not found in database' }, { status: 404 })
+      // Auth account exists but no DB record — auto-create it (handles failed registrations)
+      if (!role || (role !== 'customer' && role !== 'vendor')) {
+        return NextResponse.json({ error: 'User not found in database' }, { status: 404 })
+      }
+      const created = await prisma.user.create({
+        data: {
+          id: user.id,
+          email: user.email,
+          role,
+          ...(role === 'vendor' ? {
+            vendorProfile: { create: { businessName: 'My Business', category: 'Other', isApproved: true } }
+          } : {
+            customerProfile: { create: { fullName: user.email.split('@')[0] } }
+          }),
+        },
+        include: {
+          customerProfile: role === 'customer',
+          vendorProfile: role === 'vendor' ? { include: { packages: true, portfolioImages: true, documents: true } } : false,
+        },
+      })
+      const profile = role === 'vendor' ? created.vendorProfile : created.customerProfile
+      return NextResponse.json({ profile: { ...profile, email: created.email, role: created.role } })
     }
 
     const profile = role === 'vendor' ? dbUser.vendorProfile : dbUser.customerProfile

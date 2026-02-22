@@ -21,7 +21,22 @@ export async function GET(request) {
       where: { userId: user.id },
       select: { id: true, averageRating: true, totalReviews: true },
     })
-    if (!vendor) return NextResponse.json({ error: 'Vendor not found' }, { status: 404 })
+
+    // No profile yet — return empty zeros so the dashboard still renders
+    if (!vendor) return NextResponse.json({
+      profileViews: 0, profileViewsChange: 0,
+      inquiries: 0, inquiriesChange: 0,
+      bookings: 0, bookingsChange: 0,
+      revenue: 0, revenueChange: 0,
+      avgBookingValue: 0,
+      chartData: [],
+      topEventTypes: [],
+      statusBreakdown: { new_inquiry: 0, pending: 0, confirmed: 0, completed: 0, cancelled: 0 },
+      sourceCounts: {},
+      peakDays: [],
+      averageRating: null,
+      totalReviews: 0,
+    })
 
     const now = new Date()
     const periodStart = new Date(now.getTime() - period * 24 * 60 * 60 * 1000)
