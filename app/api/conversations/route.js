@@ -122,10 +122,10 @@ export async function POST(request) {
       return NextResponse.json({ error: 'vendorId is required' }, { status: 400 })
     }
 
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      include: { customerProfile: true },
-    })
+    let dbUser = await prisma.user.findUnique({ where: { id: user.id }, include: { customerProfile: true } })
+    if (!dbUser) {
+      dbUser = await prisma.user.findUnique({ where: { email: user.email }, include: { customerProfile: true } })
+    }
 
     if (!dbUser?.customerProfile) {
       return NextResponse.json({ error: 'Customer profile not found' }, { status: 404 })
