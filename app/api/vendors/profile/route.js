@@ -43,10 +43,17 @@ export async function PUT(request) {
   try {
     const body = await request.json()
 
-    // Find vendor profile
-    const vendorProfile = await prisma.vendorProfile.findUnique({
+    // Find vendor profile — try by Supabase auth ID first, then email fallback
+    let vendorProfile = await prisma.vendorProfile.findUnique({
       where: { userId: user.id },
     })
+    if (!vendorProfile) {
+      const dbUser = await prisma.user.findUnique({
+        where: { email: user.email },
+        include: { vendorProfile: true },
+      })
+      vendorProfile = dbUser?.vendorProfile ?? null
+    }
 
     if (!vendorProfile) {
       return NextResponse.json({ error: 'Vendor profile not found' }, { status: 404 })
