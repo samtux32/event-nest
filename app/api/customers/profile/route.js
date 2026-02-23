@@ -17,9 +17,15 @@ export async function PUT(request) {
   try {
     const body = await request.json()
 
-    const customerProfile = await prisma.customerProfile.findUnique({
-      where: { userId: user.id },
-    })
+    let dbUserId = user.id
+    let customerProfile = await prisma.customerProfile.findUnique({ where: { userId: user.id } })
+    if (!customerProfile) {
+      const dbUser = await prisma.user.findUnique({ where: { email: user.email }, select: { id: true } })
+      if (dbUser) {
+        dbUserId = dbUser.id
+        customerProfile = await prisma.customerProfile.findUnique({ where: { userId: dbUser.id } })
+      }
+    }
 
     if (!customerProfile) {
       return NextResponse.json({ error: 'Customer profile not found' }, { status: 404 })

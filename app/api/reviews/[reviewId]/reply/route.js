@@ -14,7 +14,11 @@ export async function POST(request, { params }) {
   if (!text?.trim()) return NextResponse.json({ error: 'Reply text is required' }, { status: 400 })
 
   try {
-    const vendor = await prisma.vendorProfile.findUnique({ where: { userId: user.id }, select: { id: true } })
+    let vendor = await prisma.vendorProfile.findUnique({ where: { userId: user.id }, select: { id: true } })
+    if (!vendor) {
+      const dbUser = await prisma.user.findUnique({ where: { email: user.email }, select: { id: true } })
+      if (dbUser) vendor = await prisma.vendorProfile.findUnique({ where: { userId: dbUser.id }, select: { id: true } })
+    }
     if (!vendor) return NextResponse.json({ error: 'Vendor not found' }, { status: 404 })
 
     // Verify the review belongs to this vendor
@@ -46,7 +50,11 @@ export async function DELETE(request, { params }) {
   const { reviewId } = await params
 
   try {
-    const vendor = await prisma.vendorProfile.findUnique({ where: { userId: user.id }, select: { id: true } })
+    let vendor = await prisma.vendorProfile.findUnique({ where: { userId: user.id }, select: { id: true } })
+    if (!vendor) {
+      const dbUser = await prisma.user.findUnique({ where: { email: user.email }, select: { id: true } })
+      if (dbUser) vendor = await prisma.vendorProfile.findUnique({ where: { userId: dbUser.id }, select: { id: true } })
+    }
     if (!vendor) return NextResponse.json({ error: 'Vendor not found' }, { status: 404 })
 
     await prisma.reviewReply.deleteMany({ where: { reviewId, vendorId: vendor.id } })
