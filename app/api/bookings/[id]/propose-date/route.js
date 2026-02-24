@@ -75,7 +75,7 @@ export async function POST(request, { params }) {
       prisma.message.create({
         data: {
           conversationId: conversation.id,
-          senderId: user.id,
+          senderId: dbUser.id,
           text: `📅 Date proposal: ${proposedDate}`,
           type: 'date_proposal',
         },
