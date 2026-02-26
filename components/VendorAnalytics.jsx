@@ -245,9 +245,9 @@ export default function VendorAnalytics() {
                       <DollarSign size={18} className="text-gray-500" />
                       <p className="text-gray-600 font-medium">Revenue</p>
                     </div>
-                    <p className="text-5xl font-bold mb-1">£{data.revenue.toLocaleString()}</p>
-                    {data.avgBookingValue > 0 && (
-                      <p className="text-gray-500 text-sm">Avg: £{data.avgBookingValue.toLocaleString()}</p>
+                    <p className="text-5xl font-bold mb-1">£{(data.revenue ?? 0).toLocaleString()}</p>
+                    {(data.avgBookingValue ?? 0) > 0 && (
+                      <p className="text-gray-500 text-sm">Avg: £{(data.avgBookingValue ?? 0).toLocaleString()}</p>
                     )}
                   </div>
                   <ChangeIndicator value={data.revenueChange} />
