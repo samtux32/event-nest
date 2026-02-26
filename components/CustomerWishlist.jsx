@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Heart, Star, MapPin, Search, Plus, X, FolderPlus, Check } from 'lucide-react';
-import CustomerHeader from './CustomerHeader';
+import AppHeader from './AppHeader';
 
 export default function CustomerWishlist() {
   const [vendors, setVendors] = useState([]);
@@ -98,7 +98,7 @@ export default function CustomerWishlist() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <CustomerHeader />
+      <AppHeader />
 
       {/* Invisible overlay to close any open dropdown */}
       {openDropdown && (

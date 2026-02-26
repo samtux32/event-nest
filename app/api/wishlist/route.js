@@ -74,7 +74,8 @@ export async function POST(request) {
   const supabase = await createClient()
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error || !user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  if (user.user_metadata?.role !== 'customer') return NextResponse.json({ error: 'Customers only' }, { status: 403 })
+  const role = user.user_metadata?.role
+  if (role !== 'customer' && role !== 'vendor') return NextResponse.json({ error: 'Customers only' }, { status: 403 })
 
   try {
     const { vendorId } = await request.json()

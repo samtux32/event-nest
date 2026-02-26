@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, Heart, Star, MapPin, SlidersHorizontal, X, GitCompareArrows, Clock } from 'lucide-react';
 import { useAuth } from './AuthProvider';
-import CustomerHeader from './CustomerHeader';
+import AppHeader from './AppHeader';
 
 function parsePrice(str) {
   if (!str) return null;
@@ -183,8 +183,10 @@ export default function CustomerMarketplace() {
 
   const filteredVendors = vendors
     .filter(vendor => {
-      const matchesSearch = vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            vendor.category.toLowerCase().includes(searchQuery.toLowerCase());
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = vendor.name.toLowerCase().includes(query) ||
+                            vendor.category.toLowerCase().includes(query) ||
+                            vendor.keywords?.some(k => k.toLowerCase().includes(query));
       const matchesRating = minRating === 0 || (vendor.rating !== null && vendor.rating >= minRating);
       const price = parsePrice(vendor.startingPrice);
       const matchesPrice = !isPriceFiltered || price === null || (price >= sliderMin && price <= sliderMax);
@@ -217,7 +219,7 @@ export default function CustomerMarketplace() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <CustomerHeader />
+      <AppHeader />
 
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-purple-600 to-purple-700 py-10 sm:py-16 md:py-20">
@@ -268,6 +270,19 @@ export default function CustomerMarketplace() {
             {/* Filter Panel */}
             {showFilters && (
               <div className="border-t border-gray-100 mt-4 pt-4 px-4 pb-2">
+                {/* Clear filters — positioned above filter controls */}
+                {activeFilterCount > 0 && (
+                  <div className="flex justify-end mb-3">
+                    <button
+                      onClick={clearFilters}
+                      className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700 whitespace-nowrap"
+                    >
+                      <X size={14} />
+                      Clear filters
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row sm:items-start gap-6 sm:gap-10">
                   {/* Min Rating */}
                   <div>
@@ -321,17 +336,6 @@ export default function CustomerMarketplace() {
                       </>
                     )}
                   </div>
-
-                  {/* Clear */}
-                  {activeFilterCount > 0 && (
-                    <button
-                      onClick={clearFilters}
-                      className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700 mt-6 whitespace-nowrap"
-                    >
-                      <X size={14} />
-                      Clear filters
-                    </button>
-                  )}
                 </div>
               </div>
             )}
@@ -467,6 +471,17 @@ export default function CustomerMarketplace() {
                   </div>
 
                   <p className="text-gray-600 text-sm mb-3">{vendor.description}</p>
+
+                  {vendor.keywords?.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {vendor.keywords.slice(0, 3).map((kw, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">{kw}</span>
+                      ))}
+                      {vendor.keywords.length > 3 && (
+                        <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full">+{vendor.keywords.length - 3}</span>
+                      )}
+                    </div>
+                  )}
 
                   <div className="flex items-center gap-4 mb-3 flex-wrap">
                     <div className="flex items-center gap-1">

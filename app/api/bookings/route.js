@@ -11,20 +11,26 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  if (user.user_metadata?.role !== 'customer') {
+  const role = user.user_metadata?.role
+  if (role !== 'customer' && role !== 'vendor') {
     return NextResponse.json({ error: 'Only customers can create bookings' }, { status: 403 })
   }
 
   try {
     const body = await request.json()
 
-    let dbUser = await prisma.user.findUnique({ where: { id: user.id }, include: { customerProfile: true } })
+    let dbUser = await prisma.user.findUnique({ where: { id: user.id }, include: { customerProfile: true, vendorProfile: true } })
     if (!dbUser) {
-      dbUser = await prisma.user.findUnique({ where: { email: user.email }, include: { customerProfile: true } })
+      dbUser = await prisma.user.findUnique({ where: { email: user.email }, include: { customerProfile: true, vendorProfile: true } })
     }
 
     if (!dbUser?.customerProfile) {
       return NextResponse.json({ error: 'Customer profile not found' }, { status: 404 })
+    }
+
+    // Prevent vendors from booking their own services
+    if (role === 'vendor' && dbUser.vendorProfile && body.vendorId === dbUser.vendorProfile.id) {
+      return NextResponse.json({ error: 'You cannot book your own services' }, { status: 400 })
     }
 
     const customerId = dbUser.customerProfile.id
@@ -119,7 +125,7 @@ export async function POST(request) {
   }
 }
 
-export async function GET() {
+export async function GET(request) {
   const supabase = await createClient()
   const { data: { user }, error } = await supabase.auth.getUser()
 
@@ -128,16 +134,18 @@ export async function GET() {
   }
 
   const role = user.user_metadata?.role
+  const url = new URL(request.url)
+  const actingAsCustomer = role === 'vendor' && url.searchParams.get('as') === 'customer'
 
   try {
     let dbUser = await prisma.user.findUnique({
       where: { id: user.id },
-      include: { customerProfile: role === 'customer', vendorProfile: role === 'vendor' },
+      include: { customerProfile: role === 'customer' || actingAsCustomer, vendorProfile: role === 'vendor' },
     })
     if (!dbUser) {
       dbUser = await prisma.user.findUnique({
         where: { email: user.email },
-        include: { customerProfile: role === 'customer', vendorProfile: role === 'vendor' },
+        include: { customerProfile: role === 'customer' || actingAsCustomer, vendorProfile: role === 'vendor' },
       })
     }
 
@@ -145,7 +153,9 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const profileId = role === 'vendor'
+    const effectiveRole = actingAsCustomer ? 'customer' : role
+
+    const profileId = effectiveRole === 'vendor'
       ? dbUser.vendorProfile?.id
       : dbUser.customerProfile?.id
 
@@ -153,7 +163,7 @@ export async function GET() {
       return NextResponse.json({ bookings: [] })
     }
 
-    const where = role === 'vendor'
+    const where = effectiveRole === 'vendor'
       ? { vendorId: profileId }
       : { customerId: profileId }
 

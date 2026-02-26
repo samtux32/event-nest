@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import VendorHeader from '@/components/VendorHeader';
+import AppHeader from '@/components/AppHeader';
 import {
   CalendarDays,
   ChevronLeft,
@@ -172,7 +172,7 @@ export default function VendorCalendar() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <VendorHeader />
+      <AppHeader />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8">

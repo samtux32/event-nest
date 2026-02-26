@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, X, Tag, ToggleLeft, ToggleRight, Pencil, Loader2 } from 'lucide-react';
-import VendorHeader from './VendorHeader';
+import AppHeader from './AppHeader';
 
 export default function VendorPromotions() {
   const [promotions, setPromotions] = useState([]);
@@ -90,7 +90,7 @@ export default function VendorPromotions() {
 
   return (
     <>
-      <VendorHeader />
+      <AppHeader />
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-3xl mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6">

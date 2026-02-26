@@ -13,7 +13,7 @@ export async function GET() {
   const role = user.user_metadata?.role
 
   const include = {
-    customerProfile: role === 'customer' ? true : false,
+    customerProfile: role === 'customer' || role === 'vendor' ? true : false,
     vendorProfile: role === 'vendor' ? {
       include: {
         packages: { orderBy: { sortOrder: 'asc' } },
@@ -42,6 +42,7 @@ export async function GET() {
         email: dbUser.email,
         role,
       },
+      ...(role === 'vendor' ? { customerProfile: dbUser.customerProfile || null } : {}),
     })
   } catch (err) {
     console.error('Profile fetch error:', err)

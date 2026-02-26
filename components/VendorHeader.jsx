@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import NotificationBell from './NotificationBell';
+import ModeToggle from './ModeToggle';
 
 export default function VendorHeader() {
   const { profile, signOut } = useAuth();
@@ -82,6 +83,7 @@ export default function VendorHeader() {
 
         {/* Right side */}
         <div className="flex items-center gap-3 flex-shrink-0">
+          <ModeToggle />
           <Link
             href={`/vendor-profile/${vendorProfileId || profile?.id || ''}`}
             target="_blank"
@@ -122,6 +124,9 @@ export default function VendorHeader() {
       {/* Mobile Menu */}
       {mobileOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
+          <div className="flex justify-center py-2">
+            <ModeToggle mobile />
+          </div>
           {navLinks.map(({ href, icon: Icon, label }) => {
             const active = pathname === href;
             return (

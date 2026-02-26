@@ -7,7 +7,7 @@ import LandingPage from '@/components/LandingPage'
 import CustomerMarketplace from '@/components/CustomerMarketplace'
 
 export default function Home() {
-  const { user, profile, loading } = useAuth()
+  const { user, profile, loading, isVendor, activeMode } = useAuth()
   const router = useRouter()
 
   if (loading) {
@@ -28,6 +28,11 @@ export default function Home() {
   }
 
   if (profile?.role === 'customer') {
+    return <CustomerMarketplace />
+  }
+
+  // Vendor in customer mode → show marketplace
+  if (isVendor && activeMode === 'customer') {
     return <CustomerMarketplace />
   }
 

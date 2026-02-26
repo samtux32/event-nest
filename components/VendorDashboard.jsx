@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import React from 'react';
 import Link from 'next/link';
 
-import VendorHeader from '@/components/VendorHeader';
+import AppHeader from '@/components/AppHeader';
 import { useAuth } from '@/components/AuthProvider';
 import {
   MessageSquare,
@@ -100,7 +100,7 @@ export default function VendorDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-    <VendorHeader />
+    <AppHeader />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8">

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from './AuthProvider'
 import { createClient } from '@/lib/supabase/client'
-import CustomerHeader from './CustomerHeader'
+import AppHeader from './AppHeader'
 import { HelpCircle, FileText, Shield } from 'lucide-react'
 
 export default function CustomerSettings() {
@@ -76,7 +76,7 @@ export default function CustomerSettings() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <CustomerHeader />
+      <AppHeader />
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-10">
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
 

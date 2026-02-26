@@ -15,7 +15,7 @@ import {
   Save,
   FolderOpen,
 } from 'lucide-react';
-import CustomerHeader from './CustomerHeader';
+import AppHeader from './AppHeader';
 
 const EXAMPLE_PROMPTS = [
   'Birthday party for my 7 year old son who loves football, £200 budget',
@@ -137,7 +137,7 @@ export default function AIEventPlanner() {
 
   return (
     <>
-      <CustomerHeader />
+      <AppHeader />
       <div className="min-h-screen bg-gray-50">
         {!result ? (
           /* ─── Input screen ─── */

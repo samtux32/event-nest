@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Download, Printer, Palette, ExternalLink, Loader2 } from 'lucide-react';
-import VendorHeader from './VendorHeader';
+import AppHeader from './AppHeader';
 
 const SCHEMES = {
   purple: { bg: '#7c3aed', fg: '#ffffff', label: 'Purple' },
@@ -104,7 +104,7 @@ export default function VendorQRCode() {
   if (loading) {
     return (
       <>
-        <VendorHeader />
+        <AppHeader />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
         </div>
@@ -115,7 +115,7 @@ export default function VendorQRCode() {
   if (!vendorProfile) {
     return (
       <>
-        <VendorHeader />
+        <AppHeader />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <p className="text-gray-500">Unable to load your vendor profile.</p>
         </div>
@@ -125,7 +125,7 @@ export default function VendorQRCode() {
 
   return (
     <>
-      <VendorHeader />
+      <AppHeader />
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-2xl mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Your QR Code</h1>

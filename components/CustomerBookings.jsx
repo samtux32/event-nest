@@ -12,7 +12,8 @@ import {
   ImagePlus,
   Trash2
 } from 'lucide-react';
-import CustomerHeader from '@/components/CustomerHeader';
+import AppHeader from '@/components/AppHeader';
+import { useAuth } from '@/components/AuthProvider';
 
 function formatPrice(val) {
   const num = Number(val);
@@ -203,6 +204,8 @@ function ReviewModal({ booking, onClose, onSubmitted }) {
 }
 
 export default function CustomerBookings() {
+  const { isVendor, activeMode } = useAuth();
+  const asCustomerParam = isVendor && activeMode === 'customer' ? '?as=customer' : '';
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reviewingBooking, setReviewingBooking] = useState(null);
@@ -211,7 +214,7 @@ export default function CustomerBookings() {
   useEffect(() => {
     async function fetchBookings() {
       try {
-        const res = await fetch('/api/bookings');
+        const res = await fetch(`/api/bookings${asCustomerParam}`);
         const data = await res.json();
         if (res.ok) {
           setBookings(data.bookings);
@@ -256,7 +259,7 @@ export default function CustomerBookings() {
         />
       )}
 
-      <CustomerHeader />
+      <AppHeader />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8">

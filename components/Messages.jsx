@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import VendorHeader from '@/components/VendorHeader';
+import AppHeader from '@/components/AppHeader';
 import ConversationList from '@/components/ConversationList';
 import ChatHeader from '@/components/ChatHeader';
 import MessageBubble from '@/components/MessageBubble';
@@ -172,7 +172,7 @@ export default function Messages() {
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
-      <VendorHeader />
+      <AppHeader />
 
       {/* Main Messages Container */}
       <div className="flex-1 flex overflow-hidden max-w-screen-2xl mx-auto w-full">

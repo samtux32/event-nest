@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Circle, Plus, Trash2, Calendar, ChevronDown, X } from 'lucide-react';
-import CustomerHeader from './CustomerHeader';
+import AppHeader from './AppHeader';
 
 const DEFAULT_TEMPLATES = {
   wedding: {
@@ -140,7 +140,7 @@ export default function EventChecklist() {
 
   return (
     <>
-      <CustomerHeader />
+      <AppHeader />
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-3xl mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6">

@@ -24,7 +24,17 @@ export default function ChatHeader({ conversation, role, onSendQuote }) {
               <Circle size={10} className="absolute bottom-0 right-0 fill-green-500 text-green-500 border-2 border-white rounded-full" />
             )}
           </div>
-          <h2 className="font-bold text-base truncate">{conversation.name}</h2>
+          <div className="min-w-0">
+            <h2 className="font-bold text-base truncate">{conversation.name}</h2>
+            {conversation.alsoVendor && (
+              <Link
+                href={`/vendor-profile/${conversation.alsoVendor.profileId}`}
+                className="inline-flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700"
+              >
+                Vendor · {conversation.alsoVendor.businessName}
+              </Link>
+            )}
+          </div>
         </div>
 
         <div className="flex gap-2">
@@ -68,7 +78,17 @@ export default function ChatHeader({ conversation, role, onSendQuote }) {
             )}
           </div>
           <div>
-            <h2 className="font-bold text-lg">{conversation.name}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="font-bold text-lg">{conversation.name}</h2>
+              {conversation.alsoVendor && (
+                <Link
+                  href={`/vendor-profile/${conversation.alsoVendor.profileId}`}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-600 text-xs font-medium rounded-full hover:bg-purple-100 transition-colors"
+                >
+                  Vendor · {conversation.alsoVendor.businessName}
+                </Link>
+              )}
+            </div>
             <div className="flex items-center gap-3 text-sm text-gray-600">
               <span>{conversation.eventType || '—'}</span>
               <span>•</span>

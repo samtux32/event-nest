@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Search, MessageSquare, LogOut, Heart, Settings, Menu, X, Sparkles, CheckSquare, Lightbulb, FolderOpen } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import NotificationBell from './NotificationBell';
+import ModeToggle from './ModeToggle';
 
 export default function CustomerHeader() {
   const { profile, signOut } = useAuth();
@@ -58,6 +59,7 @@ export default function CustomerHeader() {
 
         {/* Right side */}
         <div className="flex items-center gap-3 flex-shrink-0">
+          <ModeToggle />
           <NotificationBell />
           {profile?.avatarUrl ? (
             <img
@@ -88,6 +90,9 @@ export default function CustomerHeader() {
       {/* Mobile Menu */}
       {mobileOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
+          <div className="flex justify-center py-2">
+            <ModeToggle mobile />
+          </div>
           {navLinks.map(({ href, icon: Icon, label }) => {
             const active = pathname === href;
             return (

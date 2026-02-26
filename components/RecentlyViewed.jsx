@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Star, MapPin, Clock, Loader2, Trash2 } from 'lucide-react';
-import CustomerHeader from './CustomerHeader';
+import AppHeader from './AppHeader';
 
 const MAX_RECENT = 20;
 
@@ -85,7 +85,7 @@ export default function RecentlyViewed() {
   if (loading) {
     return (
       <>
-        <CustomerHeader />
+        <AppHeader />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
         </div>
@@ -95,7 +95,7 @@ export default function RecentlyViewed() {
 
   return (
     <>
-      <CustomerHeader />
+      <AppHeader />
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6">

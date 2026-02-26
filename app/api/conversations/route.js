@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(request) {
   const supabase = await createClient()
   const { data: { user }, error } = await supabase.auth.getUser()
 
@@ -11,16 +11,18 @@ export async function GET() {
   }
 
   const role = user.user_metadata?.role
+  const url = new URL(request.url)
+  const actingAsCustomer = role === 'vendor' && url.searchParams.get('as') === 'customer'
 
   try {
     let dbUser = await prisma.user.findUnique({
       where: { id: user.id },
-      include: { customerProfile: role === 'customer', vendorProfile: role === 'vendor' },
+      include: { customerProfile: role === 'customer' || actingAsCustomer, vendorProfile: role === 'vendor' },
     })
     if (!dbUser) {
       dbUser = await prisma.user.findUnique({
         where: { email: user.email },
-        include: { customerProfile: role === 'customer', vendorProfile: role === 'vendor' },
+        include: { customerProfile: role === 'customer' || actingAsCustomer, vendorProfile: role === 'vendor' },
       })
     }
 
@@ -28,7 +30,9 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const profileId = role === 'vendor'
+    const effectiveRole = actingAsCustomer ? 'customer' : role
+
+    const profileId = effectiveRole === 'vendor'
       ? dbUser.vendorProfile?.id
       : dbUser.customerProfile?.id
 
@@ -36,7 +40,7 @@ export async function GET() {
       return NextResponse.json({ conversations: [] })
     }
 
-    const where = role === 'vendor'
+    const where = effectiveRole === 'vendor'
       ? { vendorId: profileId }
       : { customerId: profileId }
 
@@ -47,7 +51,7 @@ export async function GET() {
           select: { id: true, businessName: true, profileImageUrl: true, category: true },
         },
         customer: {
-          select: { id: true, fullName: true, avatarUrl: true },
+          select: { id: true, fullName: true, avatarUrl: true, userId: true },
         },
         booking: {
           select: { id: true, eventDate: true, eventType: true, status: true, venueName: true, venueAddress: true },
@@ -61,12 +65,22 @@ export async function GET() {
       orderBy: { lastMessageAt: { sort: 'desc', nulls: 'last' } },
     })
 
+    // Batch lookup: which customers are also vendors?
+    const customerUserIds = [...new Set(conversations.map(c => c.customer.userId).filter(Boolean))]
+    const alsoVendorsList = customerUserIds.length > 0
+      ? await prisma.vendorProfile.findMany({
+          where: { userId: { in: customerUserIds } },
+          select: { userId: true, businessName: true, id: true },
+        })
+      : []
+    const alsoVendorsMap = Object.fromEntries(alsoVendorsList.map(v => [v.userId, { businessName: v.businessName, profileId: v.id }]))
+
     const mapped = conversations.map((conv) => {
-      const otherParty = role === 'vendor'
+      const otherParty = effectiveRole === 'vendor'
         ? { name: conv.customer.fullName, avatar: conv.customer.avatarUrl }
         : { name: conv.vendor.businessName, avatar: conv.vendor.profileImageUrl }
 
-      const unread = role === 'vendor' ? conv.unreadVendor : conv.unreadCustomer
+      const unread = effectiveRole === 'vendor' ? conv.unreadVendor : conv.unreadCustomer
       const lastMsg = conv.messages[0]
 
       // Map booking status to inquiry status label
@@ -95,6 +109,7 @@ export async function GET() {
         inquiryStatus: statusMap[conv.booking?.status] || 'Active',
         venueName: conv.booking?.venueName || null,
         venueAddress: conv.booking?.venueAddress || null,
+        alsoVendor: alsoVendorsMap[conv.customer.userId] || null,
       }
     })
 
@@ -113,7 +128,8 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  if (user.user_metadata?.role !== 'customer') {
+  const role = user.user_metadata?.role
+  if (role !== 'customer' && role !== 'vendor') {
     return NextResponse.json({ error: 'Only customers can start conversations' }, { status: 403 })
   }
 

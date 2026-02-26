@@ -8,13 +8,21 @@ const AuthContext = createContext({
   profile: null,
   loading: true,
   signOut: async () => {},
+  activeMode: null,
+  toggleMode: async () => {},
+  customerProfile: null,
+  isVendor: false,
 })
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [customerProfile, setCustomerProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [activeMode, setActiveMode] = useState(null)
   const supabase = createClient()
+
+  const isVendor = profile?.role === 'vendor'
 
   async function fetchProfile() {
     try {
@@ -22,10 +30,42 @@ export function AuthProvider({ children }) {
       if (res.ok) {
         const data = await res.json()
         setProfile(data.profile)
+        if (data.customerProfile !== undefined) {
+          setCustomerProfile(data.customerProfile)
+        }
+        // Init activeMode for vendors from localStorage
+        if (data.profile?.role === 'vendor') {
+          const saved = localStorage.getItem('eventNest_activeMode')
+          setActiveMode(saved === 'customer' ? 'customer' : 'vendor')
+        } else {
+          setActiveMode(null)
+        }
       }
     } catch (error) {
       console.error('Failed to fetch profile:', error)
     }
+  }
+
+  async function toggleMode() {
+    if (!isVendor) return
+    const newMode = activeMode === 'vendor' ? 'customer' : 'vendor'
+
+    // If switching to customer and no customer profile yet, create one
+    if (newMode === 'customer' && !customerProfile) {
+      try {
+        const res = await fetch('/api/auth/ensure-customer-profile', { method: 'POST' })
+        if (res.ok) {
+          const data = await res.json()
+          setCustomerProfile(data.customerProfile)
+        }
+      } catch (err) {
+        console.error('Failed to ensure customer profile:', err)
+        return
+      }
+    }
+
+    setActiveMode(newMode)
+    localStorage.setItem('eventNest_activeMode', newMode)
   }
 
   useEffect(() => {
@@ -46,6 +86,8 @@ export function AuthProvider({ children }) {
         fetchProfile()
       } else {
         setProfile(null)
+        setCustomerProfile(null)
+        setActiveMode(null)
       }
       setLoading(false)
     })
@@ -57,11 +99,14 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
+    setCustomerProfile(null)
+    setActiveMode(null)
+    localStorage.removeItem('eventNest_activeMode')
     window.location.href = '/login'
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut, refreshProfile: fetchProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, signOut, refreshProfile: fetchProfile, activeMode, toggleMode, customerProfile, isVendor }}>
       {children}
     </AuthContext.Provider>
   )

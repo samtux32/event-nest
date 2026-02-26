@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Star, MapPin, X, Plus, Loader2, ArrowLeft, Check } from 'lucide-react';
-import CustomerHeader from './CustomerHeader';
+import AppHeader from './AppHeader';
 
 export default function VendorCompare() {
   const [vendorIds, setVendorIds] = useState([]);
@@ -93,7 +93,7 @@ export default function VendorCompare() {
   if (loading) {
     return (
       <>
-        <CustomerHeader />
+        <AppHeader />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
         </div>
@@ -103,7 +103,7 @@ export default function VendorCompare() {
 
   return (
     <>
-      <CustomerHeader />
+      <AppHeader />
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6">

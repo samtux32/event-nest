@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import VendorHeader from '@/components/VendorHeader';
+import AppHeader from '@/components/AppHeader';
 import { useAuth } from '@/components/AuthProvider';
 import Link from 'next/link';
 import {
@@ -67,6 +67,9 @@ export default function EditVendorProfile() {
     twitter: '',
     tiktok: '',
 
+    // Keywords
+    keywords: [],
+
     // Portfolio
     portfolioImages: [],
 
@@ -124,6 +127,7 @@ export default function EditVendorProfile() {
       facebook: authProfile.facebook || '',
       twitter: authProfile.twitter || '',
       tiktok: authProfile.tiktok || '',
+      keywords: authProfile.keywords || [],
       coverImagePreview: authProfile.coverImageUrl || '',
       profileImagePreview: authProfile.profileImageUrl || '',
       packages: authProfile.packages?.length > 0
@@ -338,6 +342,7 @@ export default function EditVendorProfile() {
           facebook: profile.facebook,
           twitter: profile.twitter,
           tiktok: profile.tiktok,
+          keywords: profile.keywords,
           packages: profile.packages,
           coverImageUrl,
           profileImageUrl,
@@ -371,7 +376,7 @@ export default function EditVendorProfile() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-    <VendorHeader />
+    <AppHeader />
 
       {/* Saved Toast */}
       {showSavedToast && (
@@ -516,6 +521,41 @@ export default function EditVendorProfile() {
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all text-gray-900 resize-none"
                   />
                   <p className="text-xs text-gray-400 mt-1">{profile.description.length}/500 characters</p>
+                </div>
+
+                {/* Keywords / Tags */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Keywords / Tags</label>
+                  <p className="text-xs text-gray-500 mb-2">Add keywords so customers can find you when searching (e.g. "wedding", "kids party", "outdoor")</p>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {profile.keywords.map((kw, i) => (
+                      <span key={i} className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 text-purple-700 text-sm rounded-full font-medium">
+                        {kw}
+                        <button
+                          type="button"
+                          onClick={() => updateProfile('keywords', profile.keywords.filter((_, idx) => idx !== i))}
+                          className="hover:text-purple-900 ml-0.5"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Type a keyword and press Enter..."
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all text-gray-900"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const val = e.target.value.trim();
+                        if (val && !profile.keywords.includes(val)) {
+                          updateProfile('keywords', [...profile.keywords, val]);
+                          e.target.value = '';
+                        }
+                      }
+                    }}
+                  />
                 </div>
 
                 {/* Response Time */}

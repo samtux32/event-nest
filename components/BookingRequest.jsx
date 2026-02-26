@@ -17,7 +17,7 @@ function formatPrice(decimal) {
 }
 
 export default function BookingRequest({ vendorId }) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, isVendor } = useAuth();
   const router = useRouter();
   const [vendor, setVendor] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -206,6 +206,22 @@ export default function BookingRequest({ vendorId }) {
           >
             <ArrowLeft size={18} />
             Back to Marketplace
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Self-booking check: vendor cannot book their own profile
+  if (isVendor && profile?.id === vendorId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+        <div className="bg-white rounded-xl shadow-sm p-8 text-center max-w-md">
+          <AlertCircle className="mx-auto mb-4 text-amber-500" size={48} />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">This is your own profile</h2>
+          <p className="text-gray-500 mb-6">You cannot book your own services. Switch to vendor mode to manage your profile.</p>
+          <Link href="/" className="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+            Go to Dashboard
           </Link>
         </div>
       </div>

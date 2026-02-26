@@ -29,9 +29,8 @@ export async function middleware(request) {
       const redirectTo = role === 'customer' ? '/marketplace' : role === 'admin' ? '/admin' : '/'
       return NextResponse.redirect(new URL(redirectTo, request.url))
     }
-    // Customers and admins visiting / → send to their home (avoids flash of vendor dashboard)
+    // Admins visiting / → send to admin home (vendors and customers handled by page.js)
     if (user && pathname === '/') {
-      if (role === 'customer') return NextResponse.redirect(new URL('/marketplace', request.url))
       if (role === 'admin') return NextResponse.redirect(new URL('/admin', request.url))
     }
     return supabaseResponse
@@ -56,9 +55,9 @@ export async function middleware(request) {
     return supabaseResponse
   }
 
-  // Customer-only routes
+  // Customer-only routes (vendors can also access in customer mode)
   if (customerOnlyPrefixes.some(p => pathname.startsWith(p))) {
-    if (role !== 'customer') return NextResponse.redirect(new URL(role === 'vendor' ? '/' : '/login', request.url))
+    if (role !== 'customer' && role !== 'vendor') return NextResponse.redirect(new URL('/login', request.url))
     return supabaseResponse
   }
 

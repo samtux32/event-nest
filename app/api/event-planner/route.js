@@ -52,7 +52,8 @@ export async function POST(request) {
     if (authError || !user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
-    if (user.user_metadata?.role !== 'customer') {
+    const role = user.user_metadata?.role;
+    if (role !== 'customer' && role !== 'vendor') {
       return NextResponse.json({ error: 'Customers only' }, { status: 403 });
     }
 

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle } from 'lucide-react';
-import CustomerHeader from '@/components/CustomerHeader';
+import AppHeader from '@/components/AppHeader';
+import { useAuth } from '@/components/AuthProvider';
 import ConversationList from '@/components/ConversationList';
 import ChatHeader from '@/components/ChatHeader';
 import MessageBubble from '@/components/MessageBubble';
@@ -10,6 +11,8 @@ import MessageInput from '@/components/MessageInput';
 import EventDetailsSidebar from '@/components/EventDetailsSidebar';
 
 export default function CustomerMessages() {
+  const { isVendor, activeMode } = useAuth();
+  const asCustomerParam = isVendor && activeMode === 'customer' ? '?as=customer' : '';
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [mobileView, setMobileView] = useState('list'); // 'list' | 'chat'
@@ -31,7 +34,7 @@ export default function CustomerMessages() {
   useEffect(() => {
     async function fetchConversations() {
       try {
-        const res = await fetch('/api/conversations');
+        const res = await fetch(`/api/conversations${asCustomerParam}`);
         const data = await res.json();
         if (res.ok) {
           setConversations(data.conversations);
@@ -168,7 +171,7 @@ export default function CustomerMessages() {
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
-      <CustomerHeader />
+      <AppHeader />
 
       {/* Main Messages Container */}
       <div className="flex-1 flex overflow-hidden max-w-screen-2xl mx-auto w-full">
