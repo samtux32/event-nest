@@ -16,6 +16,13 @@ export async function GET(request, { params }) {
         packages: { orderBy: { sortOrder: 'asc' } },
         portfolioImages: { orderBy: { sortOrder: 'asc' } },
         awards: true,
+        promotions: {
+          where: { isActive: true },
+          orderBy: { createdAt: 'desc' },
+        },
+        faqs: {
+          orderBy: { sortOrder: 'asc' },
+        },
         reviews: {
           take: 10,
           orderBy: { createdAt: 'desc' },

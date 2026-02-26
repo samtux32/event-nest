@@ -19,6 +19,9 @@ import {
   Loader2,
   BadgeCheck,
   Sparkles,
+  Tag,
+  HelpCircle,
+  ChevronDown,
   Instagram,
   Facebook,
   Twitter,
@@ -33,6 +36,29 @@ function formatPrice(decimal) {
 function formatDate(dateString) {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+}
+
+function FAQItem({ faq }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-3 p-4 text-left hover:bg-gray-50 transition-colors"
+      >
+        <span className="flex-1 font-medium text-gray-900 text-sm">{faq.question}</span>
+        <ChevronDown
+          size={16}
+          className={`text-gray-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      {open && (
+        <div className="border-t border-gray-100 px-4 py-3">
+          <p className="text-sm text-gray-700 whitespace-pre-line">{faq.answer}</p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function VendorPublicProfile({ vendorId }) {
@@ -465,6 +491,58 @@ export default function VendorPublicProfile({ vendorId }) {
                     </div>
                   </>
                 )}
+              </section>
+            )}
+
+            {/* Promotions / Special Offers */}
+            {vendor.promotions?.length > 0 && (
+              <section className="bg-white rounded-2xl p-4 sm:p-8 border border-gray-200">
+                <div className="flex items-center gap-3 mb-4">
+                  <Tag className="text-green-600" size={24} />
+                  <h2 className="text-2xl font-bold">Special Offers</h2>
+                </div>
+                <div className="space-y-3">
+                  {vendor.promotions.map(promo => {
+                    const validUntil = promo.validUntil ? new Date(promo.validUntil) : null;
+                    const isExpired = validUntil && validUntil < new Date();
+                    if (isExpired) return null;
+                    return (
+                      <div key={promo.id} className="border border-green-200 bg-green-50 rounded-xl p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{promo.title}</h3>
+                            {promo.description && <p className="text-sm text-gray-600 mt-1">{promo.description}</p>}
+                            {validUntil && (
+                              <p className="text-xs text-gray-500 mt-2">
+                                Valid until {validUntil.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                              </p>
+                            )}
+                          </div>
+                          {promo.discountText && (
+                            <span className="px-3 py-1.5 bg-green-600 text-white text-sm font-bold rounded-lg whitespace-nowrap flex-shrink-0">
+                              {promo.discountText}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* FAQ */}
+            {vendor.faqs?.length > 0 && (
+              <section className="bg-white rounded-2xl p-4 sm:p-8 border border-gray-200">
+                <div className="flex items-center gap-3 mb-4">
+                  <HelpCircle className="text-purple-600" size={24} />
+                  <h2 className="text-2xl font-bold">Frequently Asked Questions</h2>
+                </div>
+                <div className="space-y-2">
+                  {vendor.faqs.map(faq => (
+                    <FAQItem key={faq.id} faq={faq} />
+                  ))}
+                </div>
               </section>
             )}
 

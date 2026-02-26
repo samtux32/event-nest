@@ -15,7 +15,9 @@ import {
   Menu,
   X,
   QrCode,
-  ImageIcon
+  ImageIcon,
+  Tag,
+  HelpCircle
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import NotificationBell from './NotificationBell';
@@ -41,6 +43,8 @@ export default function VendorHeader() {
     { href: '/profile-editor', icon: User, label: 'Profile' },
     { href: '/messages', icon: MessageSquare, label: 'Messages' },
     { href: '/portfolio', icon: ImageIcon, label: 'Portfolio' },
+    { href: '/promotions', icon: Tag, label: 'Offers' },
+    { href: '/vendor-faqs', icon: HelpCircle, label: 'FAQs' },
     { href: '/qr-code', icon: QrCode, label: 'QR Code' },
     { href: '/vendor-settings', icon: Settings, label: 'Settings' },
   ];

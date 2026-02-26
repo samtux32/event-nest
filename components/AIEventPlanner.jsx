@@ -12,6 +12,8 @@ import {
   Lightbulb,
   ArrowRight,
   CheckCircle2,
+  Save,
+  FolderOpen,
 } from 'lucide-react';
 import CustomerHeader from './CustomerHeader';
 
@@ -42,6 +44,7 @@ export default function AIEventPlanner() {
   const [error, setError] = useState('');
   const [savingWishlist, setSavingWishlist] = useState(false);
   const [wishlistSaved, setWishlistSaved] = useState(false);
+  const [planSaved, setPlanSaved] = useState(false);
 
   async function generate() {
     if (!prompt.trim()) return;
@@ -105,11 +108,28 @@ export default function AIEventPlanner() {
     }
   }
 
+  function savePlan() {
+    if (!result || planSaved) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem('savedEventPlans') || '[]');
+      saved.unshift({
+        id: Date.now().toString(),
+        prompt: prompt.trim(),
+        plan: result.plan,
+        vendors: result.vendors,
+        savedAt: Date.now(),
+      });
+      localStorage.setItem('savedEventPlans', JSON.stringify(saved.slice(0, 20)));
+      setPlanSaved(true);
+    } catch {}
+  }
+
   function startOver() {
     setResult(null);
     setPrompt('');
     setError('');
     setWishlistSaved(false);
+    setPlanSaved(false);
   }
 
   const plan = result?.plan;
@@ -385,6 +405,25 @@ export default function AIEventPlanner() {
                   )}
                 </button>
               )}
+              <button
+                onClick={savePlan}
+                disabled={planSaved}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium text-sm w-full sm:w-auto justify-center transition-colors ${
+                  planSaved
+                    ? 'bg-green-100 text-green-700 border border-green-200'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {planSaved ? <CheckCircle2 size={16} /> : <Save size={16} />}
+                {planSaved ? 'Plan Saved' : 'Save Plan'}
+              </button>
+              <Link
+                href="/my-plans"
+                className="flex items-center gap-2 px-6 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm w-full sm:w-auto justify-center"
+              >
+                <FolderOpen size={16} />
+                My Plans
+              </Link>
               <button
                 onClick={startOver}
                 className="flex items-center gap-2 px-6 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm w-full sm:w-auto justify-center"
