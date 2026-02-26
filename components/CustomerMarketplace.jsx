@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Heart, Star, MapPin, SlidersHorizontal, X } from 'lucide-react';
+import { Search, Heart, Star, MapPin, SlidersHorizontal, X, GitCompareArrows, Clock } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import CustomerHeader from './CustomerHeader';
 
@@ -367,6 +367,24 @@ export default function CustomerMarketplace() {
             <option value="reviews">Most Reviews</option>
             <option value="nearest">Nearest First</option>
           </select>
+        </div>
+
+        {/* Quick Links */}
+        <div className="flex items-center gap-3 mb-4">
+          <Link
+            href="/compare"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:border-purple-300 hover:text-purple-700 transition-colors"
+          >
+            <GitCompareArrows size={15} />
+            Compare Vendors
+          </Link>
+          <Link
+            href="/recently-viewed"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:border-purple-300 hover:text-purple-700 transition-colors"
+          >
+            <Clock size={15} />
+            Recently Viewed
+          </Link>
         </div>
 
         {/* Category Filter Tabs */}
