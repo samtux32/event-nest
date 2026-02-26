@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, MessageSquare, LogOut, Heart, Settings, Menu, X, Sparkles } from 'lucide-react';
+import { Search, MessageSquare, LogOut, Heart, Settings, Menu, X, Sparkles, GitCompareArrows, Clock } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import NotificationBell from './NotificationBell';
 
@@ -17,6 +17,8 @@ export default function CustomerHeader() {
     { href: '/marketplace', icon: Search, label: 'Discover' },
     { href: '/my-bookings', icon: null, label: 'Bookings' },
     { href: '/wishlist', icon: Heart, label: 'Wishlist' },
+    { href: '/compare', icon: GitCompareArrows, label: 'Compare' },
+    { href: '/recently-viewed', icon: Clock, label: 'Viewed' },
     { href: '/plan-my-event', icon: Sparkles, label: 'AI Planner' },
     { href: '/customer-messages', icon: MessageSquare, label: 'Messages' },
     { href: '/customer-settings', icon: Settings, label: 'Settings' },
