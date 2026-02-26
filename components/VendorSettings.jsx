@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useAuth } from './AuthProvider'
 import { createClient } from '@/lib/supabase/client'
 import VendorHeader from './VendorHeader'
+import { HelpCircle, FileText, Shield } from 'lucide-react'
 
 export default function VendorSettings() {
   const { user, profile, refreshProfile } = useAuth()
@@ -205,6 +207,25 @@ export default function VendorSettings() {
           >
             {quotesSaving ? 'Saving...' : 'Save Preference'}
           </button>
+        </section>
+
+        {/* Help & Legal */}
+        <section className="bg-white rounded-xl border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Help & Legal</h2>
+          <div className="space-y-2">
+            <Link href="/help" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+              <HelpCircle size={18} className="text-gray-400" />
+              Help & FAQ
+            </Link>
+            <Link href="/terms" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+              <FileText size={18} className="text-gray-400" />
+              Terms of Service
+            </Link>
+            <Link href="/privacy" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+              <Shield size={18} className="text-gray-400" />
+              Privacy Policy
+            </Link>
+          </div>
         </section>
       </div>
     </div>

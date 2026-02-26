@@ -227,9 +227,18 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8">
-        <div className="max-w-7xl mx-auto px-6 text-center text-sm">
-          &copy; {new Date().getFullYear()} Event Nest. All rights reserved.
+      <footer className="bg-gray-900 text-gray-400 py-10">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-sm">
+              &copy; {new Date().getFullYear()} Event Nest. All rights reserved.
+            </p>
+            <div className="flex items-center gap-6">
+              <Link href="/help" className="text-sm hover:text-white transition-colors">Help & FAQ</Link>
+              <Link href="/terms" className="text-sm hover:text-white transition-colors">Terms</Link>
+              <Link href="/privacy" className="text-sm hover:text-white transition-colors">Privacy</Link>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
