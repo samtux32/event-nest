@@ -141,14 +141,27 @@ export default function VendorAnalytics() {
             <p className="text-gray-600">Track your business performance and insights</p>
           </div>
           <div className="flex items-center gap-3">
-            <a
-              href="/api/analytics/export"
-              download
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/analytics/export');
+                  if (!res.ok) throw new Error();
+                  const blob = await res.blob();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = res.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] || 'analytics.csv';
+                  a.click();
+                  URL.revokeObjectURL(url);
+                } catch {
+                  alert('Export failed. Please try again.');
+                }
+              }}
               className="hidden sm:flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
             >
               <Download size={15} />
               Export CSV
-            </a>
+            </button>
           <div className="flex bg-white border border-gray-200 rounded-xl overflow-hidden">
             {[
               { value: '7', label: '7 Days' },
