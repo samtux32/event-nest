@@ -50,7 +50,7 @@ export async function GET(request) {
       orderBy: { createdAt: 'desc' },
       select: {
         rating: true,
-        comment: true,
+        text: true,
         createdAt: true,
         customer: { select: { fullName: true } },
       },
@@ -95,7 +95,7 @@ export async function GET(request) {
         new Date(r.createdAt).toLocaleDateString('en-GB'),
         csvEscape(r.customer?.fullName || 'Anonymous'),
         r.rating,
-        csvEscape(r.comment || ''),
+        csvEscape(r.text || ''),
       ].join(','));
     });
 
