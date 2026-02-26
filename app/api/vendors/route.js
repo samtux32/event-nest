@@ -4,12 +4,21 @@ import { NextResponse } from 'next/server'
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const category = searchParams.get('category')
+  const search = searchParams.get('search')
 
   try {
     const where = { isApproved: true }
 
     if (category && category !== 'All Categories') {
       where.category = category
+    }
+
+    if (search) {
+      where.OR = [
+        { businessName: { contains: search, mode: 'insensitive' } },
+        { category: { contains: search, mode: 'insensitive' } },
+        { tagline: { contains: search, mode: 'insensitive' } },
+      ]
     }
 
     const vendors = await prisma.vendorProfile.findMany({

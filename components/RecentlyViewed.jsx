@@ -40,7 +40,8 @@ export default function RecentlyViewed() {
             const res = await fetch(`/api/vendors/${item.id}`);
             if (!res.ok) return null;
             const data = await res.json();
-            return { ...data, viewedAt: item.viewedAt };
+            const vendor = data.vendor || data;
+            return { ...vendor, viewedAt: item.viewedAt };
           } catch { return null; }
         })
       );

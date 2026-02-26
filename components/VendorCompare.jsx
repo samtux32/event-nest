@@ -34,7 +34,8 @@ export default function VendorCompare() {
           try {
             const res = await fetch(`/api/vendors/${id}`);
             if (!res.ok) return null;
-            return await res.json();
+            const data = await res.json();
+            return data.vendor || data;
           } catch { return null; }
         })
       );
@@ -209,15 +210,15 @@ export default function VendorCompare() {
                           disabled={vendorIds.length >= 3}
                           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-left"
                         >
-                          {v.profileImageUrl ? (
-                            <img src={v.profileImageUrl} alt="" className="w-9 h-9 rounded-lg object-cover" />
+                          {(v.profileImageUrl || v.image) ? (
+                            <img src={v.profileImageUrl || v.image} alt="" className="w-9 h-9 rounded-lg object-cover" />
                           ) : (
                             <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-sm">
-                              {v.businessName?.[0]}
+                              {(v.businessName || v.name)?.[0]}
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{v.businessName}</p>
+                            <p className="text-sm font-medium text-gray-900 truncate">{v.businessName || v.name}</p>
                             <p className="text-xs text-gray-500">{v.category}</p>
                           </div>
                           <Plus size={16} className="text-purple-600 flex-shrink-0" />
