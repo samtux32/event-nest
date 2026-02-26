@@ -70,11 +70,17 @@ export async function POST(request) {
       messages: [{ role: 'user', content: prompt.trim() }],
     });
 
-    const text = message.content[0]?.text || '';
+    let text = message.content[0]?.text || '';
+    console.log('Claude raw response:', text.slice(0, 500));
+
+    // Strip markdown code fences if present
+    text = text.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+
     let plan;
     try {
       plan = JSON.parse(text);
-    } catch {
+    } catch (parseErr) {
+      console.error('JSON parse error:', parseErr.message, 'Response:', text.slice(0, 300));
       return NextResponse.json({ error: 'Failed to generate plan. Please try again.' }, { status: 500 });
     }
 

@@ -14,7 +14,8 @@ import {
   ExternalLink,
   Menu,
   X,
-  QrCode
+  QrCode,
+  ImageIcon
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import NotificationBell from './NotificationBell';
@@ -39,6 +40,7 @@ export default function VendorHeader() {
     { href: '/calendar', icon: Calendar, label: 'Calendar' },
     { href: '/profile-editor', icon: User, label: 'Profile' },
     { href: '/messages', icon: MessageSquare, label: 'Messages' },
+    { href: '/portfolio', icon: ImageIcon, label: 'Portfolio' },
     { href: '/qr-code', icon: QrCode, label: 'QR Code' },
     { href: '/vendor-settings', icon: Settings, label: 'Settings' },
   ];

@@ -17,7 +17,8 @@ import {
   BarChart3,
   Activity,
   Package,
-  Loader2
+  Loader2,
+  Download
 } from 'lucide-react';
 
 const SOURCE_COLORS = ['bg-purple-500', 'bg-blue-500', 'bg-green-500', 'bg-orange-500'];
@@ -139,6 +140,15 @@ export default function VendorAnalytics() {
             <h1 className="text-2xl sm:text-4xl font-bold mb-1">Analytics Dashboard</h1>
             <p className="text-gray-600">Track your business performance and insights</p>
           </div>
+          <div className="flex items-center gap-3">
+            <a
+              href="/api/analytics/export"
+              download
+              className="hidden sm:flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              <Download size={15} />
+              Export CSV
+            </a>
           <div className="flex bg-white border border-gray-200 rounded-xl overflow-hidden">
             {[
               { value: '7', label: '7 Days' },
@@ -155,6 +165,7 @@ export default function VendorAnalytics() {
                 {period.label}
               </button>
             ))}
+          </div>
           </div>
         </div>
 

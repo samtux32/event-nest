@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { trackVendorView } from '@/components/RecentlyViewed';
 import {
   ArrowLeft,
   Star,
@@ -205,6 +206,9 @@ export default function VendorPublicProfile({ vendorId }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ vendorId, source: 'direct_link' }),
         }).catch(() => {});
+
+        // Track for recently viewed page
+        trackVendorView(vendorId);
       } catch {
         setError('Failed to load vendor profile');
       } finally {
