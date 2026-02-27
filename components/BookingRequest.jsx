@@ -180,6 +180,12 @@ export default function BookingRequest({ vendorId }) {
     );
   }
 
+  // Redirect unauthenticated users to login
+  if (!authLoading && !user) {
+    window.location.href = `/login?redirectTo=/booking/${vendorId}`;
+    return null;
+  }
+
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
