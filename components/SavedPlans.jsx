@@ -13,6 +13,7 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import AppHeader from './AppHeader';
+import ConfirmModal from './ConfirmModal';
 
 const PRIORITY_COLOURS = {
   essential:   { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
@@ -28,6 +29,7 @@ const CATEGORY_COLOURS = [
 export default function SavedPlans() {
   const [plans, setPlans] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
+  const [confirmAction, setConfirmAction] = useState(null);
 
   useEffect(() => {
     try {
@@ -74,7 +76,7 @@ export default function SavedPlans() {
             </div>
             <div className="flex items-center gap-3">
               {plans.length > 0 && (
-                <button onClick={clearAll} className="text-sm text-red-500 hover:text-red-700 transition-colors">
+                <button onClick={() => setConfirmAction({ type: 'clearAll' })} className="text-sm text-red-500 hover:text-red-700 transition-colors">
                   Clear all
                 </button>
               )}
@@ -229,7 +231,7 @@ export default function SavedPlans() {
                         )}
 
                         <button
-                          onClick={() => deletePlan(saved.id)}
+                          onClick={() => setConfirmAction({ type: 'deletePlan', id: saved.id })}
                           className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-700 transition-colors"
                         >
                           <Trash2 size={14} />
@@ -244,6 +246,20 @@ export default function SavedPlans() {
           )}
         </div>
       </div>
+
+      {confirmAction && (
+        <ConfirmModal
+          title={confirmAction.type === 'clearAll' ? 'Clear all plans?' : 'Delete this plan?'}
+          message={confirmAction.type === 'clearAll' ? 'This will remove all your saved plans. This cannot be undone.' : 'This plan will be permanently deleted.'}
+          confirmLabel="Delete"
+          onConfirm={() => {
+            if (confirmAction.type === 'clearAll') clearAll();
+            else deletePlan(confirmAction.id);
+            setConfirmAction(null);
+          }}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
     </>
   );
 }

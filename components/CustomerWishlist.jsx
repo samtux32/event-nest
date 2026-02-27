@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Heart, Star, MapPin, Search, Plus, X, FolderPlus, Check } from 'lucide-react';
 import AppHeader from './AppHeader';
+import ConfirmModal from './ConfirmModal';
 
 export default function CustomerWishlist() {
   const [vendors, setVendors] = useState([]);
@@ -13,6 +14,7 @@ export default function CustomerWishlist() {
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [openDropdown, setOpenDropdown] = useState(null); // vendorId
+  const [deletingGroupId, setDeletingGroupId] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -137,7 +139,7 @@ export default function CustomerWishlist() {
                 {group.name} ({group.vendorIds.length})
               </button>
               <button
-                onClick={() => deleteGroup(group.id)}
+                onClick={() => setDeletingGroupId(group.id)}
                 title="Delete group"
                 className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-0.5 transition-colors ${
                   activeTab === group.id ? 'text-purple-200 hover:text-white' : 'text-gray-400 hover:text-gray-600'
@@ -345,6 +347,16 @@ export default function CustomerWishlist() {
           </>
         )}
       </div>
+
+      {deletingGroupId && (
+        <ConfirmModal
+          title="Delete group?"
+          message="This will remove the group. Vendors will remain in your general wishlist."
+          confirmLabel="Delete"
+          onConfirm={() => { deleteGroup(deletingGroupId); setDeletingGroupId(null); }}
+          onCancel={() => setDeletingGroupId(null)}
+        />
+      )}
     </div>
   );
 }

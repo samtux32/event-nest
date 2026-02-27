@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import { useAuth } from '@/components/AuthProvider';
+import ConfirmModal from './ConfirmModal';
 
 function formatPrice(val) {
   const num = Number(val);
@@ -210,6 +211,7 @@ export default function CustomerBookings() {
   const [loading, setLoading] = useState(true);
   const [reviewingBooking, setReviewingBooking] = useState(null);
   const [reviewedIds, setReviewedIds] = useState(new Set());
+  const [cancellingBookingId, setCancellingBookingId] = useState(null);
 
   useEffect(() => {
     async function fetchBookings() {
@@ -236,7 +238,6 @@ export default function CustomerBookings() {
   };
 
   const handleCancelBooking = async (bookingId) => {
-    if (!confirm('Are you sure you want to cancel this booking? Please check the vendor\'s cancellation policy before proceeding.')) return;
     try {
       const res = await fetch(`/api/bookings/${bookingId}/cancel`, {
         method: 'POST',
@@ -357,7 +358,7 @@ export default function CustomerBookings() {
                       )}
                       {canCancel && (
                         <button
-                          onClick={() => handleCancelBooking(booking.id)}
+                          onClick={() => setCancellingBookingId(booking.id)}
                           className="text-xs text-red-500 hover:text-red-700 hover:underline transition-colors"
                         >
                           Cancel booking
@@ -371,6 +372,16 @@ export default function CustomerBookings() {
           </div>
         )}
       </div>
+
+      {cancellingBookingId && (
+        <ConfirmModal
+          title="Cancel booking?"
+          message="Are you sure you want to cancel this booking? Please check the vendor's cancellation policy before proceeding."
+          confirmLabel="Cancel Booking"
+          onConfirm={() => { handleCancelBooking(cancellingBookingId); setCancellingBookingId(null); }}
+          onCancel={() => setCancellingBookingId(null)}
+        />
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, X, Tag, ToggleLeft, ToggleRight, Pencil, Loader2 } from 'lucide-react';
 import AppHeader from './AppHeader';
+import ConfirmModal from './ConfirmModal';
 
 export default function VendorPromotions() {
   const [promotions, setPromotions] = useState([]);
@@ -11,6 +12,7 @@ export default function VendorPromotions() {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', discountText: '', validFrom: '', validUntil: '' });
+  const [deletingPromoId, setDeletingPromoId] = useState(null);
 
   useEffect(() => {
     fetch('/api/promotions')
@@ -232,7 +234,7 @@ export default function VendorPromotions() {
                         <Pencil size={16} />
                       </button>
                       <button
-                        onClick={() => deletePromo(promo.id)}
+                        onClick={() => setDeletingPromoId(promo.id)}
                         className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
                       >
                         <Trash2 size={16} />
@@ -245,6 +247,16 @@ export default function VendorPromotions() {
           )}
         </div>
       </div>
+
+      {deletingPromoId && (
+        <ConfirmModal
+          title="Delete promotion?"
+          message="This promotion will be permanently removed from your profile."
+          confirmLabel="Delete"
+          onConfirm={() => { deletePromo(deletingPromoId); setDeletingPromoId(null); }}
+          onCancel={() => setDeletingPromoId(null)}
+        />
+      )}
     </>
   );
 }

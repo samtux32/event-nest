@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { CheckCircle, XCircle, Loader2, LogOut, Store, Users, Clock, BadgeCheck, FileText, Eye, X, Flag, Star, Trash2, MessageSquare } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
@@ -20,6 +21,7 @@ export default function AdminDashboard() {
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewActionId, setReviewActionId] = useState(null);
+  const [deletingReviewId, setDeletingReviewId] = useState(null);
 
   useEffect(() => {
     async function fetchVendors() {
@@ -420,11 +422,7 @@ export default function AdminDashboard() {
                                 </button>
                               )}
                               <button
-                                onClick={() => {
-                                  if (confirm('Permanently delete this review? This cannot be undone.')) {
-                                    deleteReview(review.id);
-                                  }
-                                }}
+                                onClick={() => setDeletingReviewId(review.id)}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-red-600 text-sm font-medium rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
                               >
                                 <Trash2 size={13} />
@@ -508,6 +506,16 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {deletingReviewId && (
+        <ConfirmModal
+          title="Delete review?"
+          message="Permanently delete this review? This cannot be undone."
+          confirmLabel="Delete"
+          onConfirm={() => { deleteReview(deletingReviewId); setDeletingReviewId(null); }}
+          onCancel={() => setDeletingReviewId(null)}
+        />
       )}
     </div>
   );

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, X, HelpCircle, Pencil, ChevronDown, Loader2 } from 'lucide-react';
 import AppHeader from './AppHeader';
+import ConfirmModal from './ConfirmModal';
 
 export default function VendorFAQManager() {
   const [faqs, setFaqs] = useState([]);
@@ -12,6 +13,7 @@ export default function VendorFAQManager() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ question: '', answer: '' });
   const [expandedId, setExpandedId] = useState(null);
+  const [deletingFaqId, setDeletingFaqId] = useState(null);
 
   useEffect(() => {
     fetch('/api/vendor-faqs')
@@ -167,7 +169,7 @@ export default function VendorFAQManager() {
                             Edit
                           </button>
                           <button
-                            onClick={() => deleteFaq(faq.id)}
+                            onClick={() => setDeletingFaqId(faq.id)}
                             className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700 transition-colors"
                           >
                             <Trash2 size={14} />
@@ -183,6 +185,16 @@ export default function VendorFAQManager() {
           )}
         </div>
       </div>
+
+      {deletingFaqId && (
+        <ConfirmModal
+          title="Delete FAQ?"
+          message="This FAQ will be permanently removed from your profile."
+          confirmLabel="Delete"
+          onConfirm={() => { deleteFaq(deletingFaqId); setDeletingFaqId(null); }}
+          onCancel={() => setDeletingFaqId(null)}
+        />
+      )}
     </>
   );
 }

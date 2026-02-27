@@ -4,10 +4,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { LogOut, Settings, HelpCircle, FileText, Shield } from 'lucide-react';
 import { useAuth } from './AuthProvider';
+import ConfirmModal from './ConfirmModal';
 
 export default function ProfileDropdown() {
   const { profile, signOut, isVendor, activeMode } = useAuth();
   const [open, setOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const ref = useRef(null);
 
   // Close on outside click
@@ -96,13 +98,23 @@ export default function ProfileDropdown() {
 
           {/* Sign Out */}
           <button
-            onClick={() => { setOpen(false); signOut(); }}
+            onClick={() => { setOpen(false); setShowLogoutConfirm(true); }}
             className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 w-full transition-colors"
           >
             <LogOut size={16} />
             Sign Out
           </button>
         </div>
+      )}
+
+      {showLogoutConfirm && (
+        <ConfirmModal
+          title="Sign out?"
+          message="Are you sure you want to sign out of your account?"
+          confirmLabel="Sign Out"
+          onConfirm={() => { setShowLogoutConfirm(false); signOut(); }}
+          onCancel={() => setShowLogoutConfirm(false)}
+        />
       )}
     </div>
   );
