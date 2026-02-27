@@ -348,7 +348,12 @@ export default function VendorPublicProfile({ vendorId }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Profile Header */}
         <div className="relative -mt-32 mb-8">
-          <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-8 shadow-xl">
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-8 shadow-xl relative">
+            {!isOwner && (
+              <button onClick={toggleWishlist} className="absolute top-4 right-4 sm:top-6 sm:right-6 hover:scale-110 transition-transform" title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}>
+                <Heart size={24} className={isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-400'} />
+              </button>
+            )}
             <div className="flex items-start gap-4">
               {vendor.profileImageUrl ? (
                 <img
@@ -762,6 +767,7 @@ export default function VendorPublicProfile({ vendorId }) {
                       {actionError && (
                         <p className="text-sm text-red-600 text-center bg-red-50 rounded-lg px-3 py-2">{actionError}</p>
                       )}
+
                     </>
                   )}
                 </div>

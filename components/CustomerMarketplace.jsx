@@ -506,7 +506,8 @@ export default function CustomerMarketplace() {
         {!loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredVendors.map(vendor => (
-              <div
+              <Link
+                href={`/vendor-profile/${vendor.id}`}
                 key={vendor.id}
                 className="bg-white rounded-2xl overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer group"
               >
@@ -524,6 +525,7 @@ export default function CustomerMarketplace() {
                   )}
                   <button
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
                       toggleWishlist(vendor.id);
                     }}
@@ -583,12 +585,9 @@ export default function CustomerMarketplace() {
                         <p className="font-bold text-gray-900">{vendor.startingPrice}</p>
                       </div>
                     )}
-                    <Link href={`/vendor-profile/${vendor.id}`} className="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors">
-                      View Profile
-                    </Link>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
