@@ -7,7 +7,7 @@ import { useAuth } from './AuthProvider';
 import ConfirmModal from './ConfirmModal';
 
 export default function ProfileDropdown() {
-  const { profile, signOut, isVendor, activeMode } = useAuth();
+  const { profile, signOut, isVendor, activeMode, loading } = useAuth();
   const [open, setOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const ref = useRef(null);
@@ -39,22 +39,26 @@ export default function ProfileDropdown() {
 
   return (
     <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex-shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-      >
-        {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt={displayName}
-            className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
-          />
-        ) : (
-          <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-            {initial}
-          </div>
-        )}
-      </button>
+      {loading || !profile ? (
+        <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
+      ) : (
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex-shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+        >
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={displayName}
+              className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+            />
+          ) : (
+            <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+              {initial}
+            </div>
+          )}
+        </button>
+      )}
 
       {open && (
         <div className="fixed left-2 right-2 top-16 z-50 md:absolute md:left-auto md:right-0 md:top-12 md:w-72 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
