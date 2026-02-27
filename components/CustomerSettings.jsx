@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useAuth } from './AuthProvider'
 import { createClient } from '@/lib/supabase/client'
 import AppHeader from './AppHeader'
-import { HelpCircle, FileText, Shield } from 'lucide-react'
+import { HelpCircle, FileText, Shield, Eye, EyeOff } from 'lucide-react'
 
 export default function CustomerSettings() {
   const { user, profile, refreshProfile } = useAuth()
@@ -15,6 +15,10 @@ export default function CustomerSettings() {
   const [email, setEmail] = useState('')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showCurrentPw, setShowCurrentPw] = useState(false)
+  const [showNewPw, setShowNewPw] = useState(false)
+  const [showConfirmPw, setShowConfirmPw] = useState(false)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState(null)
 
@@ -32,6 +36,11 @@ export default function CustomerSettings() {
       const nameChanged = fullName !== (profile?.fullName || '')
       const emailChanged = email !== (user?.email || '')
       const passwordChanged = currentPassword && newPassword
+      if (passwordChanged && newPassword !== confirmPassword) {
+        setMsg({ type: 'error', text: 'New passwords do not match.' })
+        setSaving(false)
+        return
+      }
 
       // Save name to DB
       if (nameChanged) {
@@ -58,6 +67,7 @@ export default function CustomerSettings() {
         if (error) throw new Error(error.message)
         setCurrentPassword('')
         setNewPassword('')
+        setConfirmPassword('')
       }
 
       await refreshProfile()
@@ -106,20 +116,45 @@ export default function CustomerSettings() {
             <div className="border-t border-gray-100 pt-4">
               <p className="text-sm font-medium text-gray-700 mb-3">Change Password</p>
               <div className="space-y-3">
-                <input
-                  type="password"
-                  placeholder="Current password"
-                  value={currentPassword}
-                  onChange={e => setCurrentPassword(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-                <input
-                  type="password"
-                  placeholder="New password"
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
+                <div className="relative">
+                  <input
+                    type={showCurrentPw ? 'text' : 'password'}
+                    placeholder="Current password"
+                    value={currentPassword}
+                    onChange={e => setCurrentPassword(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <button type="button" onClick={() => setShowCurrentPw(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    {showCurrentPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showNewPw ? 'text' : 'password'}
+                    placeholder="New password"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <button type="button" onClick={() => setShowNewPw(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    {showNewPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showConfirmPw ? 'text' : 'password'}
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    className={`w-full border rounded-lg px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 ${confirmPassword && confirmPassword !== newPassword ? 'border-red-300' : 'border-gray-300'}`}
+                  />
+                  <button type="button" onClick={() => setShowConfirmPw(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    {showConfirmPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {confirmPassword && confirmPassword !== newPassword && (
+                  <p className="text-xs text-red-500">Passwords do not match</p>
+                )}
               </div>
             </div>
             {msg && (
