@@ -7,6 +7,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { trackVendorView } from '@/components/RecentlyViewed';
 import AuthPromptModal from './AuthPromptModal';
 import PublicHeader from './PublicHeader';
+import WishlistButton from './WishlistButton';
 import {
   Star,
   MapPin,
@@ -350,9 +351,15 @@ export default function VendorPublicProfile({ vendorId }) {
         <div className="relative -mt-32 mb-8">
           <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-8 shadow-xl relative">
             {!isOwner && (
-              <button onClick={toggleWishlist} className="absolute top-4 right-4 sm:top-6 sm:right-6 hover:scale-110 transition-transform" title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}>
-                <Heart size={24} className={isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-400'} />
-              </button>
+              <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+                <WishlistButton
+                  vendorId={vendorId}
+                  isWishlisted={isWishlisted}
+                  onToggle={toggleWishlist}
+                  size={24}
+                  style="icon"
+                />
+              </div>
             )}
             <div className="flex items-start gap-4">
               {vendor.profileImageUrl ? (

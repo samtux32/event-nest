@@ -6,6 +6,7 @@ import { Search, Heart, Star, MapPin, SlidersHorizontal, X, GitCompareArrows, Cl
 import { useAuth } from './AuthProvider';
 import AppHeader from './AppHeader';
 import AuthPromptModal from './AuthPromptModal';
+import WishlistButton from './WishlistButton';
 
 function parsePrice(str) {
   if (!str) return null;
@@ -523,19 +524,15 @@ export default function CustomerMarketplace() {
                       <span className="text-6xl font-bold text-purple-300">{vendor.name?.[0] || 'V'}</span>
                     </div>
                   )}
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      toggleWishlist(vendor.id);
-                    }}
-                    className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-                  >
-                    <Heart
+                  <div className="absolute top-4 right-4">
+                    <WishlistButton
+                      vendorId={vendor.id}
+                      isWishlisted={wishlist.includes(vendor.id)}
+                      onToggle={() => toggleWishlist(vendor.id)}
+                      style="card"
                       size={20}
-                      className={wishlist.includes(vendor.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}
                     />
-                  </button>
+                  </div>
                 </div>
 
                 <div className="p-5">
