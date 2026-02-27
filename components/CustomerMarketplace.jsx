@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Search, Heart, Star, MapPin, SlidersHorizontal, X, GitCompareArrows, Clock } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import AppHeader from './AppHeader';
+import AuthPromptModal from './AuthPromptModal';
 
 function parsePrice(str) {
   if (!str) return null;
@@ -55,6 +56,7 @@ export default function CustomerMarketplace() {
   const [searchQuery, setSearchQuery] = useState('');
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Location state
   const [userLocation, setUserLocation] = useState(null); // { lat, lng, city }
@@ -160,7 +162,7 @@ export default function CustomerMarketplace() {
 
   const toggleWishlist = async (vendorId) => {
     if (!user) {
-      window.location.href = '/login?redirectTo=/marketplace';
+      setShowAuthModal(true);
       return;
     }
     const isWishlisted = wishlist.includes(vendorId);
@@ -531,6 +533,14 @@ export default function CustomerMarketplace() {
           </div>
         )}
       </div>
+
+      {showAuthModal && (
+        <AuthPromptModal
+          message="save to your wishlist"
+          redirectTo="/marketplace"
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
     </div>
   );
 }

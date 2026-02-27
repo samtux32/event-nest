@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
+import AuthPromptModal from '@/components/AuthPromptModal';
 import PackageSelector from '@/components/PackageSelector';
 import EventDetailsForm from '@/components/EventDetailsForm';
 import AdditionalServices from '@/components/AdditionalServices';
@@ -24,6 +25,7 @@ export default function BookingRequest({ vendorId }) {
   const [error, setError] = useState(null);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [formData, setFormData] = useState({
     eventDate: '',
     eventType: 'Wedding',
@@ -109,7 +111,7 @@ export default function BookingRequest({ vendorId }) {
     e.preventDefault();
 
     if (!user) {
-      router.push(`/login?redirectTo=/booking/${vendorId}`);
+      setShowAuthModal(true);
       return;
     }
 
@@ -180,10 +182,18 @@ export default function BookingRequest({ vendorId }) {
     );
   }
 
-  // Redirect unauthenticated users to login
+  // Show auth modal for unauthenticated users
   if (!authLoading && !user) {
-    window.location.href = `/login?redirectTo=/booking/${vendorId}`;
-    return null;
+    return (
+      <>
+        <AuthPromptModal
+          message="request a quote"
+          redirectTo={`/booking/${vendorId}`}
+          onClose={() => router.push(`/vendor-profile/${vendorId}`)}
+        />
+        <div className="min-h-screen bg-gray-50" />
+      </>
+    );
   }
 
   if (error) {

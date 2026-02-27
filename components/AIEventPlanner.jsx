@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import AppHeader from './AppHeader';
 import { useAuth } from './AuthProvider';
+import AuthPromptModal from './AuthPromptModal';
 
 const EXAMPLE_PROMPTS = [
   'Birthday party for my 7 year old son who loves football, £200 budget',
@@ -47,6 +48,7 @@ export default function AIEventPlanner() {
   const [savingWishlist, setSavingWishlist] = useState(false);
   const [wishlistSaved, setWishlistSaved] = useState(false);
   const [planSaved, setPlanSaved] = useState(false);
+  const [authModal, setAuthModal] = useState(null); // null or { message }
 
   async function generate() {
     if (!prompt.trim()) return;
@@ -73,7 +75,7 @@ export default function AIEventPlanner() {
 
   async function saveAllToWishlist() {
     if (!user) {
-      window.location.href = '/login?redirectTo=/plan-my-event';
+      setAuthModal({ message: 'save vendors to your wishlist' });
       return;
     }
     if (!result || wishlistSaved) return;
@@ -116,7 +118,7 @@ export default function AIEventPlanner() {
 
   function savePlan() {
     if (!user) {
-      window.location.href = '/login?redirectTo=/plan-my-event';
+      setAuthModal({ message: 'save your plan' });
       return;
     }
     if (!result || planSaved) return;
@@ -451,6 +453,14 @@ export default function AIEventPlanner() {
           </div>
         )}
       </div>
+
+      {authModal && (
+        <AuthPromptModal
+          message={authModal.message}
+          redirectTo="/plan-my-event"
+          onClose={() => setAuthModal(null)}
+        />
+      )}
     </>
   );
 }

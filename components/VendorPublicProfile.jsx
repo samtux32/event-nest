@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { trackVendorView } from '@/components/RecentlyViewed';
+import AuthPromptModal from './AuthPromptModal';
 import PublicHeader from './PublicHeader';
 import {
   Star,
@@ -77,6 +78,7 @@ export default function VendorPublicProfile({ vendorId }) {
   const [submittingReply, setSubmittingReply] = useState(false);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [allReviews, setAllReviews] = useState([]);
+  const [authModal, setAuthModal] = useState(null);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [starFilter, setStarFilter] = useState(null);
 
@@ -92,7 +94,7 @@ export default function VendorPublicProfile({ vendorId }) {
   }, [user, vendorId]);
 
   const toggleWishlist = async () => {
-    if (!user) { router.push(`/login?redirectTo=/vendor-profile/${vendorId}`); return; }
+    if (!user) { setAuthModal({ message: 'save to your wishlist' }); return; }
     const next = !isWishlisted;
     setIsWishlisted(next);
     try {
@@ -108,7 +110,7 @@ export default function VendorPublicProfile({ vendorId }) {
 
   const handleSendMessage = async () => {
     if (!user) {
-      router.push(`/login?redirectTo=/vendor-profile/${vendorId}`);
+      setAuthModal({ message: 'send a message' });
       return;
     }
     setActionError(null);
@@ -134,7 +136,7 @@ export default function VendorPublicProfile({ vendorId }) {
 
   const handleRequestQuote = async () => {
     if (!user) {
-      router.push(`/login?redirectTo=/vendor-profile/${vendorId}`);
+      setAuthModal({ message: 'request a custom quote' });
       return;
     }
     setActionError(null);
@@ -324,6 +326,7 @@ export default function VendorPublicProfile({ vendorId }) {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <PublicHeader />
 
@@ -722,7 +725,16 @@ export default function VendorPublicProfile({ vendorId }) {
                     </Link>
                   ) : (
                     <>
-                      <Link href={`/booking/${vendorId}`} className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                      <Link
+                        href={`/booking/${vendorId}`}
+                        onClick={(e) => {
+                          if (!user) {
+                            e.preventDefault();
+                            setAuthModal({ message: 'request a quote' });
+                          }
+                        }}
+                        className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+                      >
                         <Calendar size={20} />
                         Request Quote
                       </Link>
@@ -943,5 +955,14 @@ export default function VendorPublicProfile({ vendorId }) {
         </div>
       )}
     </div>
+
+    {authModal && (
+      <AuthPromptModal
+        message={authModal.message}
+        redirectTo={`/vendor-profile/${vendorId}`}
+        onClose={() => setAuthModal(null)}
+      />
+    )}
+    </>
   );
 }
