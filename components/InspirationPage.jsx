@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Sparkles, ArrowRight, Lightbulb, Heart, Calendar, Users } from 'lucide-react';
+import PublicHeader from './PublicHeader';
 
 const CATEGORIES = ['All', 'Wedding', 'Birthday', 'Corporate', 'Baby Shower', 'Anniversary', 'Budget-Friendly'];
 
@@ -136,6 +137,8 @@ export default function InspirationPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <PublicHeader />
+
       {/* Header */}
       <div className="bg-gradient-to-br from-purple-600 to-indigo-700 py-12">
         <div className="max-w-4xl mx-auto px-4 text-center">

@@ -130,6 +130,7 @@ model VendorProfile {
   facebook             String?
   twitter              String?
   tiktok               String?
+  keywords             String[]     @default([])
   yearsExperience      Int?         @map("years_experience")
   completedEventsCount Int          @default(0) @map("completed_events_count")
   isAvailable          Boolean      @default(true) @map("is_available")

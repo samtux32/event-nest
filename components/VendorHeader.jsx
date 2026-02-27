@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -9,25 +9,27 @@ import {
   Calendar,
   User,
   MessageSquare,
-  Settings,
-  LogOut,
   ExternalLink,
   Menu,
   X,
   QrCode,
   ImageIcon,
   Tag,
-  HelpCircle
+  HelpCircle,
+  ChevronDown
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import NotificationBell from './NotificationBell';
+import ProfileDropdown from './ProfileDropdown';
 import ModeToggle from './ModeToggle';
 
 export default function VendorHeader() {
-  const { profile, signOut } = useAuth();
+  const { profile } = useAuth();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [vendorProfileId, setVendorProfileId] = useState(null);
+  const moreRef = useRef(null);
 
   useEffect(() => {
     fetch('/api/vendors/profile')
@@ -35,20 +37,33 @@ export default function VendorHeader() {
       .then(data => { if (data?.id) setVendorProfileId(data.id); })
       .catch(() => {});
   }, []);
-  const initial = profile?.businessName?.[0] || profile?.email?.[0]?.toUpperCase() || 'V';
 
-  const navLinks = [
+  // Close More dropdown on outside click
+  useEffect(() => {
+    function handleClick(e) {
+      if (moreRef.current && !moreRef.current.contains(e.target)) setMoreOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const mainLinks = [
     { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/analytics', icon: TrendingUp, label: 'Analytics' },
     { href: '/calendar', icon: Calendar, label: 'Calendar' },
     { href: '/profile-editor', icon: User, label: 'Profile' },
     { href: '/messages', icon: MessageSquare, label: 'Messages' },
+  ];
+
+  const moreLinks = [
     { href: '/portfolio', icon: ImageIcon, label: 'Portfolio' },
     { href: '/promotions', icon: Tag, label: 'Offers' },
     { href: '/vendor-faqs', icon: HelpCircle, label: 'FAQs' },
     { href: '/qr-code', icon: QrCode, label: 'QR Code' },
-    { href: '/vendor-settings', icon: Settings, label: 'Settings' },
   ];
+
+  const allLinks = [...mainLinks, ...moreLinks];
+  const moreActive = moreLinks.some(l => pathname === l.href);
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -62,7 +77,7 @@ export default function VendorHeader() {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-1">
-          {navLinks.map(({ href, icon: Icon, label }) => {
+          {mainLinks.map(({ href, icon: Icon, label }) => {
             const active = pathname === href;
             return (
               <Link
@@ -79,6 +94,43 @@ export default function VendorHeader() {
               </Link>
             );
           })}
+
+          {/* More dropdown */}
+          <div className="relative" ref={moreRef}>
+            <button
+              onClick={() => setMoreOpen(!moreOpen)}
+              className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                moreActive
+                  ? 'bg-purple-50 text-purple-700'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              More
+              <ChevronDown size={14} className={`transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {moreOpen && (
+              <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
+                {moreLinks.map(({ href, icon: Icon, label }) => {
+                  const active = pathname === href;
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={() => setMoreOpen(false)}
+                      className={`flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-colors ${
+                        active
+                          ? 'bg-purple-50 text-purple-700'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Icon size={16} />
+                      {label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Right side */}
@@ -95,20 +147,7 @@ export default function VendorHeader() {
             View Profile
           </Link>
           <NotificationBell />
-          {profile?.profileImageUrl ? (
-            <img
-              src={profile.profileImageUrl}
-              alt={profile.businessName || 'Profile'}
-              className="w-8 h-8 rounded-full object-cover flex-shrink-0 border-2 border-gray-200"
-            />
-          ) : (
-            <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-              {initial}
-            </div>
-          )}
-          <button onClick={signOut} className="hidden md:block text-gray-400 hover:text-gray-600 transition-colors" title="Sign out">
-            <LogOut size={18} />
-          </button>
+          <ProfileDropdown />
 
           {/* Hamburger */}
           <button
@@ -127,7 +166,7 @@ export default function VendorHeader() {
           <div className="flex justify-center py-2">
             <ModeToggle mobile />
           </div>
-          {navLinks.map(({ href, icon: Icon, label }) => {
+          {allLinks.map(({ href, icon: Icon, label }) => {
             const active = pathname === href;
             return (
               <Link
@@ -155,13 +194,6 @@ export default function VendorHeader() {
             <ExternalLink size={18} />
             View Public Profile
           </Link>
-          <button
-            onClick={() => { signOut(); setMobileOpen(false); }}
-            className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 w-full transition-colors"
-          >
-            <LogOut size={18} />
-            Sign Out
-          </button>
         </div>
       )}
     </header>

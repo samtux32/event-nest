@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, Search, Users, Store, CreditCard, MessageSquare, Shield, HelpCircle } from 'lucide-react';
+import PublicHeader from './PublicHeader';
 
 const FAQ_SECTIONS = [
   {
@@ -142,7 +143,8 @@ export default function HelpPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      <PublicHeader />
+      {/* Page Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-4 py-12 text-center">
           <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">

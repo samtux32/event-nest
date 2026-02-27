@@ -1,30 +1,46 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, MessageSquare, LogOut, Heart, Settings, Menu, X, Sparkles, CheckSquare, Lightbulb, FolderOpen } from 'lucide-react';
+import { Search, MessageSquare, Heart, Menu, X, Sparkles, CheckSquare, Lightbulb, FolderOpen, ChevronDown } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import NotificationBell from './NotificationBell';
+import ProfileDropdown from './ProfileDropdown';
 import ModeToggle from './ModeToggle';
 
 export default function CustomerHeader() {
-  const { profile, signOut } = useAuth();
+  const { profile } = useAuth();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const initial = profile?.fullName?.[0] || profile?.email?.[0]?.toUpperCase() || 'C';
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef(null);
 
-  const navLinks = [
+  // Close More dropdown on outside click
+  useEffect(() => {
+    function handleClick(e) {
+      if (moreRef.current && !moreRef.current.contains(e.target)) setMoreOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const mainLinks = [
     { href: '/marketplace', icon: Search, label: 'Discover' },
     { href: '/my-bookings', icon: null, label: 'Bookings' },
     { href: '/wishlist', icon: Heart, label: 'Wishlist' },
     { href: '/plan-my-event', icon: Sparkles, label: 'AI Planner' },
+    { href: '/customer-messages', icon: MessageSquare, label: 'Messages' },
+  ];
+
+  const moreLinks = [
     { href: '/my-plans', icon: FolderOpen, label: 'My Plans' },
     { href: '/event-checklist', icon: CheckSquare, label: 'Checklist' },
     { href: '/inspiration', icon: Lightbulb, label: 'Inspiration' },
-    { href: '/customer-messages', icon: MessageSquare, label: 'Messages' },
-    { href: '/customer-settings', icon: Settings, label: 'Settings' },
   ];
+
+  const allLinks = [...mainLinks, ...moreLinks];
+  const moreActive = moreLinks.some(l => pathname === l.href);
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -38,7 +54,7 @@ export default function CustomerHeader() {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-1">
-          {navLinks.map(({ href, icon: Icon, label }) => {
+          {mainLinks.map(({ href, icon: Icon, label }) => {
             const active = pathname === href;
             return (
               <Link
@@ -55,26 +71,50 @@ export default function CustomerHeader() {
               </Link>
             );
           })}
+
+          {/* More dropdown */}
+          <div className="relative" ref={moreRef}>
+            <button
+              onClick={() => setMoreOpen(!moreOpen)}
+              className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                moreActive
+                  ? 'bg-purple-50 text-purple-700'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              More
+              <ChevronDown size={14} className={`transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {moreOpen && (
+              <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
+                {moreLinks.map(({ href, icon: Icon, label }) => {
+                  const active = pathname === href;
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={() => setMoreOpen(false)}
+                      className={`flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-colors ${
+                        active
+                          ? 'bg-purple-50 text-purple-700'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Icon size={16} />
+                      {label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Right side */}
         <div className="flex items-center gap-3 flex-shrink-0">
           <ModeToggle />
           <NotificationBell />
-          {profile?.avatarUrl ? (
-            <img
-              src={profile.avatarUrl}
-              alt={profile.fullName || 'Profile'}
-              className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
-            />
-          ) : (
-            <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-              {initial}
-            </div>
-          )}
-          <button onClick={signOut} className="hidden md:block text-gray-400 hover:text-gray-600 transition-colors" title="Sign out">
-            <LogOut size={18} />
-          </button>
+          <ProfileDropdown />
 
           {/* Hamburger */}
           <button
@@ -93,7 +133,7 @@ export default function CustomerHeader() {
           <div className="flex justify-center py-2">
             <ModeToggle mobile />
           </div>
-          {navLinks.map(({ href, icon: Icon, label }) => {
+          {allLinks.map(({ href, icon: Icon, label }) => {
             const active = pathname === href;
             return (
               <Link
@@ -111,13 +151,6 @@ export default function CustomerHeader() {
               </Link>
             );
           })}
-          <button
-            onClick={() => { signOut(); setMobileOpen(false); }}
-            className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 w-full transition-colors"
-          >
-            <LogOut size={18} />
-            Sign Out
-          </button>
         </div>
       )}
     </header>

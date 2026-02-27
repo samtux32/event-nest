@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import PublicHeader from './PublicHeader';
 
 const SECTIONS = [
   {
@@ -61,6 +62,7 @@ const SECTIONS = [
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
+      <PublicHeader />
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-4 py-10">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Terms of Service</h1>

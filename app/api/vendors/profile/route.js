@@ -117,6 +117,7 @@ export async function PUT(request) {
         facebook: body.facebook || null,
         twitter: body.twitter || null,
         tiktok: body.tiktok || null,
+        ...(Array.isArray(body.keywords) ? { keywords: body.keywords } : {}),
         profileCompletion,
         ...(latitude !== undefined ? { latitude, longitude } : {}),
         ...(body.coverImageUrl ? { coverImageUrl: body.coverImageUrl } : {}),

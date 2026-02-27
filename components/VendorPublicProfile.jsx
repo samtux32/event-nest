@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { trackVendorView } from '@/components/RecentlyViewed';
+import PublicHeader from './PublicHeader';
 import {
-  ArrowLeft,
   Star,
   MapPin,
   Heart,
@@ -253,19 +253,7 @@ export default function VendorPublicProfile({ vendorId }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center gap-4">
-              <Link href="/marketplace" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <ArrowLeft size={20} className="text-gray-600" />
-              </Link>
-              <div className="flex items-center gap-3">
-                <img src="/logo.png" alt="Event Nest" className="w-12 h-12 rounded-xl object-cover" />
-                <div className="font-bold text-sm leading-tight">Event<br/>Nest</div>
-              </div>
-            </div>
-          </div>
-        </header>
+        <PublicHeader />
 
         <div className="h-96 bg-gray-200 animate-pulse" />
 
@@ -317,19 +305,7 @@ export default function VendorPublicProfile({ vendorId }) {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center gap-4">
-              <Link href="/marketplace" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <ArrowLeft size={20} className="text-gray-600" />
-              </Link>
-              <div className="flex items-center gap-3">
-                <img src="/logo.png" alt="Event Nest" className="w-12 h-12 rounded-xl object-cover" />
-                <div className="font-bold text-sm leading-tight">Event<br/>Nest</div>
-              </div>
-            </div>
-          </div>
-        </header>
+        <PublicHeader />
 
         <div className="max-w-2xl mx-auto px-6 py-20 text-center">
           <AlertCircle className="mx-auto text-gray-400 mb-4" size={64} />
@@ -349,30 +325,7 @@ export default function VendorPublicProfile({ vendorId }) {
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/marketplace" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <ArrowLeft size={20} className="text-gray-600" />
-            </Link>
-            <div className="flex items-center gap-2.5">
-              <img src="/logo.png" alt="Event Nest" className="w-9 h-9 rounded-lg object-cover" />
-              <span className="font-bold text-gray-900 text-base">Event Nest</span>
-            </div>
-          </div>
-
-          <button
-            onClick={toggleWishlist}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <Heart
-              size={20}
-              className={isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}
-            />
-          </button>
-        </div>
-      </header>
+      <PublicHeader />
 
       {/* Cover Image */}
       <div className="relative h-96 bg-gray-200">
@@ -476,6 +429,14 @@ export default function VendorPublicProfile({ vendorId }) {
                   <p className="text-gray-700 leading-relaxed whitespace-pre-line break-words mb-6">
                     {vendor.description}
                   </p>
+                )}
+
+                {vendor.keywords?.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {vendor.keywords.map((kw, i) => (
+                      <span key={i} className="px-3 py-1.5 bg-purple-100 text-purple-700 text-sm rounded-full font-medium">{kw}</span>
+                    ))}
+                  </div>
                 )}
 
                 {services.length > 0 && (

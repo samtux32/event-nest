@@ -14,10 +14,21 @@ export async function GET(request) {
     }
 
     if (search) {
+      // First, find vendor IDs whose keywords partially match the search term
+      const keywordMatchIds = await prisma.$queryRaw`
+        SELECT id::text FROM vendor_profiles
+        WHERE EXISTS (
+          SELECT 1 FROM unnest(keywords) AS kw
+          WHERE kw ILIKE ${'%' + search + '%'}
+        )
+      `.then(rows => rows.map(r => r.id))
+
       where.OR = [
         { businessName: { contains: search, mode: 'insensitive' } },
         { category: { contains: search, mode: 'insensitive' } },
         { tagline: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        ...(keywordMatchIds.length > 0 ? [{ id: { in: keywordMatchIds } }] : []),
       ]
     }
 
@@ -43,6 +54,7 @@ export async function GET(request) {
         ? `£${Number(v.packages[0].price).toLocaleString('en-GB')}`
         : null,
       description: v.tagline || (v.description ? v.description.slice(0, 80) + '...' : ''),
+      keywords: v.keywords || [],
     }))
 
     return NextResponse.json({ vendors: mapped })
