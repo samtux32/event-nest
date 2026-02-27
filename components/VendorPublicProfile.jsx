@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
@@ -73,6 +74,7 @@ export default function VendorPublicProfile({ vendorId }) {
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [requestingQuote, setRequestingQuote] = useState(false);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
@@ -135,11 +137,15 @@ export default function VendorPublicProfile({ vendorId }) {
     }
   };
 
-  const handleRequestQuote = async () => {
+  const handleRequestQuote = () => {
     if (!user) {
       setAuthModal({ message: 'request a custom quote' });
       return;
     }
+    setShowQuoteModal(true);
+  };
+
+  const submitQuoteRequest = async ({ eventType, eventDate, guestCount, details }) => {
     setActionError(null);
     setRequestingQuote(true);
     try {
@@ -150,12 +156,21 @@ export default function VendorPublicProfile({ vendorId }) {
       });
       const data = await res.json();
       if (res.ok) {
-        // Auto-send an opening message so the vendor knows it's a quote request
+        const lines = [
+          `Hi! I'd like to request a custom quote.`,
+          ``,
+          `**Event type:** ${eventType}`,
+          eventDate ? `**Date:** ${eventDate}` : null,
+          guestCount ? `**Estimated guests:** ${guestCount}` : null,
+          details ? `\n**Details:**\n${details}` : null,
+        ].filter(Boolean).join('\n');
+
         await fetch(`/api/conversations/${data.conversation.id}/messages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: `Hi! I'd love to discuss a custom quote with you.` }),
+          body: JSON.stringify({ text: lines }),
         });
+        setShowQuoteModal(false);
         router.push(`/customer-messages?conv=${data.conversation.id}`);
       } else {
         setActionError(data.error || 'Failed to start conversation');
@@ -976,6 +991,116 @@ export default function VendorPublicProfile({ vendorId }) {
         onClose={() => setAuthModal(null)}
       />
     )}
+
+    {showQuoteModal && (
+      <QuoteRequestModal
+        vendorName={vendor?.businessName}
+        onSubmit={submitQuoteRequest}
+        onClose={() => setShowQuoteModal(false)}
+        submitting={requestingQuote}
+      />
+    )}
     </>
+  );
+}
+
+function QuoteRequestModal({ vendorName, onSubmit, onClose, submitting }) {
+  const [eventType, setEventType] = useState('');
+  const [eventDate, setEventDate] = useState('');
+  const [guestCount, setGuestCount] = useState('');
+  const [details, setDetails] = useState('');
+
+  const eventTypes = ['Wedding', 'Birthday', 'Corporate Event', 'Anniversary', 'Engagement', 'Baby Shower', 'Graduation', 'Other'];
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!eventType) return;
+    onSubmit({ eventType, eventDate, guestCount, details });
+  };
+
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-xl" onClick={e => e.stopPropagation()}>
+        <div className="p-6 border-b border-gray-100">
+          <h2 className="text-lg font-bold text-gray-900">Request a Custom Quote</h2>
+          <p className="text-sm text-gray-500 mt-1">Tell {vendorName} about your event so they can send you a tailored quote</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Event type *</label>
+            <div className="flex flex-wrap gap-2">
+              {eventTypes.map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setEventType(t)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                    eventType === t
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-purple-300'
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Event date</label>
+              <input
+                type="date"
+                value={eventDate}
+                onChange={e => setEventDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-purple-400 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Estimated guests</label>
+              <input
+                type="number"
+                value={guestCount}
+                onChange={e => setGuestCount(e.target.value)}
+                placeholder="e.g. 100"
+                min="1"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-purple-400 text-sm"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Tell them more about what you need</label>
+            <textarea
+              value={details}
+              onChange={e => setDetails(e.target.value)}
+              rows={3}
+              placeholder="e.g. Looking for a rustic theme, need setup and breakdown included, dietary requirements..."
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-purple-400 text-sm resize-none"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 border border-gray-200 rounded-xl font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!eventType || submitting}
+              className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {submitting ? 'Sending...' : 'Send Request'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>,
+    document.body
   );
 }
