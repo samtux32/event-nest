@@ -1,13 +1,13 @@
 import { updateSession } from '@/lib/supabase/middleware'
 import { NextResponse } from 'next/server'
 
-const publicPrefixes = ['/login', '/register', '/auth/callback', '/vendor-profile', '/api/auth', '/api/vendors', '/booking', '/help', '/terms', '/privacy', '/inspiration']
+const publicPrefixes = ['/login', '/register', '/auth/callback', '/vendor-profile', '/api/auth', '/api/vendors', '/api/event-planner', '/booking', '/help', '/terms', '/privacy', '/inspiration', '/marketplace', '/plan-my-event']
 
 // Routes only vendors can access
 const vendorOnlyPrefixes = ['/profile-editor', '/messages', '/calendar', '/analytics', '/vendor-settings', '/qr-code', '/portfolio', '/promotions', '/vendor-faqs']
 
 // Routes only customers can access
-const customerOnlyPrefixes = ['/marketplace', '/my-bookings', '/customer-messages', '/wishlist', '/customer-settings', '/plan-my-event', '/compare', '/recently-viewed', '/my-plans', '/event-checklist']
+const customerOnlyPrefixes = ['/my-bookings', '/customer-messages', '/wishlist', '/customer-settings', '/compare', '/recently-viewed', '/my-plans', '/event-checklist']
 
 // Routes only admins can access
 const adminOnlyPrefixes = ['/admin']
@@ -32,6 +32,10 @@ export async function middleware(request) {
     // Admins visiting / → send to admin home (vendors and customers handled by page.js)
     if (user && pathname === '/') {
       if (role === 'admin') return NextResponse.redirect(new URL('/admin', request.url))
+    }
+    // Unauthenticated visitors hitting / → send to marketplace
+    if (!user && pathname === '/') {
+      return NextResponse.redirect(new URL('/marketplace', request.url))
     }
     return supabaseResponse
   }

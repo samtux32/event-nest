@@ -16,6 +16,7 @@ import {
   FolderOpen,
 } from 'lucide-react';
 import AppHeader from './AppHeader';
+import { useAuth } from './AuthProvider';
 
 const EXAMPLE_PROMPTS = [
   'Birthday party for my 7 year old son who loves football, £200 budget',
@@ -38,6 +39,7 @@ const CATEGORY_COLOURS = [
 ];
 
 export default function AIEventPlanner() {
+  const { user } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -70,6 +72,10 @@ export default function AIEventPlanner() {
   }
 
   async function saveAllToWishlist() {
+    if (!user) {
+      window.location.href = '/login?redirectTo=/plan-my-event';
+      return;
+    }
     if (!result || wishlistSaved) return;
     setSavingWishlist(true);
     try {
@@ -109,6 +115,10 @@ export default function AIEventPlanner() {
   }
 
   function savePlan() {
+    if (!user) {
+      window.location.href = '/login?redirectTo=/plan-my-event';
+      return;
+    }
     if (!result || planSaved) return;
     try {
       const saved = JSON.parse(localStorage.getItem('savedEventPlans') || '[]');

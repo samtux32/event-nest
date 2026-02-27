@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 import prisma from '@/lib/prisma';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -47,16 +46,6 @@ Rules:
 
 export async function POST(request) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-    const role = user.user_metadata?.role;
-    if (role !== 'customer' && role !== 'vendor') {
-      return NextResponse.json({ error: 'Customers only' }, { status: 403 });
-    }
-
     const { prompt } = await request.json();
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length < 5) {
       return NextResponse.json({ error: 'Please describe your event in more detail' }, { status: 400 });

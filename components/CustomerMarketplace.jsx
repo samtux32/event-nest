@@ -49,7 +49,7 @@ function RangeSlider({ min, max, step, minVal, maxVal, onMinChange, onMaxChange 
 }
 
 export default function CustomerMarketplace() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [wishlist, setWishlist] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -159,6 +159,10 @@ export default function CustomerMarketplace() {
   };
 
   const toggleWishlist = async (vendorId) => {
+    if (!user) {
+      window.location.href = '/login?redirectTo=/marketplace';
+      return;
+    }
     const isWishlisted = wishlist.includes(vendorId);
     setWishlist(prev => isWishlisted ? prev.filter(id => id !== vendorId) : [...prev, vendorId]);
     try {
