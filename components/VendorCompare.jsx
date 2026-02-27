@@ -166,7 +166,7 @@ export default function VendorCompare() {
 
                     <div className="p-4 pt-8">
                       <h3 className="font-semibold text-gray-900">{vendor.businessName}</h3>
-                      <p className="text-sm text-purple-600">{vendor.category}</p>
+                      <p className="text-sm text-purple-600">{Array.isArray(vendor.categories) ? vendor.categories.join(', ') : vendor.category}</p>
                     </div>
                   </div>
                 ))}
@@ -219,7 +219,7 @@ export default function VendorCompare() {
                           )}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">{v.businessName || v.name}</p>
-                            <p className="text-xs text-gray-500">{v.category}</p>
+                            <p className="text-xs text-gray-500">{Array.isArray(v.categories) ? v.categories.join(', ') : v.category}</p>
                           </div>
                           <Plus size={16} className="text-purple-600 flex-shrink-0" />
                         </button>
@@ -245,7 +245,7 @@ export default function VendorCompare() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
-                        <CompareRow label="Category" vendors={vendors} render={(v) => v.category} />
+                        <CompareRow label="Category" vendors={vendors} render={(v) => Array.isArray(v.categories) ? v.categories.join(', ') : v.category} />
                         <CompareRow
                           label="Rating"
                           vendors={vendors}

@@ -23,7 +23,7 @@ export async function GET(request) {
       where: flaggedOnly ? { isFlagged: true } : {},
       include: {
         customer: { select: { fullName: true } },
-        vendor: { select: { businessName: true, category: true } },
+        vendor: { select: { businessName: true, categories: true } },
       },
       orderBy: [{ isFlagged: 'desc' }, { createdAt: 'desc' }],
     })
@@ -38,7 +38,7 @@ export async function GET(request) {
       createdAt: r.createdAt,
       customerName: r.customer?.fullName || 'Unknown',
       vendorName: r.vendor?.businessName || 'Unknown',
-      vendorCategory: r.vendor?.category || '',
+      vendorCategory: r.vendor?.categories?.join(', ') || '',
       vendorId: r.vendorId,
     }))
 

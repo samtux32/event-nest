@@ -80,7 +80,7 @@ export async function POST(request) {
       (plan.categories || []).map(async (cat) => {
         const vendors = await prisma.vendorProfile.findMany({
           where: {
-            category: cat.category,
+            categories: { has: cat.category },
             isApproved: true,
           },
           orderBy: [
@@ -91,7 +91,7 @@ export async function POST(request) {
           select: {
             id: true,
             businessName: true,
-            category: true,
+            categories: true,
             profileImageUrl: true,
             coverImageUrl: true,
             location: true,
@@ -112,7 +112,7 @@ export async function POST(request) {
         categoryVendors[cat.category] = vendors.map((v) => ({
           id: v.id,
           businessName: v.businessName,
-          category: v.category,
+          category: v.categories?.join(', ') || '',
           profileImageUrl: v.profileImageUrl,
           coverImageUrl: v.coverImageUrl,
           location: v.location,

@@ -58,7 +58,7 @@ export async function POST(request) {
           vendorProfile: {
             create: {
               businessName: businessName || 'My Business',
-              category: category || 'Other',
+              categories: category ? [category] : ['Other'],
             },
           },
         },

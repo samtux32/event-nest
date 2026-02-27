@@ -44,7 +44,7 @@ export async function GET(request) {
       const vendors = wishlists.map(({ vendor: v }) => ({
         id: v.id,
         name: v.businessName,
-        category: v.category,
+        category: v.categories?.join(', ') || '',
         image: v.profileImageUrl,
         rating: v.averageRating ? Number(v.averageRating) : null,
         reviews: v.totalReviews,

@@ -86,7 +86,7 @@ export async function PUT(request) {
     // Calculate profile completion
     const fields = [
       body.businessName,
-      body.category,
+      body.categories?.length > 0,
       body.description,
       body.location,
       body.phone,
@@ -101,7 +101,7 @@ export async function PUT(request) {
       where: { id: vendorProfile.id },
       data: {
         businessName: body.businessName || vendorProfile.businessName,
-        category: body.category || vendorProfile.category,
+        ...(Array.isArray(body.categories) ? { categories: body.categories } : {}),
         description: body.description || null,
         location: body.location || null,
         responseTime: body.responseTime || null,

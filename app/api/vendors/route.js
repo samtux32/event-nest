@@ -3,14 +3,17 @@ import { NextResponse } from 'next/server'
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
-  const category = searchParams.get('category')
+  const categories = searchParams.get('categories')
   const search = searchParams.get('search')
 
   try {
     const where = { isApproved: true }
 
-    if (category && category !== 'All Categories') {
-      where.category = category
+    if (categories) {
+      const list = categories.split(',').map(c => c.trim()).filter(Boolean)
+      if (list.length > 0) {
+        where.categories = { hasSome: list }
+      }
     }
 
     if (search) {
@@ -25,7 +28,7 @@ export async function GET(request) {
 
       where.OR = [
         { businessName: { contains: search, mode: 'insensitive' } },
-        { category: { contains: search, mode: 'insensitive' } },
+        { categories: { hasSome: [search] } },
         { tagline: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
         ...(keywordMatchIds.length > 0 ? [{ id: { in: keywordMatchIds } }] : []),
@@ -43,7 +46,7 @@ export async function GET(request) {
     const mapped = vendors.map((v) => ({
       id: v.id,
       name: v.businessName,
-      category: v.category,
+      category: v.categories?.join(', ') || '',
       image: v.profileImageUrl,
       rating: v.averageRating ? Number(v.averageRating) : null,
       reviews: v.totalReviews,

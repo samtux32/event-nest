@@ -48,7 +48,7 @@ export async function GET(request) {
       where,
       include: {
         vendor: {
-          select: { id: true, businessName: true, profileImageUrl: true, category: true },
+          select: { id: true, businessName: true, profileImageUrl: true, categories: true },
         },
         customer: {
           select: { id: true, fullName: true, avatarUrl: true, userId: true },
@@ -105,7 +105,7 @@ export async function GET(request) {
         eventDate: conv.booking?.eventDate
           ? new Date(conv.booking.eventDate).toLocaleDateString('en-GB', { month: 'short', day: '2-digit', year: 'numeric' })
           : null,
-        eventType: conv.booking?.eventType || conv.vendor.category,
+        eventType: conv.booking?.eventType || conv.vendor.categories?.[0] || '',
         inquiryStatus: statusMap[conv.booking?.status] || 'Active',
         venueName: conv.booking?.venueName || null,
         venueAddress: conv.booking?.venueAddress || null,

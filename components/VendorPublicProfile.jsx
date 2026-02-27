@@ -371,7 +371,7 @@ export default function VendorPublicProfile({ vendorId }) {
                     <BadgeCheck className="text-blue-500 flex-shrink-0" size={24} title="Verified vendor" />
                   )}
                 </h1>
-                <p className="text-base sm:text-lg text-purple-600 font-medium mb-1">{vendor.category}</p>
+                <p className="text-base sm:text-lg text-purple-600 font-medium mb-1">{Array.isArray(vendor.categories) ? vendor.categories.join(', ') : vendor.category}</p>
                 {vendor.tagline && <p className="text-gray-600 text-sm sm:text-base break-words">{vendor.tagline}</p>}
 
                 <div className="flex flex-wrap items-center gap-3 sm:gap-6 mt-3 mb-3">

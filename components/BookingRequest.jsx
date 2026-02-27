@@ -59,7 +59,7 @@ export default function BookingRequest({ vendorId }) {
         const mapped = {
           id: v.id,
           name: v.businessName,
-          category: v.category,
+          category: Array.isArray(v.categories) ? v.categories.join(', ') : v.category,
           rating: v.averageRating ? Number(v.averageRating) : null,
           reviews: v.totalReviews,
           location: v.location,

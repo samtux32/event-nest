@@ -635,7 +635,7 @@ async function main() {
         vendorProfile: {
           create: {
             businessName: vd.businessName,
-            category: vd.category,
+            categories: [vd.category],
             tagline: vd.tagline,
             description: vd.description,
             location: vd.location,

@@ -109,7 +109,7 @@ model VendorProfile {
   id                   String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId               String       @unique @map("user_id") @db.Uuid
   businessName         String       @map("business_name")
-  category             String
+  categories           String[]     @default([])
   tagline              String?
   description          String?      @db.Text
   location             String?

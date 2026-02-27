@@ -51,7 +51,7 @@ function RangeSlider({ min, max, step, minVal, maxVal, onMinChange, onMaxChange 
 
 export default function CustomerMarketplace() {
   const { user, profile } = useAuth();
-  const [selectedCategory, setSelectedCategory] = useState('All Categories');
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [vendors, setVendors] = useState([]);
@@ -60,6 +60,9 @@ export default function CustomerMarketplace() {
 
   // Location state
   const [userLocation, setUserLocation] = useState(null); // { lat, lng, city }
+  const [locationQuery, setLocationQuery] = useState('');
+  const [isGeolocating, setIsGeolocating] = useState(false);
+  const [locationError, setLocationError] = useState('');
 
   // Sort & filter state
   const [sortBy, setSortBy] = useState('rating');
@@ -100,8 +103,8 @@ export default function CustomerMarketplace() {
     async function fetchVendors() {
       setLoading(true);
       try {
-        const params = selectedCategory !== 'All Categories'
-          ? `?category=${encodeURIComponent(selectedCategory)}`
+        const params = selectedCategories.length > 0
+          ? `?categories=${selectedCategories.map(c => encodeURIComponent(c)).join(',')}`
           : '';
         const res = await fetch(`/api/vendors${params}`);
         const data = await res.json();
@@ -113,7 +116,7 @@ export default function CustomerMarketplace() {
       }
     }
     fetchVendors();
-  }, [selectedCategory]);
+  }, [selectedCategories]);
 
   // Load persisted wishlist on mount
   useEffect(() => {
@@ -154,6 +157,37 @@ export default function CustomerMarketplace() {
     );
   }, []);
 
+  const searchLocation = async (query) => {
+    if (!query.trim()) return;
+    setIsGeolocating(true);
+    setLocationError('');
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query.trim())}&format=json&limit=1`,
+        { headers: { 'User-Agent': 'EventNest/1.0' } }
+      );
+      const data = await res.json();
+      if (data.length === 0) {
+        setLocationError('Location not found');
+        setTimeout(() => setLocationError(''), 3000);
+        return;
+      }
+      const loc = {
+        lat: parseFloat(data[0].lat),
+        lng: parseFloat(data[0].lon),
+        city: data[0].display_name.split(',')[0],
+      };
+      setUserLocation(loc);
+      localStorage.setItem('userLocation', JSON.stringify(loc));
+      setLocationQuery('');
+    } catch {
+      setLocationError('Search failed');
+      setTimeout(() => setLocationError(''), 3000);
+    } finally {
+      setIsGeolocating(false);
+    }
+  };
+
   const clearLocation = () => {
     setUserLocation(null);
     localStorage.removeItem('userLocation');
@@ -191,7 +225,7 @@ export default function CustomerMarketplace() {
     .filter(vendor => {
       const query = searchQuery.toLowerCase();
       const matchesSearch = vendor.name.toLowerCase().includes(query) ||
-                            vendor.category.toLowerCase().includes(query) ||
+                            (vendor.category || '').toLowerCase().includes(query) ||
                             vendor.keywords?.some(k => k.toLowerCase().includes(query));
       const matchesRating = minRating === 0 || (vendor.rating !== null && vendor.rating >= minRating);
       const price = parsePrice(vendor.startingPrice);
@@ -250,15 +284,16 @@ export default function CustomerMarketplace() {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="flex-1 sm:flex-none px-4 py-3 border border-gray-200 sm:border-l sm:border-t-0 sm:border-b-0 sm:border-r-0 rounded-xl sm:rounded-none outline-none text-gray-700 cursor-pointer"
+                <button
+                  onClick={() => setShowFilters(prev => !prev)}
+                  className="flex-1 sm:flex-none px-4 py-3 border border-gray-200 sm:border-l sm:border-t-0 sm:border-b-0 sm:border-r-0 rounded-xl sm:rounded-none text-gray-700 cursor-pointer text-left"
                 >
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
+                  {selectedCategories.length === 0
+                    ? 'All Categories'
+                    : selectedCategories.length === 1
+                      ? selectedCategories[0]
+                      : `${selectedCategories.length} categories selected`}
+                </button>
                 <button
                   onClick={() => setShowFilters(prev => !prev)}
                   className={`relative p-3 rounded-lg transition-colors flex-shrink-0 ${showFilters ? 'bg-purple-600 text-white' : 'hover:bg-gray-50 text-gray-600 border border-gray-200 sm:border-0'}`}
@@ -365,6 +400,24 @@ export default function CustomerMarketplace() {
                 </button>
               </span>
             )}
+            <div className="relative flex items-center">
+              <MapPin size={14} className="absolute left-2.5 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search location..."
+                value={locationQuery}
+                onChange={e => setLocationQuery(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') searchLocation(locationQuery); }}
+                disabled={isGeolocating}
+                className="pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-full outline-none focus:border-purple-400 w-40 sm:w-48 disabled:opacity-50"
+              />
+              {isGeolocating && (
+                <div className="absolute right-2.5 w-3.5 h-3.5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+              )}
+            </div>
+            {locationError && (
+              <span className="text-xs text-red-500">{locationError}</span>
+            )}
           </div>
           <select
             value={sortBy}
@@ -399,19 +452,34 @@ export default function CustomerMarketplace() {
 
         {/* Category Filter Tabs */}
         <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
-          {categories.map(category => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full font-medium whitespace-nowrap transition-colors ${
-                selectedCategory === category
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-600'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
+          <button
+            onClick={() => setSelectedCategories([])}
+            className={`px-4 py-2 rounded-full font-medium whitespace-nowrap transition-colors ${
+              selectedCategories.length === 0
+                ? 'bg-purple-600 text-white'
+                : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-600'
+            }`}
+          >
+            All Categories
+          </button>
+          {categories.filter(c => c !== 'All Categories').map(category => {
+            const isActive = selectedCategories.includes(category);
+            return (
+              <button
+                key={category}
+                onClick={() => setSelectedCategories(prev =>
+                  isActive ? prev.filter(c => c !== category) : [...prev, category]
+                )}
+                className={`px-4 py-2 rounded-full font-medium whitespace-nowrap transition-colors ${
+                  isActive
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-600'
+                }`}
+              >
+                {category}
+              </button>
+            );
+          })}
         </div>
 
         {/* Loading Skeleton */}

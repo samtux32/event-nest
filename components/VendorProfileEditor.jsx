@@ -38,7 +38,7 @@ export default function EditVendorProfile() {
   const [profile, setProfile] = useState({
     // Business Info
     businessName: '',
-    category: '',
+    categories: [],
     description: '',
     location: '',
     responseTime: '',
@@ -111,7 +111,7 @@ export default function EditVendorProfile() {
     setProfile(prev => ({
       ...prev,
       businessName: authProfile.businessName || '',
-      category: authProfile.category || '',
+      categories: authProfile.categories || (authProfile.category ? [authProfile.category] : []),
       description: authProfile.description || '',
       location: authProfile.location || '',
       responseTime: authProfile.responseTime || '',
@@ -247,7 +247,7 @@ export default function EditVendorProfile() {
   const isSectionComplete = (sectionId) => {
     switch (sectionId) {
       case 'business':
-        return profile.businessName && profile.category && profile.description && profile.location;
+        return profile.businessName && profile.categories?.length > 0 && profile.description && profile.location;
       case 'images':
         return profile.coverImagePreview && profile.profileImagePreview;
       case 'pricing':
@@ -326,7 +326,7 @@ export default function EditVendorProfile() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           businessName: profile.businessName,
-          category: profile.category,
+          categories: profile.categories,
           description: profile.description,
           location: profile.location,
           responseTime: profile.responseTime,
@@ -479,19 +479,35 @@ export default function EditVendorProfile() {
                   />
                 </div>
 
-                {/* Category */}
+                {/* Categories (multi-select) */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
-                  <select
-                    value={profile.category}
-                    onChange={(e) => updateProfile('category', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all text-gray-900 cursor-pointer"
-                  >
-                    <option value="">Select your category</option>
-                    {categories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Categories * <span className="text-xs font-normal text-gray-400">(select all that apply)</span></label>
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map(cat => {
+                      const selected = profile.categories?.includes(cat);
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => {
+                            const current = profile.categories || [];
+                            const updated = selected
+                              ? current.filter(c => c !== cat)
+                              : [...current, cat];
+                            updateProfile('categories', updated);
+                          }}
+                          className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                            selected
+                              ? 'bg-purple-600 text-white border-purple-600'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-purple-300 hover:text-purple-600'
+                          }`}
+                        >
+                          {selected && <Check size={14} className="inline mr-1 -mt-0.5" />}
+                          {cat}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Location */}

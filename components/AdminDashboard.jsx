@@ -264,7 +264,7 @@ export default function AdminDashboard() {
                         <div className="font-semibold text-gray-900">{vendor.businessName}</div>
                         <div className="text-sm text-gray-500">{vendor.user?.email}</div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{vendor.category}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700">{Array.isArray(vendor.categories) ? vendor.categories.join(', ') : vendor.category}</td>
                       <td className="px-6 py-4 text-sm text-gray-500">{formatDate(vendor.user?.createdAt)}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">

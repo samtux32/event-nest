@@ -149,7 +149,7 @@ export default function RecentlyViewed() {
                             {vendor.businessName}
                           </h3>
                         </Link>
-                        <p className="text-sm text-purple-600">{vendor.category}</p>
+                        <p className="text-sm text-purple-600">{Array.isArray(vendor.categories) ? vendor.categories.join(', ') : vendor.category}</p>
                         <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                           {vendor.averageRating > 0 && (
                             <span className="flex items-center gap-1 text-sm text-gray-600">

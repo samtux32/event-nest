@@ -171,7 +171,7 @@ export async function GET(request) {
       where,
       include: {
         vendor: {
-          select: { id: true, businessName: true, profileImageUrl: true, category: true },
+          select: { id: true, businessName: true, profileImageUrl: true, categories: true },
         },
         customer: {
           select: { id: true, fullName: true, avatarUrl: true },

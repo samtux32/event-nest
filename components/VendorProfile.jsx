@@ -149,7 +149,7 @@ export default function VendorProfile() {
                   </div>
                   
                   <span className="inline-block px-4 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium mb-3">
-                    {vendor.category}
+                    {Array.isArray(vendor.categories) ? vendor.categories.join(', ') : vendor.category}
                   </span>
                   
                   <div className="flex items-center gap-6 text-gray-600 mb-4">
