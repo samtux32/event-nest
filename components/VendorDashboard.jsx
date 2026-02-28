@@ -204,17 +204,20 @@ export default function VendorDashboard() {
                       </span>
                     </div>
 
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        acceptBooking(iq);
-                      }}
-                      disabled={updatingId === iq.id}
-                      className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-1"
-                    >
-                      {updatingId === iq.id && <Loader2 size={14} className="animate-spin" />}
-                      Accept
-                    </button>
+                    {/* Hide Accept for quote-created bookings — customer accepts the quote instead */}
+                    {(iq.contactName || iq.packageId) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          acceptBooking(iq);
+                        }}
+                        disabled={updatingId === iq.id}
+                        className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-1"
+                      >
+                        {updatingId === iq.id && <Loader2 size={14} className="animate-spin" />}
+                        Accept
+                      </button>
+                    )}
                   </div>
                 </div>
               ))
@@ -289,14 +292,16 @@ export default function VendorDashboard() {
               >
                 Send Message
               </Link>
-              <button
-                onClick={() => acceptBooking(selectedInquiry)}
-                disabled={updatingId === selectedInquiry.id}
-                className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {updatingId === selectedInquiry.id && <Loader2 size={16} className="animate-spin" />}
-                Accept Booking
-              </button>
+              {(selectedInquiry.contactName || selectedInquiry.packageId) && (
+                <button
+                  onClick={() => acceptBooking(selectedInquiry)}
+                  disabled={updatingId === selectedInquiry.id}
+                  className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {updatingId === selectedInquiry.id && <Loader2 size={16} className="animate-spin" />}
+                  Accept Booking
+                </button>
+              )}
             </div>
           </div>
         )}

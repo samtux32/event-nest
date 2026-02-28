@@ -89,10 +89,10 @@ export async function POST(request, { params }) {
 
       // Create or update the booking when vendor sends a quote
       if (conversation.booking?.id) {
-        // Existing booking — update the confirmed date and price
+        // Existing booking — update the date, price and reset status to new_inquiry
         await tx.booking.update({
           where: { id: conversation.booking.id },
-          data: { eventDate: new Date(eventDate), totalPrice, vendorFee, customerFee },
+          data: { eventDate: new Date(eventDate), totalPrice, vendorFee, customerFee, status: 'new_inquiry', confirmedAt: null },
         })
       } else {
         // No booking yet — create a pending one (shows in calendar as Pending)
