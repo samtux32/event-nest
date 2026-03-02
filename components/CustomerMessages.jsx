@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Shield } from 'lucide-react';
+import ConfirmModal from '@/components/ConfirmModal';
 import AppHeader from '@/components/AppHeader';
 import { useAuth } from '@/components/AuthProvider';
 import ConversationList from '@/components/ConversationList';
@@ -21,6 +22,8 @@ export default function CustomerMessages() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingConvos, setLoadingConvos] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [sendError, setSendError] = useState(null);
   const messagesEndRef = useRef(null);
 
   // Read ?conv= from URL on mount and pre-select that conversation
@@ -113,6 +116,25 @@ export default function CustomerMessages() {
     );
   };
 
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      const res = await fetch(`/api/conversations/${selectedConversation}/messages`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId }),
+      });
+      if (res.ok) {
+        setMessages(prev =>
+          prev.map(m => m.id === messageId ? { ...m, type: 'deleted', text: null, attachmentUrl: null, attachmentName: null, attachmentType: null, quote: null } : m)
+        );
+      }
+    } catch (err) {
+      console.error('Failed to delete message:', err);
+    } finally {
+      setDeleteConfirm(null);
+    }
+  };
+
   const handleSendMessage = async (text, attachment) => {
     if (!selectedConversation) return;
     if (!text?.trim() && !attachment) return;
@@ -162,6 +184,10 @@ export default function CustomerMessages() {
       } else {
         console.error('Send message failed:', data);
         setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+        if (data.code === 'CONTACT_INFO_BLOCKED') {
+          setSendError(data.error);
+          setTimeout(() => setSendError(null), 6000);
+        }
       }
     } catch (err) {
       console.error('Failed to send message:', err);
@@ -247,12 +273,20 @@ export default function CustomerMessages() {
                         isCustomer={true}
                         onQuoteUpdated={handleQuoteUpdated}
                         onDateAccepted={handleDateAccepted}
+                        onDeleteMessage={(id) => setDeleteConfirm(id)}
                       />
                     ))}
                     <div ref={messagesEndRef} />
                   </>
                 )}
               </div>
+
+              {sendError && (
+                <div className="flex items-center gap-2 bg-amber-50 border-t border-amber-200 px-4 py-2.5">
+                  <Shield size={16} className="text-amber-600 flex-shrink-0" />
+                  <p className="text-sm text-amber-800">{sendError}</p>
+                </div>
+              )}
 
               <MessageInput
                 value={messageInput}
@@ -281,6 +315,15 @@ export default function CustomerMessages() {
         )}
       </div>
 
+      {deleteConfirm && (
+        <ConfirmModal
+          title="Unsend Message"
+          message="This message will be removed for everyone."
+          confirmLabel="Unsend"
+          onConfirm={() => handleDeleteMessage(deleteConfirm)}
+          onCancel={() => setDeleteConfirm(null)}
+        />
+      )}
     </div>
   );
 }

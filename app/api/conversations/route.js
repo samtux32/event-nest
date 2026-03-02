@@ -57,6 +57,7 @@ export async function GET(request) {
           select: { id: true, eventDate: true, eventType: true, status: true, venueName: true, venueAddress: true },
         },
         messages: {
+          where: { deletedAt: null },
           take: 1,
           orderBy: { createdAt: 'desc' },
           select: { text: true, createdAt: true },

@@ -21,6 +21,9 @@ export default function CustomerSettings() {
   const [showConfirmPw, setShowConfirmPw] = useState(false)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState(null)
+  const [businessName, setBusinessName] = useState('')
+  const [vendorSaving, setVendorSaving] = useState(false)
+  const [vendorMsg, setVendorMsg] = useState(null)
 
   useEffect(() => {
     if (profile) setFullName(profile.fullName || '')
@@ -81,6 +84,30 @@ export default function CustomerSettings() {
       setMsg({ type: 'error', text: err.message })
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleBecomeVendor(e) {
+    e.preventDefault()
+    if (!businessName.trim()) return
+    setVendorSaving(true)
+    setVendorMsg(null)
+
+    try {
+      const res = await fetch('/api/auth/become-vendor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessName: businessName.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to create vendor profile')
+
+      await refreshProfile()
+      window.location.href = '/dashboard'
+    } catch (err) {
+      setVendorMsg({ type: 'error', text: err.message })
+    } finally {
+      setVendorSaving(false)
     }
   }
 
@@ -171,6 +198,39 @@ export default function CustomerSettings() {
             </button>
           </form>
         </section>
+
+        {/* Become a Vendor */}
+        {profile?.role === 'customer' && (
+          <section id="become-vendor" className="bg-white rounded-xl border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">Become a Vendor</h2>
+            <p className="text-sm text-gray-500 mb-4">List your services and start receiving bookings.</p>
+            <form onSubmit={handleBecomeVendor} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
+                <input
+                  type="text"
+                  value={businessName}
+                  onChange={e => setBusinessName(e.target.value)}
+                  placeholder="e.g. Sam's Photography"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                />
+              </div>
+              {vendorMsg && (
+                <p className={`text-sm ${vendorMsg.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                  {vendorMsg.text}
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={vendorSaving || !businessName.trim()}
+                className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg"
+              >
+                {vendorSaving ? 'Creating...' : 'Create Vendor Profile'}
+              </button>
+            </form>
+          </section>
+        )}
 
         {/* Help & Legal */}
         <section className="bg-white rounded-xl border border-gray-200 p-6">

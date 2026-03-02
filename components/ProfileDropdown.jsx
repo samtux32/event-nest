@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { LogOut, Settings, HelpCircle, FileText, Shield } from 'lucide-react';
+import { LogOut, Settings, HelpCircle, FileText, Shield, Store } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import ConfirmModal from './ConfirmModal';
 
@@ -30,8 +30,11 @@ export default function ProfileDropdown() {
   const initial = displayName[0]?.toUpperCase() || email[0]?.toUpperCase() || '?';
   const avatarUrl = profile?.profileImageUrl || profile?.avatarUrl;
 
+  const isCustomer = profile?.role === 'customer'
+
   const links = [
     { href: settingsUrl, icon: Settings, label: 'Account Information' },
+    ...(isCustomer ? [{ href: '/customer-settings#become-vendor', icon: Store, label: 'Become a Vendor' }] : []),
     { href: '/help', icon: HelpCircle, label: 'Help & FAQ' },
     { href: '/terms', icon: FileText, label: 'Terms of Service' },
     { href: '/privacy', icon: Shield, label: 'Privacy Policy' },

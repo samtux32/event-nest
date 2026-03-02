@@ -1,9 +1,23 @@
 import React from 'react';
-import { FileText } from 'lucide-react';
+import { FileText, Trash2 } from 'lucide-react';
 import QuoteCard from '@/components/QuoteCard';
 import DateProposalCard from '@/components/DateProposalCard';
 
-export default function MessageBubble({ message, isCustomer, onQuoteUpdated, onDateAccepted }) {
+export default function MessageBubble({ message, isCustomer, onQuoteUpdated, onDateAccepted, onDeleteMessage }) {
+  // Deleted message placeholder
+  if (message.type === 'deleted') {
+    return (
+      <div className={`flex gap-3 ${message.sender === 'me' ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex flex-col ${message.sender === 'me' ? 'items-end' : ''}`}>
+          <div className="max-w-lg px-4 py-3 rounded-2xl bg-gray-100 border border-gray-200">
+            <p className="text-sm italic text-gray-400">This message was deleted</p>
+          </div>
+          <span className="text-xs text-gray-500 mt-1 px-2">{message.timestamp}</span>
+        </div>
+      </div>
+    );
+  }
+
   if (message.type === 'quote' && message.quote) {
     return (
       <div className={`flex gap-3 ${message.sender === 'me' ? 'flex-row-reverse' : ''}`}>
@@ -36,8 +50,18 @@ export default function MessageBubble({ message, isCustomer, onQuoteUpdated, onD
 
   if (message.type === 'attachment' && message.attachmentUrl) {
     const isMe = message.sender === 'me';
+    const canUnsendAttachment = isMe && onDeleteMessage;
     return (
-      <div className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
+      <div className={`group flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
+        {canUnsendAttachment && (
+          <button
+            onClick={() => onDeleteMessage(message.id)}
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-red-500 self-center"
+            title="Unsend message"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
         {!isMe && (
           message.avatar ? (
             <img src={message.avatar} alt="Avatar" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
@@ -84,8 +108,10 @@ export default function MessageBubble({ message, isCustomer, onQuoteUpdated, onD
     );
   }
 
+  const canUnsend = message.sender === 'me' && (message.type === 'text' || message.type === 'attachment');
+
   return (
-    <div className={`flex gap-3 ${message.sender === 'me' ? 'flex-row-reverse' : ''}`}>
+    <div className={`group flex gap-3 ${message.sender === 'me' ? 'flex-row-reverse' : ''}`}>
       {message.sender === 'them' && (
         message.avatar ? (
           <img
@@ -100,14 +126,25 @@ export default function MessageBubble({ message, isCustomer, onQuoteUpdated, onD
         )
       )}
       <div className={`flex flex-col ${message.sender === 'me' ? 'items-end' : ''}`}>
-        <div
-          className={`max-w-lg px-4 py-3 rounded-2xl ${
-            message.sender === 'me'
-              ? 'bg-purple-600 text-white'
-              : 'bg-white border border-gray-200 text-gray-900'
-          }`}
-        >
-          <p className="text-sm leading-relaxed">{message.text}</p>
+        <div className="flex items-center gap-1.5">
+          {canUnsend && onDeleteMessage && (
+            <button
+              onClick={() => onDeleteMessage(message.id)}
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-red-500"
+              title="Unsend message"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+          <div
+            className={`max-w-lg px-4 py-3 rounded-2xl ${
+              message.sender === 'me'
+                ? 'bg-purple-600 text-white'
+                : 'bg-white border border-gray-200 text-gray-900'
+            }`}
+          >
+            <p className="text-sm leading-relaxed">{message.text}</p>
+          </div>
         </div>
         <span className="text-xs text-gray-500 mt-1 px-2">{message.timestamp}</span>
       </div>

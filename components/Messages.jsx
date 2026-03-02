@@ -8,7 +8,8 @@ import MessageBubble from '@/components/MessageBubble';
 import MessageInput from '@/components/MessageInput';
 import EventDetailsSidebar from '@/components/EventDetailsSidebar';
 import QuoteForm from '@/components/QuoteForm';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Shield } from 'lucide-react';
+import ConfirmModal from '@/components/ConfirmModal';
 
 export default function Messages() {
   const [conversations, setConversations] = useState([]);
@@ -27,6 +28,8 @@ export default function Messages() {
   const [loadingConvos, setLoadingConvos] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [showQuoteForm, setShowQuoteForm] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [sendError, setSendError] = useState(null);
   const messagesEndRef = useRef(null);
 
   // Fetch conversations
@@ -134,8 +137,18 @@ export default function Messages() {
         );
       } else {
         console.error('Send message failed:', data);
-        // Remove the temp message so the user knows it didn't send
         setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+        // Revert conversation preview
+        setConversations(prev =>
+          prev.map(c => c.id === selectedConversation
+            ? { ...c, lastMessage: conversations.find(cc => cc.id === selectedConversation)?.lastMessage || '', timestamp: conversations.find(cc => cc.id === selectedConversation)?.timestamp || '' }
+            : c
+          )
+        );
+        if (data.code === 'CONTACT_INFO_BLOCKED') {
+          setSendError(data.error);
+          setTimeout(() => setSendError(null), 6000);
+        }
       }
     } catch (err) {
       console.error('Failed to send message:', err);
@@ -168,6 +181,25 @@ export default function Messages() {
         m.quote?.id === updatedQuote.id ? { ...m, quote: updatedQuote } : m
       )
     );
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      const res = await fetch(`/api/conversations/${selectedConversation}/messages`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId }),
+      });
+      if (res.ok) {
+        setMessages(prev =>
+          prev.map(m => m.id === messageId ? { ...m, type: 'deleted', text: null, attachmentUrl: null, attachmentName: null, attachmentType: null, quote: null } : m)
+        );
+      }
+    } catch (err) {
+      console.error('Failed to delete message:', err);
+    } finally {
+      setDeleteConfirm(null);
+    }
   };
 
   return (
@@ -236,12 +268,20 @@ export default function Messages() {
                         message={message}
                         isCustomer={false}
                         onQuoteUpdated={handleQuoteUpdated}
+                        onDeleteMessage={(id) => setDeleteConfirm(id)}
                       />
                     ))}
                     <div ref={messagesEndRef} />
                   </>
                 )}
               </div>
+
+              {sendError && (
+                <div className="flex items-center gap-2 bg-amber-50 border-t border-amber-200 px-4 py-2.5">
+                  <Shield size={16} className="text-amber-600 flex-shrink-0" />
+                  <p className="text-sm text-amber-800">{sendError}</p>
+                </div>
+              )}
 
               <MessageInput
                 value={messageInput}
@@ -276,6 +316,16 @@ export default function Messages() {
           conversationId={selectedConversation}
           onClose={() => setShowQuoteForm(false)}
           onSent={handleQuoteSent}
+        />
+      )}
+
+      {deleteConfirm && (
+        <ConfirmModal
+          title="Unsend Message"
+          message="This message will be removed for everyone."
+          confirmLabel="Unsend"
+          onConfirm={() => handleDeleteMessage(deleteConfirm)}
+          onCancel={() => setDeleteConfirm(null)}
         />
       )}
     </div>

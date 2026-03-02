@@ -10,39 +10,48 @@ export async function GET() {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  const role = user.user_metadata?.role
-
-  const include = {
-    customerProfile: role === 'customer' || role === 'vendor' ? true : false,
-    vendorProfile: role === 'vendor' ? {
-      include: {
-        packages: { orderBy: { sortOrder: 'asc' } },
-        portfolioImages: { orderBy: { sortOrder: 'asc' } },
-        documents: true,
-      },
-    } : false,
-  }
+  const metaRole = user.user_metadata?.role
 
   try {
     // Try by Supabase auth ID first, then fall back to email
-    let dbUser = await prisma.user.findUnique({ where: { id: user.id }, include })
+    // First do a lightweight lookup to get the DB role
+    let dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { role: true } })
     if (!dbUser) {
-      dbUser = await prisma.user.findUnique({ where: { email: user.email }, include })
+      dbUser = await prisma.user.findUnique({ where: { email: user.email }, select: { role: true } })
     }
 
     if (!dbUser) {
       return NextResponse.json({ error: 'User not found in database' }, { status: 404 })
     }
 
-    const profile = role === 'vendor' ? dbUser.vendorProfile : dbUser.customerProfile
+    // Use DB role as source of truth, fall back to Supabase metadata
+    const role = dbUser.role || metaRole
+
+    const include = {
+      customerProfile: role === 'customer' || role === 'vendor' ? true : false,
+      vendorProfile: role === 'vendor' ? {
+        include: {
+          packages: { orderBy: { sortOrder: 'asc' } },
+          portfolioImages: { orderBy: { sortOrder: 'asc' } },
+          documents: true,
+        },
+      } : false,
+    }
+
+    let fullUser = await prisma.user.findUnique({ where: { id: user.id }, include })
+    if (!fullUser) {
+      fullUser = await prisma.user.findUnique({ where: { email: user.email }, include })
+    }
+
+    const profile = role === 'vendor' ? fullUser.vendorProfile : fullUser.customerProfile
 
     return NextResponse.json({
       profile: {
         ...profile,
-        email: dbUser.email,
+        email: fullUser.email,
         role,
       },
-      ...(role === 'vendor' ? { customerProfile: dbUser.customerProfile || null } : {}),
+      ...(role === 'vendor' ? { customerProfile: fullUser.customerProfile || null } : {}),
     })
   } catch (err) {
     console.error('Profile fetch error:', err)

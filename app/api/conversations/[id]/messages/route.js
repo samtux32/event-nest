@@ -77,6 +77,23 @@ export async function GET(request, { params }) {
         ? (senderIsVendor ? conversation.vendor.businessName : conversation.customer.fullName) || null
         : null
 
+      // Soft-deleted messages show placeholder only
+      if (msg.deletedAt) {
+        return {
+          id: msg.id,
+          sender: isMe ? 'me' : 'them',
+          text: null,
+          type: 'deleted',
+          attachmentUrl: null,
+          attachmentName: null,
+          attachmentType: null,
+          avatar,
+          senderName,
+          quote: null,
+          timestamp: new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+        }
+      }
+
       return {
         id: msg.id,
         sender: isMe ? 'me' : 'them',
@@ -140,6 +157,7 @@ export async function POST(request, { params }) {
       include: {
         vendor: { select: { userId: true, businessName: true, user: { select: { email: true } } } },
         customer: { select: { userId: true, fullName: true, user: { select: { email: true } } } },
+        booking: { select: { status: true } },
       },
     })
 
@@ -153,6 +171,26 @@ export async function POST(request, { params }) {
 
     if (!isVendor && !isCustomer) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
+    }
+
+    // Block contact info before booking is confirmed/completed
+    const bookingStatus = conversation.booking?.status
+    const isBookingConfirmed = bookingStatus === 'confirmed' || bookingStatus === 'completed'
+    if (!isBookingConfirmed && text?.trim()) {
+      const contactPatterns = [
+        /\b0\d{2,4}[\s.-]?\d{3,4}[\s.-]?\d{3,4}\b/,           // UK numbers
+        /\b\+\d{1,3}[\s.-]?\d{2,4}[\s.-]?\d{3,4}[\s.-]?\d{3,4}\b/, // International
+        /\(\d{3}\)\s?\d{3}[-.]?\d{4}/,                          // US (xxx) xxx-xxxx
+        /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/,                        // US xxx-xxx-xxxx
+        /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/,      // Email
+      ]
+      const hasContactInfo = contactPatterns.some(p => p.test(text.trim()))
+      if (hasContactInfo) {
+        return NextResponse.json({
+          error: 'Contact information cannot be shared until a booking is confirmed. This protects both parties.',
+          code: 'CONTACT_INFO_BLOCKED',
+        }, { status: 400 })
+      }
     }
 
     // Create message and update conversation in a transaction
@@ -233,5 +271,57 @@ export async function POST(request, { params }) {
   } catch (err) {
     console.error('Send message error:', err)
     return NextResponse.json({ error: 'Failed to send message' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request, { params }) {
+  const { id } = await params
+
+  const supabase = await createClient()
+  const { data: { user }, error } = await supabase.auth.getUser()
+
+  if (error || !user) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  }
+
+  const { messageId } = await request.json()
+
+  if (!messageId) {
+    return NextResponse.json({ error: 'messageId is required' }, { status: 400 })
+  }
+
+  try {
+    const dbUserId = await getDbUserId(user.id, user.email)
+
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+      select: { id: true, senderId: true, conversationId: true, type: true, deletedAt: true },
+    })
+
+    if (!message || message.conversationId !== id) {
+      return NextResponse.json({ error: 'Message not found' }, { status: 404 })
+    }
+
+    if (message.senderId !== dbUserId) {
+      return NextResponse.json({ error: 'You can only unsend your own messages' }, { status: 403 })
+    }
+
+    if (message.type !== 'text' && message.type !== 'attachment') {
+      return NextResponse.json({ error: 'This message type cannot be unsent' }, { status: 400 })
+    }
+
+    if (message.deletedAt) {
+      return NextResponse.json({ error: 'Message already deleted' }, { status: 400 })
+    }
+
+    await prisma.message.update({
+      where: { id: messageId },
+      data: { deletedAt: new Date() },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    console.error('Delete message error:', err)
+    return NextResponse.json({ error: 'Failed to delete message' }, { status: 500 })
   }
 }
