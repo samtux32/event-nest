@@ -111,7 +111,7 @@ export default function VendorDashboard() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
+          <Link href="/messages" className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-md hover:scale-[1.02] transition-all duration-200">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-gray-600 text-sm mb-2">New Inquiries</p>
@@ -122,9 +122,9 @@ export default function VendorDashboard() {
                 <MessageSquare className="text-purple-600" size={24} />
               </div>
             </div>
-          </div>
+          </Link>
 
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
+          <Link href="/calendar" className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-md hover:scale-[1.02] transition-all duration-200">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-gray-600 text-sm mb-2">Upcoming Bookings</p>
@@ -135,9 +135,9 @@ export default function VendorDashboard() {
                 <CalendarDays className="text-blue-600" size={24} />
               </div>
             </div>
-          </div>
+          </Link>
 
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
+          <Link href="/analytics" className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-md hover:scale-[1.02] transition-all duration-200">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-gray-600 text-sm mb-2">Total Revenue</p>
@@ -148,9 +148,9 @@ export default function VendorDashboard() {
                 <DollarSign className="text-green-600" size={24} />
               </div>
             </div>
-          </div>
+          </Link>
 
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
+          <Link href="/calendar" className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-md hover:scale-[1.02] transition-all duration-200">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-gray-600 text-sm mb-2">Completed Events</p>
@@ -161,7 +161,7 @@ export default function VendorDashboard() {
                 <CheckCircle className="text-orange-600" size={24} />
               </div>
             </div>
-          </div>
+          </Link>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-200">

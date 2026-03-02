@@ -158,6 +158,7 @@ model VendorProfile {
   promotions           Promotion[]
   faqs                 VendorFAQ[]
 
+  @@index([isApproved, averageRating])
   @@map("vendor_profiles")
 }
 
@@ -174,6 +175,7 @@ model Package {
   vendor   VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   bookings Booking[]
 
+  @@index([vendorId])
   @@map("packages")
 }
 
@@ -306,8 +308,8 @@ model Conversation {
   quotes   Quote[]
 
   @@unique([vendorId, customerId]) // One conversation per vendor-customer pair
-  @@index([vendorId])
-  @@index([customerId])
+  @@index([vendorId, lastMessageAt])
+  @@index([customerId, lastMessageAt])
   @@map("conversations")
 }
 

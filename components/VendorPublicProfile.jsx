@@ -752,19 +752,21 @@ export default function VendorPublicProfile({ vendorId }) {
                     </Link>
                   ) : (
                     <>
-                      <Link
-                        href={`/booking/${vendorId}`}
-                        onClick={(e) => {
-                          if (!user) {
-                            e.preventDefault();
-                            setAuthModal({ message: 'request a quote' });
-                          }
-                        }}
-                        className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
-                      >
-                        <Calendar size={20} />
-                        Request Quote
-                      </Link>
+                      {vendor.packages?.length > 0 && (
+                        <Link
+                          href={`/booking/${vendorId}`}
+                          onClick={(e) => {
+                            if (!user) {
+                              e.preventDefault();
+                              setAuthModal({ message: 'request a quote' });
+                            }
+                          }}
+                          className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <Calendar size={20} />
+                          Request Quote
+                        </Link>
+                      )}
 
                       <button
                         onClick={handleSendMessage}
