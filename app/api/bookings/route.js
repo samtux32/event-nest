@@ -167,6 +167,9 @@ export async function GET(request) {
       ? { vendorId: profileId }
       : { customerId: profileId }
 
+    const limit = Math.min(parseInt(url.searchParams.get('limit')) || 20, 100)
+    const offset = parseInt(url.searchParams.get('offset')) || 0
+
     const bookings = await prisma.booking.findMany({
       where,
       include: {
@@ -187,9 +190,14 @@ export async function GET(request) {
         },
       },
       orderBy: { createdAt: 'desc' },
+      take: limit + 1,
+      skip: offset,
     })
 
-    return NextResponse.json({ bookings })
+    const hasMore = bookings.length > limit
+    if (hasMore) bookings.pop()
+
+    return NextResponse.json({ bookings, hasMore })
   } catch (err) {
     console.error('Fetch bookings error:', err)
     return NextResponse.json({ error: 'Failed to fetch bookings' }, { status: 500 })

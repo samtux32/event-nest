@@ -21,6 +21,10 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
+  const url = new URL(request.url)
+  const limit = Math.min(parseInt(url.searchParams.get('limit')) || 50, 100)
+  const cursor = url.searchParams.get('cursor') // ISO date string
+
   try {
     // Verify user is part of this conversation
     const conversation = await prisma.conversation.findUnique({
@@ -44,10 +48,16 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
     }
 
-    // Fetch messages
+    // Fetch messages with cursor pagination
+    const whereClause = { conversationId: id }
+    if (cursor) {
+      whereClause.createdAt = { lt: new Date(cursor) }
+    }
+
     const messages = await prisma.message.findMany({
-      where: { conversationId: id },
-      orderBy: { createdAt: 'asc' },
+      where: whereClause,
+      orderBy: { createdAt: 'desc' },
+      take: limit + 1,
       include: {
         sender: {
           select: { id: true },
@@ -56,15 +66,21 @@ export async function GET(request, { params }) {
       },
     })
 
-    // Mark unread messages as read for this user
-    const unreadField = isVendor ? 'unreadVendor' : 'unreadCustomer'
-    const currentUnread = isVendor ? conversation.unreadVendor : conversation.unreadCustomer
+    const hasMore = messages.length > limit
+    if (hasMore) messages.pop()
+    messages.reverse() // Back to chronological order
 
-    if (currentUnread > 0) {
-      await prisma.conversation.update({
-        where: { id },
-        data: { [unreadField]: 0 },
-      })
+    // Mark unread messages as read for this user (only on initial load, not "load older")
+    if (!cursor) {
+      const unreadField = isVendor ? 'unreadVendor' : 'unreadCustomer'
+      const currentUnread = isVendor ? conversation.unreadVendor : conversation.unreadCustomer
+
+      if (currentUnread > 0) {
+        await prisma.conversation.update({
+          where: { id },
+          data: { [unreadField]: 0 },
+        })
+      }
     }
 
     const mapped = messages.map((msg) => {
@@ -90,6 +106,7 @@ export async function GET(request, { params }) {
           avatar,
           senderName,
           quote: null,
+          createdAt: msg.createdAt.toISOString(),
           timestamp: new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
         }
       }
@@ -123,11 +140,12 @@ export async function GET(request, { params }) {
             ? conversation.booking.eventDate.toISOString().split('T')[0]
             : null,
         } : {}),
+        createdAt: msg.createdAt.toISOString(),
         timestamp: new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
       }
     })
 
-    return NextResponse.json({ messages: mapped })
+    return NextResponse.json({ messages: mapped, hasMore })
   } catch (err) {
     console.error('Messages fetch error:', err)
     return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 })

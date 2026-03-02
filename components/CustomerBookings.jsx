@@ -212,14 +212,19 @@ export default function CustomerBookings() {
   const [reviewingBooking, setReviewingBooking] = useState(null);
   const [reviewedIds, setReviewedIds] = useState(new Set());
   const [cancellingBookingId, setCancellingBookingId] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     async function fetchBookings() {
       try {
-        const res = await fetch(`/api/bookings${asCustomerParam}`);
+        const res = await fetch(`/api/bookings${asCustomerParam}${asCustomerParam ? '&' : '?'}limit=20`);
         const data = await res.json();
         if (res.ok) {
           setBookings(data.bookings);
+          setHasMore(data.hasMore ?? false);
+          setOffset(data.bookings.length);
           // Seed reviewedIds from server data so the button doesn't reappear on refresh
           const alreadyReviewed = new Set(data.bookings.filter(b => b.review).map(b => b.id));
           setReviewedIds(alreadyReviewed);
@@ -232,6 +237,28 @@ export default function CustomerBookings() {
     }
     fetchBookings();
   }, []);
+
+  const loadMoreBookings = async () => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(`/api/bookings${asCustomerParam}${asCustomerParam ? '&' : '?'}limit=20&offset=${offset}`);
+      const data = await res.json();
+      if (res.ok) {
+        setBookings(prev => [...prev, ...data.bookings]);
+        setHasMore(data.hasMore ?? false);
+        setOffset(prev => prev + data.bookings.length);
+        const newReviewed = data.bookings.filter(b => b.review).map(b => b.id);
+        if (newReviewed.length > 0) {
+          setReviewedIds(prev => new Set([...prev, ...newReviewed]));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load more bookings:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const handleReviewSubmitted = (bookingId) => {
     setReviewedIds(prev => new Set([...prev, bookingId]));
@@ -369,6 +396,18 @@ export default function CustomerBookings() {
                 </div>
               );
             })}
+
+            {hasMore && (
+              <div className="text-center pt-4">
+                <button
+                  onClick={loadMoreBookings}
+                  disabled={loadingMore}
+                  className="px-8 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+                >
+                  {loadingMore ? 'Loading...' : 'Load More Bookings'}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

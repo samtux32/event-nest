@@ -24,7 +24,11 @@ export default function CustomerMessages() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [sendError, setSendError] = useState(null);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   // Read ?conv= from URL on mount and pre-select that conversation
   useEffect(() => {
@@ -63,11 +67,13 @@ export default function CustomerMessages() {
 
     async function fetchMessages() {
       setLoadingMessages(true);
+      setShouldAutoScroll(true);
       try {
-        const res = await fetch(`/api/conversations/${selectedConversation}/messages`);
+        const res = await fetch(`/api/conversations/${selectedConversation}/messages?limit=50`);
         const data = await res.json();
         if (res.ok) {
           setMessages(data.messages);
+          setHasMoreMessages(data.hasMore ?? false);
           setConversations(prev =>
             prev.map(c => c.id === selectedConversation ? { ...c, unread: 0 } : c)
           );
@@ -82,10 +88,38 @@ export default function CustomerMessages() {
     fetchMessages();
   }, [selectedConversation]);
 
-  // Auto-scroll to bottom when messages change
+  const loadOlderMessages = async () => {
+    if (!selectedConversation || !messages.length || loadingOlder) return;
+    setLoadingOlder(true);
+    setShouldAutoScroll(false);
+    const container = messagesContainerRef.current;
+    const prevScrollHeight = container?.scrollHeight || 0;
+    try {
+      const oldest = messages[0];
+      const res = await fetch(`/api/conversations/${selectedConversation}/messages?limit=50&cursor=${encodeURIComponent(oldest.createdAt)}`);
+      const data = await res.json();
+      if (res.ok) {
+        setMessages(prev => [...data.messages, ...prev]);
+        setHasMoreMessages(data.hasMore ?? false);
+        requestAnimationFrame(() => {
+          if (container) {
+            container.scrollTop = container.scrollHeight - prevScrollHeight;
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load older messages:', err);
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
+
+  // Auto-scroll to bottom on initial load + new messages (not on "load older")
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (shouldAutoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, shouldAutoScroll]);
 
   const selectedConv = conversations.find(c => c.id === selectedConversation);
 
@@ -140,6 +174,7 @@ export default function CustomerMessages() {
     if (!text?.trim() && !attachment) return;
 
     setMessageInput('');
+    setShouldAutoScroll(true);
 
     // Optimistic update
     const tempMessage = {
@@ -255,7 +290,7 @@ export default function CustomerMessages() {
               )}
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4">
                 {loadingMessages ? (
                   <div className="space-y-4">
                     {[1, 2, 3].map(i => (
@@ -266,6 +301,17 @@ export default function CustomerMessages() {
                   </div>
                 ) : (
                   <>
+                    {hasMoreMessages && (
+                      <div className="text-center py-2">
+                        <button
+                          onClick={loadOlderMessages}
+                          disabled={loadingOlder}
+                          className="text-sm text-purple-600 hover:text-purple-800 font-medium disabled:opacity-50"
+                        >
+                          {loadingOlder ? 'Loading...' : 'Load older messages'}
+                        </button>
+                      </div>
+                    )}
                     {messages.map((message) => (
                       <MessageBubble
                         key={message.id}

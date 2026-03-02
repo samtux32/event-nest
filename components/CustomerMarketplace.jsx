@@ -58,6 +58,9 @@ export default function CustomerMarketplace() {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Location state
   const [userLocation, setUserLocation] = useState(null); // { lat, lng, city }
@@ -81,11 +84,15 @@ export default function CustomerMarketplace() {
   const sliderMin = minPriceFilter ?? priceRangeMin;
   const sliderMax = maxPriceFilter ?? priceRangeMax;
 
-  // Reset price slider whenever the vendor list changes (e.g. category switch)
+  // Reset price slider on full reloads (category/search change), not "load more" appends
+  const [shouldResetPrice, setShouldResetPrice] = useState(false);
   useEffect(() => {
-    setMinPriceFilter(null);
-    setMaxPriceFilter(null);
-  }, [vendors]);
+    if (shouldResetPrice) {
+      setMinPriceFilter(null);
+      setMaxPriceFilter(null);
+      setShouldResetPrice(false);
+    }
+  }, [shouldResetPrice]);
 
   const categories = [
     'All Categories',
@@ -103,13 +110,20 @@ export default function CustomerMarketplace() {
   useEffect(() => {
     async function fetchVendors() {
       setLoading(true);
+      setOffset(0);
+      setShouldResetPrice(true);
       try {
-        const params = selectedCategories.length > 0
-          ? `?categories=${selectedCategories.map(c => encodeURIComponent(c)).join(',')}`
-          : '';
-        const res = await fetch(`/api/vendors${params}`);
+        const params = new URLSearchParams();
+        if (selectedCategories.length > 0) params.set('categories', selectedCategories.join(','));
+        params.set('limit', '24');
+        params.set('offset', '0');
+        const res = await fetch(`/api/vendors?${params.toString()}`);
         const data = await res.json();
-        if (res.ok) setVendors(data.vendors);
+        if (res.ok) {
+          setVendors(data.vendors);
+          setHasMore(data.hasMore ?? false);
+          setOffset(data.vendors.length);
+        }
       } catch (err) {
         console.error('Failed to fetch vendors:', err);
       } finally {
@@ -118,6 +132,28 @@ export default function CustomerMarketplace() {
     }
     fetchVendors();
   }, [selectedCategories]);
+
+  const loadMoreVendors = async () => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const params = new URLSearchParams();
+      if (selectedCategories.length > 0) params.set('categories', selectedCategories.join(','));
+      params.set('limit', '24');
+      params.set('offset', String(offset));
+      const res = await fetch(`/api/vendors?${params.toString()}`);
+      const data = await res.json();
+      if (res.ok) {
+        setVendors(prev => [...prev, ...data.vendors]);
+        setHasMore(data.hasMore ?? false);
+        setOffset(prev => prev + data.vendors.length);
+      }
+    } catch (err) {
+      console.error('Failed to load more vendors:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   // Load persisted wishlist on mount
   useEffect(() => {
@@ -586,6 +622,18 @@ export default function CustomerMarketplace() {
                 </div>
               </Link>
             ))}
+          </div>
+        )}
+
+        {!loading && hasMore && (
+          <div className="text-center mt-8">
+            <button
+              onClick={loadMoreVendors}
+              disabled={loadingMore}
+              className="px-8 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+            >
+              {loadingMore ? 'Loading...' : 'Load More Vendors'}
+            </button>
           </div>
         )}
 

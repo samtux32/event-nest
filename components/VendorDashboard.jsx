@@ -44,33 +44,56 @@ const statusLabels = {
 export default function VendorDashboard() {
   const { profile: authProfile } = useAuth();
   const [bookings, setBookings] = useState([]);
+  const [stats, setStats] = useState({ newInquiries: 0, upcomingBookings: 0, completedEvents: 0, totalRevenue: 0 });
   const [loading, setLoading] = useState(true);
   const [selectedInquiry, setSelectedInquiry] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
-    async function fetchBookings() {
+    async function fetchData() {
       try {
-        const res = await fetch('/api/bookings');
-        const data = await res.json();
-        if (res.ok) {
-          setBookings(data.bookings);
+        const [statsRes, bookingsRes] = await Promise.all([
+          fetch('/api/bookings/stats'),
+          fetch('/api/bookings?limit=20'),
+        ]);
+        const [statsData, bookingsData] = await Promise.all([statsRes.json(), bookingsRes.json()]);
+        if (statsRes.ok) setStats(statsData);
+        if (bookingsRes.ok) {
+          setBookings(bookingsData.bookings);
+          setHasMore(bookingsData.hasMore ?? false);
+          setOffset(bookingsData.bookings.length);
         }
       } catch (err) {
-        console.error('Failed to fetch bookings:', err);
+        console.error('Failed to fetch dashboard data:', err);
       } finally {
         setLoading(false);
       }
     }
-    fetchBookings();
+    fetchData();
   }, []);
 
-  const newInquiries = bookings.filter(b => b.status === 'new_inquiry').length;
-  const upcomingBookings = bookings.filter(b => b.status === 'confirmed').length;
-  const completedEvents = bookings.filter(b => b.status === 'completed').length;
-  const totalRevenue = bookings
-    .filter(b => b.status === 'confirmed' || b.status === 'completed')
-    .reduce((sum, b) => sum + Number(b.totalPrice || 0), 0);
+  const loadMoreInquiries = async () => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(`/api/bookings?limit=20&offset=${offset}`);
+      const data = await res.json();
+      if (res.ok) {
+        setBookings(prev => [...prev, ...data.bookings]);
+        setHasMore(data.hasMore ?? false);
+        setOffset(prev => prev + data.bookings.length);
+      }
+    } catch (err) {
+      console.error('Failed to load more inquiries:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const { newInquiries, upcomingBookings, completedEvents, totalRevenue } = stats;
 
   // Show new_inquiry and pending bookings in the inquiries list
   const activeInquiries = bookings.filter(b => b.status === 'new_inquiry' || b.status === 'pending');
@@ -225,6 +248,18 @@ export default function VendorDashboard() {
               <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-100 rounded-2xl">
                 <MessageSquare className="mx-auto mb-4 text-gray-300" size={48} />
                 <p>No active inquiries</p>
+              </div>
+            )}
+
+            {hasMore && (
+              <div className="text-center pt-4">
+                <button
+                  onClick={loadMoreInquiries}
+                  disabled={loadingMore}
+                  className="text-sm text-purple-600 hover:text-purple-800 font-medium disabled:opacity-50"
+                >
+                  {loadingMore ? 'Loading...' : 'Load more'}
+                </button>
               </div>
             )}
           </div>
