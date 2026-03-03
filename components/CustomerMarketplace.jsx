@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Search, Heart, Star, MapPin, SlidersHorizontal, X, GitCompareArrows, Clock } from 'lucide-react';
 import { useAuth } from './AuthProvider';
@@ -61,6 +61,17 @@ export default function CustomerMarketplace() {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debounceRef = useRef(null);
+
+  // Debounce search input — waits 400ms after user stops typing
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 400);
+    return () => clearTimeout(debounceRef.current);
+  }, [searchQuery]);
 
   // Location state
   const [userLocation, setUserLocation] = useState(null); // { lat, lng, city }
@@ -107,17 +118,22 @@ export default function CustomerMarketplace() {
     'Cake'
   ];
 
+  const buildParams = (extraOffset) => {
+    const params = new URLSearchParams();
+    if (selectedCategories.length > 0) params.set('categories', selectedCategories.join(','));
+    if (debouncedSearch) params.set('search', debouncedSearch);
+    params.set('limit', '24');
+    params.set('offset', String(extraOffset));
+    return params;
+  };
+
   useEffect(() => {
     async function fetchVendors() {
       setLoading(true);
       setOffset(0);
       setShouldResetPrice(true);
       try {
-        const params = new URLSearchParams();
-        if (selectedCategories.length > 0) params.set('categories', selectedCategories.join(','));
-        params.set('limit', '24');
-        params.set('offset', '0');
-        const res = await fetch(`/api/vendors?${params.toString()}`);
+        const res = await fetch(`/api/vendors?${buildParams(0).toString()}`);
         const data = await res.json();
         if (res.ok) {
           setVendors(data.vendors);
@@ -131,17 +147,13 @@ export default function CustomerMarketplace() {
       }
     }
     fetchVendors();
-  }, [selectedCategories]);
+  }, [selectedCategories, debouncedSearch]);
 
   const loadMoreVendors = async () => {
     if (loadingMore) return;
     setLoadingMore(true);
     try {
-      const params = new URLSearchParams();
-      if (selectedCategories.length > 0) params.set('categories', selectedCategories.join(','));
-      params.set('limit', '24');
-      params.set('offset', String(offset));
-      const res = await fetch(`/api/vendors?${params.toString()}`);
+      const res = await fetch(`/api/vendors?${buildParams(offset).toString()}`);
       const data = await res.json();
       if (res.ok) {
         setVendors(prev => [...prev, ...data.vendors]);
@@ -260,14 +272,10 @@ export default function CustomerMarketplace() {
 
   const filteredVendors = vendors
     .filter(vendor => {
-      const query = searchQuery.toLowerCase();
-      const matchesSearch = vendor.name.toLowerCase().includes(query) ||
-                            (vendor.category || '').toLowerCase().includes(query) ||
-                            vendor.keywords?.some(k => k.toLowerCase().includes(query));
       const matchesRating = minRating === 0 || (vendor.rating !== null && vendor.rating >= minRating);
       const price = parsePrice(vendor.startingPrice);
       const matchesPrice = !isPriceFiltered || price === null || (price >= sliderMin && price <= sliderMax);
-      return matchesSearch && matchesRating && matchesPrice;
+      return matchesRating && matchesPrice;
     })
     .sort((a, b) => {
       if (sortBy === 'rating') {
