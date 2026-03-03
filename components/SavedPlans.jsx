@@ -14,6 +14,7 @@ import {
   Loader2,
   Pencil,
   RotateCcw,
+  CheckSquare,
 } from 'lucide-react';
 import AppHeader from './AppHeader';
 import ConfirmModal from './ConfirmModal';
@@ -38,6 +39,7 @@ export default function SavedPlans() {
   const [editPrompt, setEditPrompt] = useState('');
   const [editBudget, setEditBudget] = useState('');
   const [regenerating, setRegenerating] = useState(false);
+  const [creatingChecklist, setCreatingChecklist] = useState(null); // plan id
 
   useEffect(() => {
     fetchPlans();
@@ -114,6 +116,27 @@ export default function SavedPlans() {
       // Could show error but keeping simple
     } finally {
       setRegenerating(false);
+    }
+  }
+
+  async function createChecklistFromPlan(saved) {
+    setCreatingChecklist(saved.id);
+    try {
+      const categories = saved.categories || [];
+      const items = categories.map((cat) => ({
+        text: `Book ${cat.category.toLowerCase()} (budget: £${cat.budgetAllocation?.toLocaleString()})`,
+        timeline: cat.priority === 'essential' ? 'Book first' : cat.priority === 'recommended' ? 'Book early' : 'Nice to have',
+      }));
+      const res = await fetch('/api/checklists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: saved.title, items }),
+      });
+      if (!res.ok) throw new Error();
+      // Navigate to checklist page
+      window.location.href = '/event-checklist';
+    } catch {} finally {
+      setCreatingChecklist(null);
     }
   }
 
@@ -344,7 +367,7 @@ export default function SavedPlans() {
                           </div>
                         )}
 
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 flex-wrap">
                           {!isEditing && (
                             <button
                               onClick={() => startEdit(saved)}
@@ -354,6 +377,18 @@ export default function SavedPlans() {
                               Edit Plan
                             </button>
                           )}
+                          <button
+                            onClick={() => createChecklistFromPlan(saved)}
+                            disabled={creatingChecklist === saved.id}
+                            className="flex items-center gap-1.5 text-sm text-purple-600 hover:text-purple-800 transition-colors disabled:opacity-50"
+                          >
+                            {creatingChecklist === saved.id ? (
+                              <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                              <CheckSquare size={14} />
+                            )}
+                            Create Checklist
+                          </button>
                           <button
                             onClick={() => setConfirmAction({ type: 'deletePlan', id: saved.id })}
                             className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-700 transition-colors"

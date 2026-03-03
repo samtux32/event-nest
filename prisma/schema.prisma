@@ -98,6 +98,7 @@ model CustomerProfile {
   conversations  Conversation[]
   quotes         Quote[]
   savedPlans     SavedPlan[]
+  checklists     Checklist[]
 
   @@map("customer_profiles")
 }
@@ -528,6 +529,39 @@ model SavedPlan {
 
   @@index([customerId])
   @@map("saved_plans")
+}
+
+// ═══════════════════════════════════════════════════
+// CHECKLISTS
+// ═══════════════════════════════════════════════════
+
+model Checklist {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId String   @map("customer_id") @db.Uuid
+  name       String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  customer CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items    ChecklistItem[]
+
+  @@index([customerId])
+  @@map("checklists")
+}
+
+model ChecklistItem {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  checklistId String   @map("checklist_id") @db.Uuid
+  text        String
+  timeline    String?
+  done        Boolean  @default(false)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  checklist Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  @@index([checklistId])
+  @@map("checklist_items")
 }
 
 /// Tracks each time a customer views a vendor profile

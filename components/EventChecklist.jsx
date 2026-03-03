@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Circle, Plus, Trash2, Calendar, ChevronDown, X } from 'lucide-react';
+import { CheckCircle2, Circle, Plus, Trash2, Calendar, ChevronDown, X, Loader2 } from 'lucide-react';
 import AppHeader from './AppHeader';
+import ConfirmModal from './ConfirmModal';
 
 const DEFAULT_TEMPLATES = {
   wedding: {
@@ -61,81 +62,117 @@ const DEFAULT_TEMPLATES = {
 
 export default function EventChecklist() {
   const [checklists, setChecklists] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showNewForm, setShowNewForm] = useState(false);
   const [newName, setNewName] = useState('');
   const [newTemplate, setNewTemplate] = useState('custom');
   const [expandedId, setExpandedId] = useState(null);
   const [newItemText, setNewItemText] = useState('');
+  const [confirmAction, setConfirmAction] = useState(null);
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem('eventChecklists') || '[]');
-      setChecklists(stored);
-    } catch { setChecklists([]); }
+    fetchChecklists();
   }, []);
 
-  function save(updated) {
-    setChecklists(updated);
-    localStorage.setItem('eventChecklists', JSON.stringify(updated));
+  async function fetchChecklists() {
+    try {
+      const res = await fetch('/api/checklists');
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setChecklists(data.checklists || []);
+    } catch {
+      setChecklists([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function createChecklist() {
+  async function createChecklist() {
     if (!newName.trim()) return;
     const template = DEFAULT_TEMPLATES[newTemplate];
-    const checklist = {
-      id: Date.now().toString(),
-      name: newName.trim(),
-      createdAt: Date.now(),
-      items: template.items.map((item, i) => ({
-        id: `${Date.now()}-${i}`,
-        text: item.text,
-        timeline: item.timeline,
-        done: false,
-      })),
-    };
-    save([checklist, ...checklists]);
-    setNewName('');
-    setNewTemplate('custom');
-    setShowNewForm(false);
-    setExpandedId(checklist.id);
+    try {
+      const res = await fetch('/api/checklists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newName.trim(),
+          items: template.items,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const { checklist } = await res.json();
+      setChecklists((prev) => [checklist, ...prev]);
+      setNewName('');
+      setNewTemplate('custom');
+      setShowNewForm(false);
+      setExpandedId(checklist.id);
+    } catch {}
   }
 
-  function deleteChecklist(id) {
-    save(checklists.filter((c) => c.id !== id));
-    if (expandedId === id) setExpandedId(null);
+  async function deleteChecklist(id) {
+    try {
+      await fetch(`/api/checklists/${id}`, { method: 'DELETE' });
+      setChecklists((prev) => prev.filter((c) => c.id !== id));
+      if (expandedId === id) setExpandedId(null);
+    } catch {}
   }
 
-  function toggleItem(checklistId, itemId) {
-    save(
-      checklists.map((c) =>
+  async function toggleItem(checklistId, itemId, currentDone) {
+    // Optimistic update
+    setChecklists((prev) =>
+      prev.map((c) =>
         c.id === checklistId
-          ? { ...c, items: c.items.map((item) => (item.id === itemId ? { ...item, done: !item.done } : item)) }
+          ? { ...c, items: c.items.map((item) => (item.id === itemId ? { ...item, done: !currentDone } : item)) }
           : c
       )
     );
+    try {
+      await fetch(`/api/checklists/${checklistId}/items/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ done: !currentDone }),
+      });
+    } catch {
+      // Revert on failure
+      setChecklists((prev) =>
+        prev.map((c) =>
+          c.id === checklistId
+            ? { ...c, items: c.items.map((item) => (item.id === itemId ? { ...item, done: currentDone } : item)) }
+            : c
+        )
+      );
+    }
   }
 
-  function addItem(checklistId) {
+  async function addItem(checklistId) {
     if (!newItemText.trim()) return;
-    save(
-      checklists.map((c) =>
-        c.id === checklistId
-          ? {
-              ...c,
-              items: [...c.items, { id: Date.now().toString(), text: newItemText.trim(), timeline: '', done: false }],
-            }
-          : c
-      )
-    );
+    const text = newItemText.trim();
     setNewItemText('');
+    try {
+      const res = await fetch(`/api/checklists/${checklistId}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error();
+      const { item } = await res.json();
+      setChecklists((prev) =>
+        prev.map((c) =>
+          c.id === checklistId ? { ...c, items: [...c.items, item] } : c
+        )
+      );
+    } catch {}
   }
 
-  function removeItem(checklistId, itemId) {
-    save(
-      checklists.map((c) =>
+  async function removeItem(checklistId, itemId) {
+    setChecklists((prev) =>
+      prev.map((c) =>
         c.id === checklistId ? { ...c, items: c.items.filter((item) => item.id !== itemId) } : c
       )
     );
+    try {
+      await fetch(`/api/checklists/${checklistId}/items/${itemId}`, { method: 'DELETE' });
+    } catch {}
   }
 
   return (
@@ -203,7 +240,11 @@ export default function EventChecklist() {
           )}
 
           {/* Checklists */}
-          {checklists.length === 0 && !showNewForm ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+            </div>
+          ) : checklists.length === 0 && !showNewForm ? (
             <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
               <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Calendar className="w-8 h-8 text-purple-600" />
@@ -268,7 +309,7 @@ export default function EventChecklist() {
                               key={item.id}
                               className="flex items-start gap-3 py-2 px-2 rounded-lg hover:bg-gray-50 group transition-colors"
                             >
-                              <button onClick={() => toggleItem(checklist.id, item.id)} className="mt-0.5 flex-shrink-0">
+                              <button onClick={() => toggleItem(checklist.id, item.id, item.done)} className="mt-0.5 flex-shrink-0">
                                 {item.done ? (
                                   <CheckCircle2 size={20} className="text-purple-600" />
                                 ) : (
@@ -313,7 +354,7 @@ export default function EventChecklist() {
                         </div>
 
                         <button
-                          onClick={() => deleteChecklist(checklist.id)}
+                          onClick={() => setConfirmAction({ id: checklist.id })}
                           className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-700 transition-colors mt-4"
                         >
                           <Trash2 size={14} />
@@ -328,6 +369,19 @@ export default function EventChecklist() {
           )}
         </div>
       </div>
+
+      {confirmAction && (
+        <ConfirmModal
+          title="Delete this checklist?"
+          message="All items in this checklist will be permanently deleted."
+          confirmLabel="Delete"
+          onConfirm={() => {
+            deleteChecklist(confirmAction.id);
+            setConfirmAction(null);
+          }}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
     </>
   );
 }
