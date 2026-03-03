@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Circle, Plus, Trash2, Calendar, ChevronDown, X, Loader2 } from 'lucide-react';
+import { CheckCircle2, Circle, Plus, Trash2, Calendar, ChevronDown, X, Loader2, Clock } from 'lucide-react';
 import AppHeader from './AppHeader';
 import ConfirmModal from './ConfirmModal';
 
@@ -175,6 +175,33 @@ export default function EventChecklist() {
     } catch {}
   }
 
+  async function updateEventDate(checklistId, date) {
+    setChecklists((prev) =>
+      prev.map((c) => (c.id === checklistId ? { ...c, eventDate: date || null } : c))
+    );
+    try {
+      await fetch(`/api/checklists/${checklistId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventDate: date || null }),
+      });
+    } catch {}
+  }
+
+  function getCountdown(dateStr) {
+    if (!dateStr) return null;
+    const eventDate = new Date(dateStr);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    eventDate.setHours(0, 0, 0, 0);
+    const diff = eventDate - now;
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    if (days < 0) return { text: `${Math.abs(days)} days ago`, past: true };
+    if (days === 0) return { text: 'Today!', past: false };
+    if (days === 1) return { text: 'Tomorrow!', past: false };
+    return { text: `${days} days to go`, past: false };
+  }
+
   return (
     <>
       <AppHeader />
@@ -303,6 +330,30 @@ export default function EventChecklist() {
                     {/* Items */}
                     {isExpanded && (
                       <div className="border-t border-gray-100 p-5">
+                        {/* Event date + countdown */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4 pb-4 border-b border-gray-100">
+                          <div className="flex items-center gap-2">
+                            <Calendar size={16} className="text-gray-400" />
+                            <label className="text-sm text-gray-600">Event date:</label>
+                            <input
+                              type="date"
+                              value={checklist.eventDate ? new Date(checklist.eventDate).toISOString().split('T')[0] : ''}
+                              onChange={(e) => updateEventDate(checklist.id, e.target.value)}
+                              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            />
+                          </div>
+                          {(() => {
+                            const countdown = getCountdown(checklist.eventDate);
+                            if (!countdown) return null;
+                            return (
+                              <div className={`flex items-center gap-1.5 text-sm font-medium ${countdown.past ? 'text-red-500' : 'text-purple-600'}`}>
+                                <Clock size={14} />
+                                {countdown.text}
+                              </div>
+                            );
+                          })()}
+                        </div>
+
                         <div className="space-y-1 mb-4">
                           {checklist.items.map((item) => (
                             <div

@@ -47,13 +47,14 @@ export async function POST(request) {
     const profile = await getCustomerProfile(user.id, user.email)
     if (!profile) return NextResponse.json({ error: 'Customer profile not found' }, { status: 404 })
 
-    const { name, items } = await request.json()
+    const { name, items, eventDate } = await request.json()
     if (!name) return NextResponse.json({ error: 'name is required' }, { status: 400 })
 
     const checklist = await prisma.checklist.create({
       data: {
         customerId: profile.id,
         name,
+        eventDate: eventDate ? new Date(eventDate) : null,
         items: items?.length ? {
           create: items.map((item, i) => ({
             text: item.text,

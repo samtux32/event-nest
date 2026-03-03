@@ -143,6 +143,7 @@ export default function AIEventPlanner() {
           categories: result.plan.categories,
           tips: result.plan.tips,
           vendors: result.vendors,
+          eventDate: result.plan.eventDate || null,
         }),
       });
       if (!res.ok) throw new Error('Failed to save plan');

@@ -54,6 +54,7 @@ You MUST respond with valid JSON only, no markdown, no extra text. Use this exac
   "title": "string - creative name for the event plan",
   "theme": "string - suggested theme in a few words",
   "totalBudget": number,
+  "eventDate": "string - ISO date (YYYY-MM-DD) if the user mentions a date, otherwise null",
   "categories": [
     {
       "category": "string - must be one of the available categories listed above",
