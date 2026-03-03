@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import AppHeader from '@/components/AppHeader';
 import ConversationList from '@/components/ConversationList';
 import ChatHeader from '@/components/ChatHeader';
@@ -10,6 +10,7 @@ import EventDetailsSidebar from '@/components/EventDetailsSidebar';
 import QuoteForm from '@/components/QuoteForm';
 import { MessageCircle, Shield } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
+import useRealtimeChat from '@/hooks/useRealtimeChat';
 
 export default function Messages() {
   const [conversations, setConversations] = useState([]);
@@ -122,6 +123,39 @@ export default function Messages() {
 
   const selectedConv = conversations.find(c => c.id === selectedConversation);
 
+  // Real-time message handling
+  const handleRealtimeNewMessage = useCallback((msg) => {
+    setShouldAutoScroll(true);
+    setMessages(prev => {
+      // Deduplicate — skip if we already have this message
+      if (prev.some(m => m.id === msg.id)) return prev;
+      return [...prev, msg];
+    });
+    // Update conversation list
+    setConversations(prev =>
+      prev.map(c => c.id === selectedConversation
+        ? { ...c, lastMessage: msg.text || '📎 Attachment', timestamp: msg.timestamp, unread: 0 }
+        : c
+      )
+    );
+  }, [selectedConversation]);
+
+  const handleRealtimeMessageDeleted = useCallback((messageId) => {
+    setMessages(prev =>
+      prev.map(m => m.id === messageId
+        ? { ...m, type: 'deleted', text: null, attachmentUrl: null, attachmentName: null, attachmentType: null, quote: null }
+        : m
+      )
+    );
+  }, []);
+
+  const { broadcast, addSentId } = useRealtimeChat({
+    conversationId: selectedConversation,
+    selectedConv,
+    onNewMessage: handleRealtimeNewMessage,
+    onMessageDeleted: handleRealtimeMessageDeleted,
+  });
+
   const handleSendMessage = async (text, attachment) => {
     if (!selectedConversation) return;
     if (!text?.trim() && !attachment) return;
@@ -163,14 +197,14 @@ export default function Messages() {
       });
       const data = await res.json();
       if (res.ok) {
+        const serverMsg = { ...tempMessage, id: data.message.id, timestamp: data.message.timestamp, createdAt: data.message.createdAt };
         // Only update the ID and timestamp from the server — keep all other data
         // from tempMessage so attachment fields are never overwritten by a null response
         setMessages(prev =>
-          prev.map(m => m.id === tempMessage.id
-            ? { ...tempMessage, id: data.message.id, timestamp: data.message.timestamp }
-            : m
-          )
+          prev.map(m => m.id === tempMessage.id ? serverMsg : m)
         );
+        addSentId(data.message.id);
+        broadcast('new_message', serverMsg);
       } else {
         console.error('Send message failed:', data);
         setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
@@ -209,6 +243,8 @@ export default function Messages() {
         : c
       )
     );
+    addSentId(quoteMessage.id);
+    broadcast('new_message', quoteMessage);
   };
 
   const handleQuoteUpdated = (updatedQuote) => {
@@ -230,6 +266,7 @@ export default function Messages() {
         setMessages(prev =>
           prev.map(m => m.id === messageId ? { ...m, type: 'deleted', text: null, attachmentUrl: null, attachmentName: null, attachmentType: null, quote: null } : m)
         );
+        broadcast('message_deleted', { messageId });
       }
     } catch (err) {
       console.error('Failed to delete message:', err);

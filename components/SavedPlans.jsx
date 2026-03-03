@@ -11,6 +11,9 @@ import {
   Sparkles,
   ChevronDown,
   Lightbulb,
+  Loader2,
+  Pencil,
+  RotateCcw,
 } from 'lucide-react';
 import AppHeader from './AppHeader';
 import ConfirmModal from './ConfirmModal';
@@ -28,33 +31,94 @@ const CATEGORY_COLOURS = [
 
 export default function SavedPlans() {
   const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editPrompt, setEditPrompt] = useState('');
+  const [editBudget, setEditBudget] = useState('');
+  const [regenerating, setRegenerating] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem('savedEventPlans') || '[]');
-      setPlans(stored);
-    } catch {
-      setPlans([]);
-    }
+    fetchPlans();
   }, []);
 
-  function deletePlan(id) {
-    const updated = plans.filter((p) => p.id !== id);
-    setPlans(updated);
-    localStorage.setItem('savedEventPlans', JSON.stringify(updated));
-    if (expandedId === id) setExpandedId(null);
+  async function fetchPlans() {
+    try {
+      const res = await fetch('/api/saved-plans');
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setPlans(data.plans || []);
+    } catch {
+      setPlans([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function clearAll() {
-    setPlans([]);
-    localStorage.removeItem('savedEventPlans');
-    setExpandedId(null);
+  async function deletePlan(id) {
+    try {
+      await fetch(`/api/saved-plans/${id}`, { method: 'DELETE' });
+      setPlans((prev) => prev.filter((p) => p.id !== id));
+      if (expandedId === id) setExpandedId(null);
+      if (editingId === id) setEditingId(null);
+    } catch {}
   }
 
-  function timeAgo(ts) {
-    const diff = Date.now() - ts;
+  function startEdit(saved) {
+    setEditingId(saved.id);
+    setEditPrompt(saved.prompt);
+    setEditBudget(saved.totalBudget?.toString() || '');
+  }
+
+  async function regeneratePlan(id) {
+    setRegenerating(true);
+    try {
+      // Build prompt with optional budget override
+      let fullPrompt = editPrompt.trim();
+      if (editBudget) {
+        // Replace existing budget mention or append
+        fullPrompt = fullPrompt.replace(/£[\d,]+\s*budget/i, '').replace(/,\s*$/, '').trim();
+        fullPrompt += `, £${editBudget} budget`;
+      }
+
+      // Generate new plan
+      const genRes = await fetch('/api/event-planner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: fullPrompt }),
+      });
+      if (!genRes.ok) throw new Error('Failed to generate plan');
+      const genData = await genRes.json();
+
+      // Update saved plan
+      const updateRes = await fetch(`/api/saved-plans/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: fullPrompt,
+          title: genData.plan.title,
+          theme: genData.plan.theme,
+          totalBudget: genData.plan.totalBudget,
+          categories: genData.plan.categories,
+          tips: genData.plan.tips,
+          vendors: genData.vendors,
+        }),
+      });
+      if (!updateRes.ok) throw new Error('Failed to update plan');
+      const { plan: updated } = await updateRes.json();
+
+      setPlans((prev) => prev.map((p) => (p.id === id ? updated : p)));
+      setEditingId(null);
+    } catch {
+      // Could show error but keeping simple
+    } finally {
+      setRegenerating(false);
+    }
+  }
+
+  function timeAgo(dateStr) {
+    const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
     if (mins < 1) return 'Just now';
     if (mins < 60) return `${mins}m ago`;
@@ -74,23 +138,20 @@ export default function SavedPlans() {
               <h1 className="text-2xl font-bold text-gray-900">My Saved Plans</h1>
               <p className="text-gray-500 mt-1">{plans.length} plan{plans.length !== 1 ? 's' : ''} saved</p>
             </div>
-            <div className="flex items-center gap-3">
-              {plans.length > 0 && (
-                <button onClick={() => setConfirmAction({ type: 'clearAll' })} className="text-sm text-red-500 hover:text-red-700 transition-colors">
-                  Clear all
-                </button>
-              )}
-              <Link
-                href="/plan-my-event"
-                className="flex items-center gap-1.5 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
-              >
-                <Sparkles size={15} />
-                New Plan
-              </Link>
-            </div>
+            <Link
+              href="/plan-my-event"
+              className="flex items-center gap-1.5 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+            >
+              <Sparkles size={15} />
+              New Plan
+            </Link>
           </div>
 
-          {plans.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+            </div>
+          ) : plans.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
               <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <FolderOpen className="w-8 h-8 text-purple-600" />
@@ -109,9 +170,10 @@ export default function SavedPlans() {
           ) : (
             <div className="space-y-4">
               {plans.map((saved) => {
-                const plan = saved.plan;
+                const categories = saved.categories || [];
                 const vendors = saved.vendors || {};
                 const isExpanded = expandedId === saved.id;
+                const isEditing = editingId === saved.id;
 
                 return (
                   <div key={saved.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -124,12 +186,12 @@ export default function SavedPlans() {
                         <Sparkles size={18} className="text-purple-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 truncate">{plan.title}</h3>
+                        <h3 className="font-semibold text-gray-900 truncate">{saved.title}</h3>
                         <p className="text-sm text-gray-500 truncate">
-                          {plan.theme} &middot; £{plan.totalBudget?.toLocaleString()} &middot; {plan.categories?.length || 0} categories
+                          {saved.theme} &middot; £{saved.totalBudget?.toLocaleString()} &middot; {categories.length || 0} categories
                         </p>
                       </div>
-                      <span className="text-xs text-gray-400 hidden sm:block flex-shrink-0">{timeAgo(saved.savedAt)}</span>
+                      <span className="text-xs text-gray-400 hidden sm:block flex-shrink-0">{timeAgo(saved.createdAt)}</span>
                       <ChevronDown
                         size={18}
                         className={`text-gray-400 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
@@ -139,18 +201,70 @@ export default function SavedPlans() {
                     {/* Expanded detail */}
                     {isExpanded && (
                       <div className="border-t border-gray-100 p-5">
-                        {/* Original prompt */}
-                        <div className="bg-gray-50 rounded-lg px-4 py-3 mb-5">
-                          <p className="text-xs text-gray-400 mb-1">Your request</p>
-                          <p className="text-sm text-gray-700">{saved.prompt}</p>
-                        </div>
+                        {/* Edit form */}
+                        {isEditing ? (
+                          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-5">
+                            <p className="text-sm font-medium text-purple-900 mb-3">Edit & Re-generate</p>
+                            <textarea
+                              value={editPrompt}
+                              onChange={(e) => setEditPrompt(e.target.value)}
+                              rows={3}
+                              className="w-full border border-purple-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none mb-3"
+                            />
+                            <div className="flex items-center gap-3 mb-3">
+                              <label className="text-sm text-purple-800">Budget override:</label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">£</span>
+                                <input
+                                  type="number"
+                                  value={editBudget}
+                                  onChange={(e) => setEditBudget(e.target.value)}
+                                  placeholder="Optional"
+                                  className="pl-7 pr-3 py-1.5 border border-purple-300 rounded-lg text-sm w-32 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => regeneratePlan(saved.id)}
+                                disabled={regenerating || !editPrompt.trim()}
+                                className="flex items-center gap-1.5 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 text-sm font-medium"
+                              >
+                                {regenerating ? (
+                                  <>
+                                    <Loader2 size={14} className="animate-spin" />
+                                    Regenerating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <RotateCcw size={14} />
+                                    Re-generate
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                onClick={() => setEditingId(null)}
+                                disabled={regenerating}
+                                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* Original prompt */
+                          <div className="bg-gray-50 rounded-lg px-4 py-3 mb-5">
+                            <p className="text-xs text-gray-400 mb-1">Your request</p>
+                            <p className="text-sm text-gray-700">{saved.prompt}</p>
+                          </div>
+                        )}
 
                         {/* Budget bar */}
                         <div className="mb-5">
-                          <p className="text-sm font-medium text-gray-500 mb-2">Budget: £{plan.totalBudget?.toLocaleString()}</p>
+                          <p className="text-sm font-medium text-gray-500 mb-2">Budget: £{saved.totalBudget?.toLocaleString()}</p>
                           <div className="flex rounded-full overflow-hidden h-4 mb-2">
-                            {(plan.categories || []).map((cat, i) => {
-                              const pct = plan.totalBudget ? (cat.budgetAllocation / plan.totalBudget) * 100 : 0;
+                            {categories.map((cat, i) => {
+                              const pct = saved.totalBudget ? (cat.budgetAllocation / saved.totalBudget) * 100 : 0;
                               if (pct < 1) return null;
                               return (
                                 <div
@@ -167,7 +281,7 @@ export default function SavedPlans() {
                             })}
                           </div>
                           <div className="flex flex-wrap gap-3">
-                            {(plan.categories || []).map((cat, i) => {
+                            {categories.map((cat, i) => {
                               const pColours = PRIORITY_COLOURS[cat.priority] || PRIORITY_COLOURS.recommended;
                               const matchedVendors = vendors[cat.category] || [];
                               return (
@@ -214,14 +328,14 @@ export default function SavedPlans() {
                         )}
 
                         {/* Tips */}
-                        {plan.tips?.length > 0 && (
+                        {saved.tips?.length > 0 && (
                           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-5">
                             <div className="flex items-center gap-1.5 mb-2">
                               <Lightbulb size={14} className="text-amber-600" />
                               <p className="text-sm font-medium text-amber-900">Tips</p>
                             </div>
                             <ul className="space-y-1">
-                              {plan.tips.map((tip, i) => (
+                              {saved.tips.map((tip, i) => (
                                 <li key={i} className="text-sm text-amber-800 flex items-start gap-1.5">
                                   <span className="text-amber-500">•</span> {tip}
                                 </li>
@@ -230,13 +344,24 @@ export default function SavedPlans() {
                           </div>
                         )}
 
-                        <button
-                          onClick={() => setConfirmAction({ type: 'deletePlan', id: saved.id })}
-                          className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-700 transition-colors"
-                        >
-                          <Trash2 size={14} />
-                          Delete this plan
-                        </button>
+                        <div className="flex items-center gap-4">
+                          {!isEditing && (
+                            <button
+                              onClick={() => startEdit(saved)}
+                              className="flex items-center gap-1.5 text-sm text-purple-600 hover:text-purple-800 transition-colors"
+                            >
+                              <Pencil size={14} />
+                              Edit Plan
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setConfirmAction({ type: 'deletePlan', id: saved.id })}
+                            className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-700 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                            Delete this plan
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -249,12 +374,11 @@ export default function SavedPlans() {
 
       {confirmAction && (
         <ConfirmModal
-          title={confirmAction.type === 'clearAll' ? 'Clear all plans?' : 'Delete this plan?'}
-          message={confirmAction.type === 'clearAll' ? 'This will remove all your saved plans. This cannot be undone.' : 'This plan will be permanently deleted.'}
+          title="Delete this plan?"
+          message="This plan will be permanently deleted."
           confirmLabel="Delete"
           onConfirm={() => {
-            if (confirmAction.type === 'clearAll') clearAll();
-            else deletePlan(confirmAction.id);
+            deletePlan(confirmAction.id);
             setConfirmAction(null);
           }}
           onCancel={() => setConfirmAction(null)}

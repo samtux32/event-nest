@@ -12,6 +12,10 @@ export async function POST(request) {
     const file = formData.get('file')
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
 
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File must be under 10MB' }, { status: 400 })
+    }
+
     // Determine file type
     let attachmentType = 'file'
     if (file.type.startsWith('image/')) attachmentType = 'image'

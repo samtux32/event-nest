@@ -97,6 +97,7 @@ model CustomerProfile {
   wishlistGroups WishlistGroup[]
   conversations  Conversation[]
   quotes         Quote[]
+  savedPlans     SavedPlan[]
 
   @@map("customer_profiles")
 }
@@ -503,6 +504,30 @@ model VendorFAQ {
 
   @@index([vendorId])
   @@map("vendor_faqs")
+}
+
+// ═══════════════════════════════════════════════════
+// SAVED PLANS
+// ═══════════════════════════════════════════════════
+
+model SavedPlan {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId  String   @map("customer_id") @db.Uuid
+  prompt      String   @db.Text
+  title       String
+  theme       String?
+  totalBudget Float    @map("total_budget")
+  categories  Json
+  tips        Json?
+  vendors     Json?
+  eventDate   DateTime? @map("event_date") @db.Date
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  customer CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@map("saved_plans")
 }
 
 /// Tracks each time a customer views a vendor profile

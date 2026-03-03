@@ -49,6 +49,8 @@ export default function AIEventPlanner() {
   const [wishlistSaved, setWishlistSaved] = useState(false);
   const [planSaved, setPlanSaved] = useState(false);
   const [authModal, setAuthModal] = useState(null); // null or { message }
+  const [showGroupNameInput, setShowGroupNameInput] = useState(false);
+  const [groupName, setGroupName] = useState('');
 
   async function generate() {
     if (!prompt.trim()) return;
@@ -73,19 +75,26 @@ export default function AIEventPlanner() {
     }
   }
 
-  async function saveAllToWishlist() {
+  function handleWishlistClick() {
     if (!user) {
       setAuthModal({ message: 'save vendors to your wishlist' });
       return;
     }
     if (!result || wishlistSaved) return;
+    setGroupName(result.plan.title || 'AI Event Plan');
+    setShowGroupNameInput(true);
+  }
+
+  async function saveAllToWishlist() {
+    if (!result || wishlistSaved) return;
     setSavingWishlist(true);
+    setShowGroupNameInput(false);
     try {
       // Create a wishlist group
       const groupRes = await fetch('/api/wishlist/groups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: result.plan.title || 'AI Event Plan' }),
+        body: JSON.stringify({ name: groupName.trim() || 'AI Event Plan' }),
       });
       const groupData = await groupRes.json();
       if (!groupRes.ok) throw new Error('Failed to create wishlist group');
@@ -116,24 +125,31 @@ export default function AIEventPlanner() {
     }
   }
 
-  function savePlan() {
+  async function savePlan() {
     if (!user) {
       setAuthModal({ message: 'save your plan' });
       return;
     }
     if (!result || planSaved) return;
     try {
-      const saved = JSON.parse(localStorage.getItem('savedEventPlans') || '[]');
-      saved.unshift({
-        id: Date.now().toString(),
-        prompt: prompt.trim(),
-        plan: result.plan,
-        vendors: result.vendors,
-        savedAt: Date.now(),
+      const res = await fetch('/api/saved-plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          title: result.plan.title,
+          theme: result.plan.theme,
+          totalBudget: result.plan.totalBudget,
+          categories: result.plan.categories,
+          tips: result.plan.tips,
+          vendors: result.vendors,
+        }),
       });
-      localStorage.setItem('savedEventPlans', JSON.stringify(saved.slice(0, 20)));
+      if (!res.ok) throw new Error('Failed to save plan');
       setPlanSaved(true);
-    } catch {}
+    } catch {
+      setError('Failed to save plan. Please try again.');
+    }
   }
 
   function startOver() {
@@ -213,6 +229,19 @@ export default function AIEventPlanner() {
                 ))}
               </div>
             </div>
+
+            {user && (
+              <div className="mt-6 text-center">
+                <Link
+                  href="/my-plans"
+                  className="inline-flex items-center gap-2 text-sm text-purple-600 hover:text-purple-800 font-medium transition-colors"
+                >
+                  <FolderOpen size={16} />
+                  View My Saved Plans
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+            )}
 
             {error && (
               <div className="mt-6 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 text-sm">
@@ -388,10 +417,42 @@ export default function AIEventPlanner() {
             )}
 
             {/* Actions */}
+            {/* Wishlist group name input */}
+            {showGroupNameInput && (
+              <div className="bg-white rounded-xl border border-purple-200 p-4 mb-4 max-w-md mx-auto">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Wishlist group name
+                </label>
+                <input
+                  type="text"
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-3"
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveAllToWishlist(); }}
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={saveAllToWishlist}
+                    disabled={!groupName.trim()}
+                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 text-sm font-medium"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setShowGroupNameInput(false)}
+                    className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               {Object.values(vendors).flat().length > 0 && (
                 <button
-                  onClick={saveAllToWishlist}
+                  onClick={handleWishlistClick}
                   disabled={savingWishlist || wishlistSaved}
                   className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium text-sm w-full sm:w-auto justify-center transition-colors ${
                     wishlistSaved

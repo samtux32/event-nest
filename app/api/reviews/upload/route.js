@@ -14,6 +14,10 @@ export async function POST(request) {
     const file = formData.get('file')
     if (!file) return NextResponse.json({ error: 'file is required' }, { status: 400 })
 
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File must be under 10MB' }, { status: 400 })
+    }
+
     const ext = file.name.split('.').pop()
     const path = `${user.id}/review-${Date.now()}.${ext}`
 

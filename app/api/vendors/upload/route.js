@@ -23,6 +23,10 @@ export async function POST(request) {
       return NextResponse.json({ error: 'file and type are required' }, { status: 400 })
     }
 
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File must be under 10MB' }, { status: 400 })
+    }
+
     const isDocument = type === 'document'
     const bucket = isDocument ? 'vendor-documents' : 'vendor-images'
     const ext = file.name.split('.').pop()
