@@ -79,6 +79,7 @@ export default function VendorPublicProfile({ vendorId }) {
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [submittingReply, setSubmittingReply] = useState(false);
+  const [replyError, setReplyError] = useState(null);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [allReviews, setAllReviews] = useState([]);
   const [authModal, setAuthModal] = useState(null);
@@ -210,6 +211,7 @@ export default function VendorPublicProfile({ vendorId }) {
   const handleReply = async (reviewId) => {
     if (!replyText.trim()) return;
     setSubmittingReply(true);
+    setReplyError(null);
     try {
       const res = await fetch(`/api/reviews/${reviewId}/reply`, {
         method: 'POST',
@@ -217,7 +219,7 @@ export default function VendorPublicProfile({ vendorId }) {
         body: JSON.stringify({ text: replyText }),
       });
       const data = await res.json();
-      if (!res.ok) { alert(data.error || 'Failed to submit reply'); return; }
+      if (!res.ok) { setReplyError(data.error || 'Failed to submit reply'); return; }
       setVendor(prev => ({
         ...prev,
         reviews: prev.reviews.map(r => r.id === reviewId ? { ...r, reply: data.reply } : r),
@@ -225,7 +227,7 @@ export default function VendorPublicProfile({ vendorId }) {
       setReplyingTo(null);
       setReplyText('');
     } catch {
-      alert('Something went wrong. Please try again.');
+      setReplyError('Something went wrong. Please try again.');
     } finally {
       setSubmittingReply(false);
     }
@@ -655,9 +657,12 @@ export default function VendorPublicProfile({ vendorId }) {
                               rows={3}
                               className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-purple-600 resize-none"
                             />
+                            {replyError && (
+                              <p className="text-sm text-red-600 mt-1">{replyError}</p>
+                            )}
                             <div className="flex gap-2 mt-2">
                               <button
-                                onClick={() => { setReplyingTo(null); setReplyText(''); }}
+                                onClick={() => { setReplyingTo(null); setReplyText(''); setReplyError(null); }}
                                 className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                               >
                                 Cancel

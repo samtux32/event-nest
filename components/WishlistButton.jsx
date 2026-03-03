@@ -108,6 +108,7 @@ export default function WishlistButton({ vendorId, isWishlisted, onToggle, class
           onClick={handleClick}
           className="hover:scale-110 transition-transform"
           title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <Heart
             size={size}
@@ -118,6 +119,7 @@ export default function WishlistButton({ vendorId, isWishlisted, onToggle, class
         <button
           onClick={handleClick}
           className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <Heart
             size={size}

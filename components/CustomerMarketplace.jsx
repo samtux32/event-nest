@@ -440,7 +440,7 @@ export default function CustomerMarketplace() {
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-50 text-purple-700 text-sm rounded-full border border-purple-200">
                 <MapPin size={12} />
                 Near {userLocation.city}
-                <button onClick={clearLocation} className="ml-1 hover:text-purple-900" title="Clear location">
+                <button onClick={clearLocation} className="ml-1 hover:text-purple-900" title="Clear location" aria-label="Clear location">
                   <X size={10} />
                 </button>
               </span>

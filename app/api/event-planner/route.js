@@ -2,6 +2,35 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import Anthropic from '@anthropic-ai/sdk';
 
+// In-memory rate limiter: 5 requests per minute per IP
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60 * 1000;
+const RATE_LIMIT_MAX = 5;
+
+function isRateLimited(ip) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+    return false;
+  }
+  if (now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+    return false;
+  }
+  entry.count++;
+  if (entry.count > RATE_LIMIT_MAX) return true;
+  return false;
+}
+
+// Clean up stale entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap) {
+    if (now > entry.resetAt) rateLimitMap.delete(ip);
+  }
+}, 5 * 60 * 1000);
+
 const CATEGORIES = [
   'Catering',
   'Photography',
@@ -46,6 +75,14 @@ Rules:
 
 export async function POST(request) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    if (isRateLimited(ip)) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a minute before trying again.' },
+        { status: 429 }
+      );
+    }
+
     const { prompt } = await request.json();
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length < 5) {
       return NextResponse.json({ error: 'Please describe your event in more detail' }, { status: 400 });

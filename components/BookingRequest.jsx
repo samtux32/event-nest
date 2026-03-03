@@ -25,6 +25,7 @@ export default function BookingRequest({ vendorId }) {
   const [error, setError] = useState(null);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [formData, setFormData] = useState({
     eventDate: '',
@@ -116,6 +117,7 @@ export default function BookingRequest({ vendorId }) {
     }
 
     setSubmitting(true);
+    setSubmitError(null);
     try {
       const res = await fetch('/api/bookings', {
         method: 'POST',
@@ -130,13 +132,13 @@ export default function BookingRequest({ vendorId }) {
 
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || 'Failed to submit booking');
+        setSubmitError(data.error || 'Failed to submit booking');
         return;
       }
 
       router.push('/my-bookings');
     } catch {
-      alert('Something went wrong. Please try again.');
+      setSubmitError('Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -315,6 +317,13 @@ export default function BookingRequest({ vendorId }) {
                 formData={formData}
                 onFormChange={handleInputChange}
               />
+
+              {submitError && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center gap-2">
+                  <AlertCircle size={18} className="flex-shrink-0" />
+                  {submitError}
+                </div>
+              )}
 
               {/* Submit Button */}
               <button

@@ -27,6 +27,7 @@ function RegisterForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const searchParams = useSearchParams()
   const isOAuth = searchParams.get('oauth') === 'true'
   const supabase = createClient()
@@ -290,9 +291,25 @@ function RegisterForm() {
                 </>
               )}
 
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="mt-1 accent-purple-600"
+                  required
+                />
+                <span className="text-sm text-gray-600">
+                  I agree to the{' '}
+                  <Link href="/terms" className="text-purple-600 hover:text-purple-700 underline" target="_blank">Terms of Service</Link>
+                  {' '}and{' '}
+                  <Link href="/privacy" className="text-purple-600 hover:text-purple-700 underline" target="_blank">Privacy Policy</Link>
+                </span>
+              </label>
+
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !agreedToTerms}
                 className="w-full py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
               >
                 {loading ? 'Creating account...' : 'Create Account'}

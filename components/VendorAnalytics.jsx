@@ -28,6 +28,7 @@ export default function VendorAnalytics() {
   const [timePeriod, setTimePeriod] = useState('30');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [exportError, setExportError] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -143,6 +144,7 @@ export default function VendorAnalytics() {
           <div className="flex items-center gap-3">
             <button
               onClick={async () => {
+                setExportError(null);
                 try {
                   const res = await fetch('/api/analytics/export');
                   if (!res.ok) throw new Error();
@@ -154,7 +156,7 @@ export default function VendorAnalytics() {
                   a.click();
                   URL.revokeObjectURL(url);
                 } catch {
-                  alert('Export failed. Please try again.');
+                  setExportError('Export failed. Please try again.');
                 }
               }}
               className="hidden sm:flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
@@ -181,6 +183,13 @@ export default function VendorAnalytics() {
           </div>
           </div>
         </div>
+
+        {exportError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center justify-between">
+            <span>{exportError}</span>
+            <button onClick={() => setExportError(null)} className="text-red-400 hover:text-red-600 ml-2">✕</button>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-24">

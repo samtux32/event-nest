@@ -11,7 +11,8 @@ import {
   Clock,
   DollarSign,
   CheckCircle,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from 'lucide-react';
 
 function formatPrice(val) {
@@ -126,6 +127,16 @@ export default function VendorDashboard() {
     <AppHeader />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {authProfile?.isApproved === false && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3">
+            <AlertTriangle size={20} className="text-amber-600 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-amber-800">Your profile is pending approval</p>
+              <p className="text-sm text-amber-700">Your profile is not yet visible in the marketplace. An admin will review and approve it shortly.</p>
+            </div>
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-2xl sm:text-4xl font-bold mb-2">
             Welcome back, {authProfile?.businessName || 'Vendor'} 👋
@@ -279,6 +290,7 @@ export default function VendorDashboard() {
               <button
                 onClick={() => setSelectedInquiry(null)}
                 className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Close inquiry details"
               >
                 ✕
               </button>

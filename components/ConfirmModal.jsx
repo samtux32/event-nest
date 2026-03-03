@@ -6,13 +6,13 @@ import { AlertTriangle } from 'lucide-react';
 
 export default function ConfirmModal({ title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', onConfirm, onCancel, destructive = true }) {
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onCancel}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" onClick={onCancel}>
       <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl" onClick={e => e.stopPropagation()}>
         <div className="p-6 text-center">
           <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 ${destructive ? 'bg-red-100' : 'bg-purple-100'}`}>
             <AlertTriangle size={24} className={destructive ? 'text-red-600' : 'text-purple-600'} />
           </div>
-          <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
+          <h3 id="confirm-modal-title" className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
           <p className="text-sm text-gray-600">{message}</p>
         </div>
         <div className="flex gap-3 px-6 pb-6">
