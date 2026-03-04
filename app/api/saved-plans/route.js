@@ -47,7 +47,7 @@ export async function POST(request) {
     if (!profile) return NextResponse.json({ error: 'Customer profile not found' }, { status: 404 })
 
     const body = await request.json()
-    const { prompt, title, theme, totalBudget, categories, tips, vendors, eventDate } = body
+    const { prompt, title, theme, totalBudget, categories, tips, vendors, checklist, eventDate } = body
 
     if (!prompt || !title || !categories) {
       return NextResponse.json({ error: 'prompt, title, and categories are required' }, { status: 400 })
@@ -63,6 +63,7 @@ export async function POST(request) {
         categories,
         tips: tips || null,
         vendors: vendors || null,
+        checklist: checklist || null,
         eventDate: eventDate ? new Date(eventDate) : null,
       },
     })

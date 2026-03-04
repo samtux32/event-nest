@@ -143,6 +143,7 @@ export default function AIEventPlanner() {
           categories: result.plan.categories,
           tips: result.plan.tips,
           vendors: result.vendors,
+          checklist: result.plan.checklist || null,
           eventDate: result.plan.eventDate || null,
         }),
       });

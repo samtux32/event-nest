@@ -59,6 +59,7 @@ export async function POST(request) {
           create: items.map((item, i) => ({
             text: item.text,
             timeline: item.timeline || null,
+            category: item.category || null,
             done: false,
             sortOrder: i,
           })),

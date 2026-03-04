@@ -64,6 +64,20 @@ export default function CustomerMarketplace() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const debounceRef = useRef(null);
 
+  // Initialize category filter from URL query params (e.g. ?categories=Venue)
+  const urlInitRef = useRef(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const cats = params.get('categories');
+    if (cats) {
+      const parsed = cats.split(',').map((c) => c.trim()).filter(Boolean);
+      if (parsed.length > 0) {
+        urlInitRef.current = true;
+        setSelectedCategories(parsed);
+      }
+    }
+  }, []);
+
   // Debounce search input — waits 400ms after user stops typing
   useEffect(() => {
     clearTimeout(debounceRef.current);
@@ -128,12 +142,21 @@ export default function CustomerMarketplace() {
   };
 
   useEffect(() => {
+    // Skip the initial fetch if URL params will set categories (avoids fetching unfiltered first)
+    if (urlInitRef.current && selectedCategories.length === 0) return;
+    urlInitRef.current = false;
+
     async function fetchVendors() {
       setLoading(true);
       setOffset(0);
       setShouldResetPrice(true);
       try {
-        const res = await fetch(`/api/vendors?${buildParams(0).toString()}`);
+        const params = new URLSearchParams();
+        if (selectedCategories.length > 0) params.set('categories', selectedCategories.join(','));
+        if (debouncedSearch) params.set('search', debouncedSearch);
+        params.set('limit', '24');
+        params.set('offset', '0');
+        const res = await fetch(`/api/vendors?${params.toString()}`);
         const data = await res.json();
         if (res.ok) {
           setVendors(data.vendors);

@@ -31,7 +31,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Checklist not found' }, { status: 404 })
     }
 
-    const { text } = await request.json()
+    const { text, category } = await request.json()
     if (!text) return NextResponse.json({ error: 'text is required' }, { status: 400 })
 
     const maxOrder = await prisma.checklistItem.aggregate({
@@ -43,6 +43,7 @@ export async function POST(request, { params }) {
       data: {
         checklistId: id,
         text,
+        category: category || null,
         sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,
       },
     })

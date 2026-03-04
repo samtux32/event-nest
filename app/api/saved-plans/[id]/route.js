@@ -32,7 +32,7 @@ export async function PUT(request, { params }) {
     }
 
     const body = await request.json()
-    const { prompt, title, theme, totalBudget, categories, tips, vendors, eventDate } = body
+    const { prompt, title, theme, totalBudget, categories, tips, vendors, checklist, eventDate } = body
 
     const updated = await prisma.savedPlan.update({
       where: { id },
@@ -44,6 +44,7 @@ export async function PUT(request, { params }) {
         ...(categories !== undefined && { categories }),
         ...(tips !== undefined && { tips }),
         ...(vendors !== undefined && { vendors }),
+        ...(checklist !== undefined && { checklist }),
         ...(eventDate !== undefined && { eventDate: eventDate ? new Date(eventDate) : null }),
       },
     })

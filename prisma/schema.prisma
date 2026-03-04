@@ -521,6 +521,7 @@ model SavedPlan {
   categories  Json
   tips        Json?
   vendors     Json?
+  checklist   Json?
   eventDate   DateTime? @map("event_date") @db.Date
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -555,6 +556,7 @@ model ChecklistItem {
   checklistId String   @map("checklist_id") @db.Uuid
   text        String
   timeline    String?
+  category    String?
   done        Boolean  @default(false)
   sortOrder   Int      @default(0) @map("sort_order")
   createdAt   DateTime @default(now()) @map("created_at")

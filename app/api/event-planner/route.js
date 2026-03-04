@@ -63,7 +63,10 @@ You MUST respond with valid JSON only, no markdown, no extra text. Use this exac
       "notes": "string - brief AI advice for this category, 1-2 sentences"
     }
   ],
-  "tips": ["string - practical planning tip", "string - another tip", "string - another tip"]
+  "tips": ["string - practical planning tip", "string - another tip", "string - another tip"],
+  "checklist": [
+    { "text": "string - a specific planning/logistics task", "timeline": "string - e.g. '6-8 months before', '2 weeks before'" }
+  ]
 }
 
 Rules:
@@ -72,7 +75,8 @@ Rules:
 - Budget allocations must sum to totalBudget.
 - Include 3-5 practical tips.
 - Keep notes concise and helpful.
-- Priority: "essential" = must-have, "recommended" = strongly suggested, "optional" = nice-to-have.`;
+- Priority: "essential" = must-have, "recommended" = strongly suggested, "optional" = nice-to-have.
+- Generate 8-15 checklist items that are logistics/planning tasks (NOT vendor bookings — those are handled separately). Examples: "Create guest list", "Send invitations", "Plan seating arrangement", "Confirm final headcount". Tailor items to the specific event type, size, and context. Order by timeline (earliest first).`;
 
 export async function POST(request) {
   try {
@@ -93,7 +97,7 @@ export async function POST(request) {
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const message = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
+      max_tokens: 1500,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt.trim() }],
     });

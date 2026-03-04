@@ -15,6 +15,9 @@ import {
   Pencil,
   RotateCcw,
   CheckSquare,
+  RefreshCw,
+  X,
+  Plus,
 } from 'lucide-react';
 import AppHeader from './AppHeader';
 import ConfirmModal from './ConfirmModal';
@@ -40,9 +43,16 @@ export default function SavedPlans() {
   const [editBudget, setEditBudget] = useState('');
   const [regenerating, setRegenerating] = useState(false);
   const [creatingChecklist, setCreatingChecklist] = useState(null); // plan id
+  const [swapModal, setSwapModal] = useState(null); // { planId, category, currentVendorId?, mode: 'swap'|'add' }
+  const [swapCandidates, setSwapCandidates] = useState([]);
+  const [swapLoading, setSwapLoading] = useState(false);
+  const [existingChecklists, setExistingChecklists] = useState({}); // { planTitle: checklistId }
+  const [renamingPlanId, setRenamingPlanId] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
 
   useEffect(() => {
     fetchPlans();
+    fetchChecklists();
   }, []);
 
   async function fetchPlans() {
@@ -56,6 +66,17 @@ export default function SavedPlans() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function fetchChecklists() {
+    try {
+      const res = await fetch('/api/checklists');
+      if (!res.ok) return;
+      const data = await res.json();
+      const map = {};
+      (data.checklists || []).forEach((c) => { map[c.name] = c.id; });
+      setExistingChecklists(map);
+    } catch {}
   }
 
   async function deletePlan(id) {
@@ -93,18 +114,20 @@ export default function SavedPlans() {
       if (!genRes.ok) throw new Error('Failed to generate plan');
       const genData = await genRes.json();
 
-      // Update saved plan
+      // Update saved plan — keep existing title (user may have renamed it)
+      const existing = plans.find((p) => p.id === id);
       const updateRes = await fetch(`/api/saved-plans/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: fullPrompt,
-          title: genData.plan.title,
+          title: existing?.title || genData.plan.title,
           theme: genData.plan.theme,
           totalBudget: genData.plan.totalBudget,
           categories: genData.plan.categories,
           tips: genData.plan.tips,
           vendors: genData.vendors,
+          checklist: genData.plan.checklist || null,
         }),
       });
       if (!updateRes.ok) throw new Error('Failed to update plan');
@@ -123,21 +146,158 @@ export default function SavedPlans() {
     setCreatingChecklist(saved.id);
     try {
       const categories = saved.categories || [];
-      const items = categories.map((cat) => ({
+
+      // Vendor booking items from plan categories (with category link for Feature 3)
+      const vendorItems = categories.map((cat) => ({
         text: `Book ${cat.category.toLowerCase()} (budget: £${cat.budgetAllocation?.toLocaleString()})`,
-        timeline: cat.priority === 'essential' ? 'Book first' : cat.priority === 'recommended' ? 'Book early' : 'Nice to have',
+        timeline: cat.priority === 'essential' ? '2-3 months before' : '1-2 months before',
+        category: cat.category,
       }));
+
+      // AI-generated checklist items (from plan) or minimal fallback for old plans
+      const aiItems = saved.checklist?.length
+        ? saved.checklist.map((item) => ({ text: item.text, timeline: item.timeline || null }))
+        : [
+            { text: 'Set date and budget', timeline: '3-4 months before' },
+            { text: 'Create guest list', timeline: '2-3 months before' },
+            { text: 'Send invitations', timeline: '4-6 weeks before' },
+            { text: 'Confirm all bookings', timeline: '1 week before' },
+            { text: 'Final headcount confirmation', timeline: '3-4 days before' },
+          ];
+
+      const items = [...aiItems, ...vendorItems];
+
       const res = await fetch('/api/checklists', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: saved.title, items, eventDate: saved.eventDate || null }),
       });
       if (!res.ok) throw new Error();
-      // Navigate to checklist page
+      const { checklist } = await res.json();
+      if (checklist) {
+        setExistingChecklists((prev) => ({ ...prev, [saved.title]: checklist.id }));
+      }
       window.location.href = '/event-checklist';
     } catch {} finally {
       setCreatingChecklist(null);
     }
+  }
+
+  async function renamePlan(id) {
+    const trimmed = renameValue.trim();
+    if (!trimmed) { setRenamingPlanId(null); return; }
+    const plan = plans.find((p) => p.id === id);
+    if (!plan || plan.title === trimmed) { setRenamingPlanId(null); return; }
+
+    // Update checklist map if name changed
+    const oldTitle = plan.title;
+
+    // Optimistic update
+    setPlans((prev) => prev.map((p) => p.id === id ? { ...p, title: trimmed } : p));
+    setRenamingPlanId(null);
+
+    try {
+      const res = await fetch(`/api/saved-plans/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: trimmed }),
+      });
+      if (!res.ok) throw new Error();
+      // Update checklist name mapping
+      if (existingChecklists[oldTitle]) {
+        setExistingChecklists((prev) => {
+          const next = { ...prev };
+          next[trimmed] = next[oldTitle];
+          delete next[oldTitle];
+          return next;
+        });
+      }
+    } catch {
+      setPlans((prev) => prev.map((p) => p.id === id ? { ...p, title: oldTitle } : p));
+    }
+  }
+
+  function mapApiVendor(v, category) {
+    return {
+      id: v.id,
+      businessName: v.name || v.businessName,
+      category: v.category || category,
+      profileImageUrl: v.image || v.profileImageUrl || null,
+      coverImageUrl: null,
+      location: v.location,
+      averageRating: v.rating != null ? Number(v.rating) : null,
+      totalReviews: v.reviews || 0,
+      startingPrice: null,
+      tagline: v.description || null,
+    };
+  }
+
+  async function openVendorModal(planId, category, currentVendorId, mode = 'add') {
+    const plan = plans.find((p) => p.id === planId);
+    const existingIds = (plan?.vendors?.[category] || []).map((v) => v.id);
+    setSwapModal({ planId, category, currentVendorId, mode });
+    setSwapLoading(true);
+    setSwapCandidates([]);
+    try {
+      const res = await fetch(`/api/vendors?categories=${encodeURIComponent(category)}&limit=15`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const candidates = (data.vendors || []).filter((v) => !existingIds.includes(v.id));
+      setSwapCandidates(candidates);
+    } catch {
+      setSwapCandidates([]);
+    } finally {
+      setSwapLoading(false);
+    }
+  }
+
+  async function selectVendorFromModal(newVendor) {
+    if (!swapModal) return;
+    const { planId, category, currentVendorId, mode } = swapModal;
+    const plan = plans.find((p) => p.id === planId);
+    if (!plan) return;
+
+    const updatedVendors = { ...plan.vendors };
+    const categoryVendors = [...(updatedVendors[category] || [])];
+    const mapped = mapApiVendor(newVendor, category);
+
+    if (mode === 'swap' && currentVendorId) {
+      updatedVendors[category] = categoryVendors.map((v) => v.id === currentVendorId ? mapped : v);
+    } else {
+      categoryVendors.push(mapped);
+      updatedVendors[category] = categoryVendors;
+    }
+
+    try {
+      const res = await fetch(`/api/saved-plans/${planId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendors: updatedVendors }),
+      });
+      if (!res.ok) throw new Error();
+      const { plan: updated } = await res.json();
+      setPlans((prev) => prev.map((p) => (p.id === planId ? updated : p)));
+    } catch {}
+    setSwapModal(null);
+  }
+
+  async function removeVendorFromPlan(planId, category, vendorId) {
+    const plan = plans.find((p) => p.id === planId);
+    if (!plan) return;
+
+    const updatedVendors = { ...plan.vendors };
+    updatedVendors[category] = (updatedVendors[category] || []).filter((v) => v.id !== vendorId);
+
+    try {
+      const res = await fetch(`/api/saved-plans/${planId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendors: updatedVendors }),
+      });
+      if (!res.ok) throw new Error();
+      const { plan: updated } = await res.json();
+      setPlans((prev) => prev.map((p) => (p.id === planId ? updated : p)));
+    } catch {}
   }
 
   function timeAgo(dateStr) {
@@ -201,15 +361,48 @@ export default function SavedPlans() {
                 return (
                   <div key={saved.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                     {/* Summary row */}
-                    <button
+                    <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => setExpandedId(isExpanded ? null : saved.id)}
-                      className="w-full flex items-center gap-4 p-5 text-left hover:bg-gray-50 transition-colors"
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedId(isExpanded ? null : saved.id); } }}
+                      className="w-full flex items-center gap-4 p-5 text-left hover:bg-gray-50 transition-colors cursor-pointer"
                     >
                       <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
                         <Sparkles size={18} className="text-purple-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 truncate">{saved.title}</h3>
+                        {renamingPlanId === saved.id ? (
+                          <input
+                            type="text"
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            onBlur={() => renamePlan(saved.id)}
+                            onKeyDown={(e) => {
+                              e.stopPropagation();
+                              if (e.key === 'Enter') renamePlan(saved.id);
+                              if (e.key === 'Escape') setRenamingPlanId(null);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="font-semibold text-gray-900 bg-white border border-purple-300 rounded px-2 py-0.5 w-full focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            autoFocus
+                          />
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-semibold text-gray-900 truncate">{saved.title}</h3>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRenamingPlanId(saved.id);
+                                setRenameValue(saved.title);
+                              }}
+                              className="p-0.5 text-gray-300 hover:text-purple-600 transition-colors flex-shrink-0"
+                              title="Rename plan"
+                            >
+                              <Pencil size={12} />
+                            </button>
+                          </div>
+                        )}
                         <p className="text-sm text-gray-500 truncate">
                           {saved.theme} &middot; £{saved.totalBudget?.toLocaleString()} &middot; {categories.length || 0} categories
                         </p>
@@ -219,7 +412,7 @@ export default function SavedPlans() {
                         size={18}
                         className={`text-gray-400 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                       />
-                    </button>
+                    </div>
 
                     {/* Expanded detail */}
                     {isExpanded && (
@@ -321,31 +514,73 @@ export default function SavedPlans() {
                           </div>
                         </div>
 
-                        {/* Vendor matches */}
-                        {Object.entries(vendors).some(([, v]) => v.length > 0) && (
+                        {/* Vendor matches by category */}
+                        {(Object.entries(vendors).some(([, v]) => v.length > 0) || categories.length > 0) && (
                           <div className="mb-5">
                             <p className="text-sm font-medium text-gray-500 mb-3">Matched Vendors</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                              {Object.values(vendors).flat().map((v) => (
-                                <Link
-                                  key={v.id}
-                                  href={`/vendor-profile/${v.id}`}
-                                  className="flex items-center gap-2.5 p-2.5 border border-gray-200 rounded-lg hover:border-purple-300 transition-colors group"
-                                >
-                                  {v.profileImageUrl ? (
-                                    <img src={v.profileImageUrl} alt="" className="w-8 h-8 rounded-lg object-cover" />
-                                  ) : (
-                                    <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-xs">
-                                      {v.businessName?.[0]}
+                            <div className="space-y-3">
+                              {/* Show all plan categories, even ones with no vendors yet */}
+                              {(() => {
+                                const catNames = new Set([
+                                  ...categories.map((c) => c.category),
+                                  ...Object.keys(vendors),
+                                ]);
+                                return [...catNames].map((catName) => {
+                                  const catVendors = vendors[catName] || [];
+                                return (
+                                  <div key={catName}>
+                                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1.5">{catName}</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                      {catVendors.map((v) => (
+                                        <div key={v.id} className="flex items-center gap-2.5 p-2.5 border border-gray-200 rounded-lg group">
+                                          <Link href={`/vendor-profile/${v.id}`} className="flex items-center gap-2.5 min-w-0 flex-1">
+                                            {v.profileImageUrl ? (
+                                              <img src={v.profileImageUrl} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                                            ) : (
+                                              <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-xs flex-shrink-0">
+                                                {v.businessName?.[0]}
+                                              </div>
+                                            )}
+                                            <div className="min-w-0 flex-1">
+                                              <p className="text-sm font-medium text-gray-900 truncate group-hover:text-purple-700">{v.businessName}</p>
+                                              {v.averageRating > 0 && (
+                                                <span className="flex items-center gap-0.5 text-xs text-gray-500">
+                                                  <Star size={10} className="text-yellow-500 fill-yellow-500" />
+                                                  {Number(v.averageRating).toFixed(1)}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </Link>
+                                          <div className="flex items-center gap-0.5 flex-shrink-0">
+                                            <button
+                                              onClick={() => openVendorModal(saved.id, catName, v.id, 'swap')}
+                                              className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors"
+                                              title="Swap vendor"
+                                            >
+                                              <RefreshCw size={13} />
+                                            </button>
+                                            <button
+                                              onClick={() => removeVendorFromPlan(saved.id, catName, v.id)}
+                                              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                              title="Remove vendor"
+                                            >
+                                              <X size={13} />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      ))}
+                                      <button
+                                        onClick={() => openVendorModal(saved.id, catName, null, 'add')}
+                                        className="flex items-center justify-center gap-1.5 p-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-purple-400 hover:text-purple-600 hover:bg-purple-50 transition-colors"
+                                      >
+                                        <Plus size={14} />
+                                        Add vendor
+                                      </button>
                                     </div>
-                                  )}
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-gray-900 truncate group-hover:text-purple-700">{v.businessName}</p>
-                                    <p className="text-xs text-gray-500">{v.category}</p>
                                   </div>
-                                  <ArrowRight size={12} className="text-gray-300 group-hover:text-purple-500 flex-shrink-0" />
-                                </Link>
-                              ))}
+                                );
+                              });
+                              })()}
                             </div>
                           </div>
                         )}
@@ -377,18 +612,28 @@ export default function SavedPlans() {
                               Edit Plan
                             </button>
                           )}
-                          <button
-                            onClick={() => createChecklistFromPlan(saved)}
-                            disabled={creatingChecklist === saved.id}
-                            className="flex items-center gap-1.5 text-sm text-purple-600 hover:text-purple-800 transition-colors disabled:opacity-50"
-                          >
-                            {creatingChecklist === saved.id ? (
-                              <Loader2 size={14} className="animate-spin" />
-                            ) : (
+                          {existingChecklists[saved.title] ? (
+                            <Link
+                              href="/event-checklist"
+                              className="flex items-center gap-1.5 text-sm text-purple-600 hover:text-purple-800 transition-colors"
+                            >
                               <CheckSquare size={14} />
-                            )}
-                            Create Checklist
-                          </button>
+                              View Checklist
+                            </Link>
+                          ) : (
+                            <button
+                              onClick={() => createChecklistFromPlan(saved)}
+                              disabled={creatingChecklist === saved.id}
+                              className="flex items-center gap-1.5 text-sm text-purple-600 hover:text-purple-800 transition-colors disabled:opacity-50"
+                            >
+                              {creatingChecklist === saved.id ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                <CheckSquare size={14} />
+                              )}
+                              Create Checklist
+                            </button>
+                          )}
                           <button
                             onClick={() => setConfirmAction({ type: 'deletePlan', id: saved.id })}
                             className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-700 transition-colors"
@@ -418,6 +663,73 @@ export default function SavedPlans() {
           }}
           onCancel={() => setConfirmAction(null)}
         />
+      )}
+
+      {/* Vendor picker modal (swap or add) */}
+      {swapModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSwapModal(null)}>
+          <div className="bg-white rounded-xl max-w-md w-full max-h-[70vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <div>
+                <h3 className="font-semibold text-gray-900">
+                  {swapModal.mode === 'swap' ? 'Swap Vendor' : 'Add Vendor'}
+                </h3>
+                <p className="text-xs text-gray-500">{swapModal.category}</p>
+              </div>
+              <button onClick={() => setSwapModal(null)} className="p-1 text-gray-400 hover:text-gray-600">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="overflow-y-auto max-h-[55vh] p-4">
+              {swapLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
+                </div>
+              ) : swapCandidates.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-8">No other vendors found in this category</p>
+              ) : (
+                <div className="space-y-2">
+                  {swapCandidates.map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => selectVendorFromModal(v)}
+                      className="w-full flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors text-left"
+                    >
+                      {v.image ? (
+                        <img src={v.image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-sm flex-shrink-0">
+                          {v.name?.[0]}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 truncate">{v.name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {v.rating > 0 && (
+                            <span className="flex items-center gap-0.5 text-xs text-gray-500">
+                              <Star size={10} className="text-yellow-500 fill-yellow-500" />
+                              {Number(v.rating).toFixed(1)}
+                            </span>
+                          )}
+                          {v.location && (
+                            <span className="flex items-center gap-0.5 text-xs text-gray-400">
+                              <MapPin size={10} />
+                              {v.location}
+                            </span>
+                          )}
+                        </div>
+                        {v.startingPrice && (
+                          <p className="text-xs text-purple-600 font-medium mt-0.5">{v.startingPrice}</p>
+                        )}
+                      </div>
+                      <ArrowRight size={14} className="text-gray-300 flex-shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

@@ -1,9 +1,52 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Circle, Plus, Trash2, Calendar, ChevronDown, X, Loader2, Clock } from 'lucide-react';
+import Link from 'next/link';
+import { CheckCircle2, Circle, Plus, Trash2, Calendar, ChevronDown, X, Loader2, Clock, AlertTriangle, ExternalLink, Pencil } from 'lucide-react';
 import AppHeader from './AppHeader';
 import ConfirmModal from './ConfirmModal';
+
+// Feature 2: Parse timeline string to a real due date relative to event date
+function parseTimelineToDueDate(timeline, eventDate) {
+  if (!timeline || !eventDate) return null;
+  const event = new Date(eventDate);
+  event.setHours(0, 0, 0, 0);
+  const t = timeline.toLowerCase().trim();
+
+  // Match patterns like "6-8 months before", "2 weeks before", "12+ months before", "1 month before", "3-4 days before"
+  const match = t.match(/(\d+)[\s+\-]*(?:(\d+)\s*)?(?:months?|weeks?|days?|years?)\s*before/);
+  if (!match) return null;
+
+  // Use the larger number (further from event) as the target
+  const num = match[2] ? parseInt(match[2]) : parseInt(match[1]);
+  const unit = t.match(/(months?|weeks?|days?|years?)/)?.[1] || '';
+
+  const due = new Date(event);
+  if (unit.startsWith('month')) {
+    due.setMonth(due.getMonth() - num);
+  } else if (unit.startsWith('week')) {
+    due.setDate(due.getDate() - num * 7);
+  } else if (unit.startsWith('day')) {
+    due.setDate(due.getDate() - num);
+  } else if (unit.startsWith('year')) {
+    due.setFullYear(due.getFullYear() - num);
+  }
+  return due;
+}
+
+function formatDueDate(date) {
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// Feature 4: Check if an item is overdue
+function isOverdue(timeline, eventDate, done) {
+  if (done) return false;
+  const due = parseTimelineToDueDate(timeline, eventDate);
+  if (!due) return false;
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return due < now;
+}
 
 const DEFAULT_TEMPLATES = {
   wedding: {
@@ -69,6 +112,8 @@ export default function EventChecklist() {
   const [expandedId, setExpandedId] = useState(null);
   const [newItemText, setNewItemText] = useState('');
   const [confirmAction, setConfirmAction] = useState(null);
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
 
   useEffect(() => {
     fetchChecklists();
@@ -188,6 +233,25 @@ export default function EventChecklist() {
     } catch {}
   }
 
+  async function renameChecklist(id) {
+    const trimmed = renameValue.trim();
+    if (!trimmed) { setRenamingId(null); return; }
+    const old = checklists.find((c) => c.id === id);
+    if (!old || old.name === trimmed) { setRenamingId(null); return; }
+
+    setChecklists((prev) => prev.map((c) => c.id === id ? { ...c, name: trimmed } : c));
+    setRenamingId(null);
+    try {
+      await fetch(`/api/checklists/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmed }),
+      });
+    } catch {
+      setChecklists((prev) => prev.map((c) => c.id === id ? { ...c, name: old.name } : c));
+    }
+  }
+
   function getCountdown(dateStr) {
     if (!dateStr) return null;
     const eventDate = new Date(dateStr);
@@ -298,9 +362,12 @@ export default function EventChecklist() {
                 return (
                   <div key={checklist.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                     {/* Summary */}
-                    <button
+                    <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => setExpandedId(isExpanded ? null : checklist.id)}
-                      className="w-full flex items-center gap-4 p-5 text-left hover:bg-gray-50 transition-colors"
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedId(isExpanded ? null : checklist.id); } }}
+                      className="w-full flex items-center gap-4 p-5 text-left hover:bg-gray-50 transition-colors cursor-pointer"
                     >
                       <div className="relative w-10 h-10 flex-shrink-0">
                         <svg className="w-10 h-10 -rotate-90">
@@ -318,14 +385,44 @@ export default function EventChecklist() {
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 truncate">{checklist.name}</h3>
+                        {renamingId === checklist.id ? (
+                          <input
+                            type="text"
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            onBlur={() => renameChecklist(checklist.id)}
+                            onKeyDown={(e) => {
+                              e.stopPropagation();
+                              if (e.key === 'Enter') renameChecklist(checklist.id);
+                              if (e.key === 'Escape') setRenamingId(null);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="font-semibold text-gray-900 bg-white border border-purple-300 rounded px-2 py-0.5 w-full focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            autoFocus
+                          />
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-semibold text-gray-900 truncate">{checklist.name}</h3>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRenamingId(checklist.id);
+                                setRenameValue(checklist.name);
+                              }}
+                              className="p-0.5 text-gray-300 hover:text-purple-600 transition-colors flex-shrink-0"
+                              title="Rename checklist"
+                            >
+                              <Pencil size={12} />
+                            </button>
+                          </div>
+                        )}
                         <p className="text-sm text-gray-500">{doneCount}/{totalCount} completed</p>
                       </div>
                       <ChevronDown
                         size={18}
                         className={`text-gray-400 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                       />
-                    </button>
+                    </div>
 
                     {/* Items */}
                     {isExpanded && (
@@ -354,35 +451,78 @@ export default function EventChecklist() {
                           })()}
                         </div>
 
-                        <div className="space-y-1 mb-4">
-                          {checklist.items.map((item) => (
-                            <div
-                              key={item.id}
-                              className="flex items-start gap-3 py-2 px-2 rounded-lg hover:bg-gray-50 group transition-colors"
-                            >
-                              <button onClick={() => toggleItem(checklist.id, item.id, item.done)} className="mt-0.5 flex-shrink-0">
-                                {item.done ? (
-                                  <CheckCircle2 size={20} className="text-purple-600" />
-                                ) : (
-                                  <Circle size={20} className="text-gray-300" />
-                                )}
-                              </button>
-                              <div className="flex-1 min-w-0">
-                                <p className={`text-sm ${item.done ? 'line-through text-gray-400' : 'text-gray-900'}`}>
-                                  {item.text}
-                                </p>
-                                {item.timeline && (
-                                  <p className="text-xs text-gray-400 mt-0.5">{item.timeline}</p>
-                                )}
-                              </div>
-                              <button
-                                onClick={() => removeItem(checklist.id, item.id)}
-                                className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-500 transition-all flex-shrink-0"
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                        {/* Feature 4: Overdue count summary */}
+                        {(() => {
+                          const overdueCount = checklist.items.filter((item) => isOverdue(item.timeline, checklist.eventDate, item.done)).length;
+                          if (overdueCount === 0) return null;
+                          return (
+                            <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                              <AlertTriangle size={14} className="text-amber-600 flex-shrink-0" />
+                              <p className="text-sm text-amber-800 font-medium">
+                                {overdueCount} overdue {overdueCount === 1 ? 'task' : 'tasks'}
+                              </p>
                             </div>
-                          ))}
+                          );
+                        })()}
+
+                        <div className="space-y-1 mb-4">
+                          {checklist.items.map((item) => {
+                            const overdue = isOverdue(item.timeline, checklist.eventDate, item.done);
+                            const dueDate = parseTimelineToDueDate(item.timeline, checklist.eventDate);
+
+                            return (
+                              <div
+                                key={item.id}
+                                className={`flex items-start gap-3 py-2 px-2 rounded-lg group transition-colors ${
+                                  overdue ? 'bg-amber-50 hover:bg-amber-100' : 'hover:bg-gray-50'
+                                }`}
+                              >
+                                <button onClick={() => toggleItem(checklist.id, item.id, item.done)} className="mt-0.5 flex-shrink-0">
+                                  {item.done ? (
+                                    <CheckCircle2 size={20} className="text-purple-600" />
+                                  ) : (
+                                    <Circle size={20} className={overdue ? 'text-amber-400' : 'text-gray-300'} />
+                                  )}
+                                </button>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <p className={`text-sm ${item.done ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                                      {item.text}
+                                    </p>
+                                    {overdue && (
+                                      <span className="text-xs font-medium px-1.5 py-0.5 bg-amber-200 text-amber-800 rounded">
+                                        Overdue
+                                      </span>
+                                    )}
+                                  </div>
+                                  {item.timeline && (
+                                    <p className={`text-xs mt-0.5 ${overdue ? 'text-amber-600' : 'text-gray-400'}`}>
+                                      {item.timeline}
+                                      {dueDate && (
+                                        <span className="ml-1">(by {formatDueDate(dueDate)})</span>
+                                      )}
+                                    </p>
+                                  )}
+                                  {/* Feature 3: Browse vendors link */}
+                                  {item.category && !item.done && (
+                                    <Link
+                                      href={`/marketplace?categories=${encodeURIComponent(item.category)}`}
+                                      className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 mt-1 font-medium"
+                                    >
+                                      Browse {item.category} vendors
+                                      <ExternalLink size={10} />
+                                    </Link>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => removeItem(checklist.id, item.id)}
+                                  className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-500 transition-all flex-shrink-0"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            );
+                          })}
                         </div>
 
                         {/* Add item */}
