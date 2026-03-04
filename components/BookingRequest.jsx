@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Loader2, FolderOpen, Check } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import AuthPromptModal from '@/components/AuthPromptModal';
 import PackageSelector from '@/components/PackageSelector';
@@ -27,6 +27,8 @@ export default function BookingRequest({ vendorId }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [savedPlans, setSavedPlans] = useState([]);
+  const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [formData, setFormData] = useState({
     eventDate: '',
     eventType: 'Wedding',
@@ -91,6 +93,15 @@ export default function BookingRequest({ vendorId }) {
     fetchVendor();
   }, [vendorId]);
 
+  // Fetch saved plans for linking
+  useEffect(() => {
+    if (!user) return;
+    fetch('/api/saved-plans')
+      .then(r => r.json())
+      .then(d => setSavedPlans((d.plans || []).filter(p => p.totalBudget)))
+      .catch(() => {});
+  }, [user]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -125,6 +136,7 @@ export default function BookingRequest({ vendorId }) {
         body: JSON.stringify({
           vendorId,
           packageId: selectedPackage,
+          savedPlanId: selectedPlanId || null,
           ...formData,
           guestCount: formData.guestCount ? parseInt(formData.guestCount) : null,
         }),
@@ -286,6 +298,38 @@ export default function BookingRequest({ vendorId }) {
                 selectedPackage={selectedPackage}
                 onSelectPackage={setSelectedPackage}
               />
+
+              {/* Link to Plan */}
+              {savedPlans.length > 0 && (
+                <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                  <h2 className="text-xl font-bold mb-1">Link to a Plan</h2>
+                  <p className="text-sm text-gray-500 mb-4">Optionally link this booking to one of your event plans for budget tracking.</p>
+                  <div className="space-y-2">
+                    {savedPlans.map(plan => {
+                      const isSelected = selectedPlanId === plan.id;
+                      return (
+                        <button
+                          key={plan.id}
+                          type="button"
+                          onClick={() => setSelectedPlanId(isSelected ? null : plan.id)}
+                          className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-colors ${
+                            isSelected
+                              ? 'border-purple-400 bg-purple-50'
+                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <FolderOpen size={18} className={isSelected ? 'text-purple-600' : 'text-gray-400'} />
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-medium truncate ${isSelected ? 'text-purple-700' : 'text-gray-800'}`}>{plan.title}</p>
+                            <p className="text-xs text-gray-500">Budget: £{Number(plan.totalBudget).toLocaleString('en-GB')}</p>
+                          </div>
+                          {isSelected && <Check size={18} className="text-purple-600 flex-shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Event Details */}
               <EventDetailsForm

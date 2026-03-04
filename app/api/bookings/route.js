@@ -67,6 +67,7 @@ export async function POST(request) {
         contactEmail: body.contactEmail || null,
         contactPhone: body.contactPhone || null,
         hearAbout: body.hearAbout || null,
+        savedPlanId: body.savedPlanId || null,
         status: 'new_inquiry',
         totalPrice,
         vendorFee,
@@ -188,6 +189,9 @@ export async function GET(request) {
         review: {
           select: { id: true },
         },
+        savedPlan: {
+          select: { id: true, title: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
       take: limit + 1,
@@ -292,6 +296,58 @@ export async function PUT(request) {
     return NextResponse.json({ booking: updated })
   } catch (err) {
     console.error('Update booking error:', err)
+    return NextResponse.json({ error: 'Failed to update booking' }, { status: 500 })
+  }
+}
+
+// PATCH — customer links/unlinks a booking to a saved plan
+export async function PATCH(request) {
+  const supabase = await createClient()
+  const { data: { user }, error } = await supabase.auth.getUser()
+
+  if (error || !user) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  }
+
+  try {
+    const body = await request.json()
+    const { bookingId, savedPlanId } = body
+
+    if (!bookingId) {
+      return NextResponse.json({ error: 'bookingId is required' }, { status: 400 })
+    }
+
+    let dbUser = await prisma.user.findUnique({ where: { id: user.id }, include: { customerProfile: true } })
+    if (!dbUser) {
+      dbUser = await prisma.user.findUnique({ where: { email: user.email }, include: { customerProfile: true } })
+    }
+
+    if (!dbUser?.customerProfile) {
+      return NextResponse.json({ error: 'Customer profile not found' }, { status: 404 })
+    }
+
+    // Verify booking belongs to this customer
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
+    if (!booking || booking.customerId !== dbUser.customerProfile.id) {
+      return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
+    }
+
+    // If linking, verify plan belongs to this customer
+    if (savedPlanId) {
+      const plan = await prisma.savedPlan.findUnique({ where: { id: savedPlanId } })
+      if (!plan || plan.customerId !== dbUser.customerProfile.id) {
+        return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
+      }
+    }
+
+    const updated = await prisma.booking.update({
+      where: { id: bookingId },
+      data: { savedPlanId: savedPlanId || null },
+    })
+
+    return NextResponse.json({ booking: updated })
+  } catch (err) {
+    console.error('Patch booking error:', err)
     return NextResponse.json({ error: 'Failed to update booking' }, { status: 500 })
   }
 }

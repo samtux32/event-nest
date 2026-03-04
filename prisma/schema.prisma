@@ -271,6 +271,7 @@ model Booking {
   paymentStatus      PaymentStatus @default(unpaid) @map("payment_status")
   stripePaymentId    String?       @map("stripe_payment_id")
   proposedDate       DateTime?     @map("proposed_date") @db.Date
+  savedPlanId        String?       @map("saved_plan_id") @db.Uuid
   confirmedAt        DateTime?     @map("confirmed_at")
   createdAt          DateTime      @default(now()) @map("created_at")
   updatedAt          DateTime      @updatedAt @map("updated_at")
@@ -279,6 +280,7 @@ model Booking {
   vendor       VendorProfile   @relation(fields: [vendorId], references: [id])
   customer     CustomerProfile @relation(fields: [customerId], references: [id])
   package      Package?        @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  savedPlan    SavedPlan?      @relation(fields: [savedPlanId], references: [id], onDelete: SetNull)
   conversation Conversation?
   review       Review?
   quote        Quote?
@@ -527,6 +529,7 @@ model SavedPlan {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   customer CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  bookings Booking[]
 
   @@index([customerId])
   @@map("saved_plans")

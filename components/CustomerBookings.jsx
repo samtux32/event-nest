@@ -10,7 +10,11 @@ import {
   Star,
   X,
   ImagePlus,
-  Trash2
+  Trash2,
+  FolderOpen,
+  Check,
+  Link2,
+  Unlink
 } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import { useAuth } from '@/components/AuthProvider';
@@ -215,6 +219,8 @@ export default function CustomerBookings() {
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [savedPlans, setSavedPlans] = useState([]);
+  const [linkingBookingId, setLinkingBookingId] = useState(null); // booking id currently showing plan picker
 
   useEffect(() => {
     async function fetchBookings() {
@@ -236,6 +242,11 @@ export default function CustomerBookings() {
       }
     }
     fetchBookings();
+    // Fetch saved plans for linking
+    fetch('/api/saved-plans')
+      .then(r => r.json())
+      .then(d => setSavedPlans((d.plans || []).filter(p => p.totalBudget)))
+      .catch(() => {});
   }, []);
 
   const loadMoreBookings = async () => {
@@ -262,6 +273,26 @@ export default function CustomerBookings() {
 
   const handleReviewSubmitted = (bookingId) => {
     setReviewedIds(prev => new Set([...prev, bookingId]));
+  };
+
+  const handleLinkPlan = async (bookingId, planId) => {
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId, savedPlanId: planId }),
+      });
+      if (res.ok) {
+        const plan = planId ? savedPlans.find(p => p.id === planId) : null;
+        setBookings(prev => prev.map(b => b.id === bookingId
+          ? { ...b, savedPlanId: planId, savedPlan: plan ? { id: plan.id, title: plan.title } : null }
+          : b
+        ));
+      }
+    } catch (err) {
+      console.error('Failed to link booking to plan:', err);
+    }
+    setLinkingBookingId(null);
   };
 
   const handleCancelBooking = async (bookingId) => {
@@ -393,6 +424,64 @@ export default function CustomerBookings() {
                       )}
                     </div>
                   </div>
+
+                  {/* Plan link */}
+                  {savedPlans.length > 0 && booking.status !== 'cancelled' && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      {booking.savedPlan ? (
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1.5 text-xs text-purple-600">
+                            <FolderOpen size={12} />
+                            Linked to <span className="font-medium">{booking.savedPlan.title}</span>
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setLinkingBookingId(linkingBookingId === booking.id ? null : booking.id)}
+                              className="text-xs text-gray-500 hover:text-purple-600 transition-colors"
+                            >
+                              Change
+                            </button>
+                            <button
+                              onClick={() => handleLinkPlan(booking.id, null)}
+                              className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors"
+                            >
+                              <Unlink size={11} />
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setLinkingBookingId(linkingBookingId === booking.id ? null : booking.id)}
+                          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-purple-600 transition-colors"
+                        >
+                          <Link2 size={12} />
+                          Link to a plan
+                        </button>
+                      )}
+
+                      {linkingBookingId === booking.id && (
+                        <div className="mt-2 space-y-1.5">
+                          {savedPlans.map(plan => (
+                            <button
+                              key={plan.id}
+                              onClick={() => handleLinkPlan(booking.id, plan.id)}
+                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border text-left text-sm transition-colors ${
+                                booking.savedPlanId === plan.id
+                                  ? 'border-purple-400 bg-purple-50 text-purple-700'
+                                  : 'border-gray-200 hover:border-purple-200 hover:bg-purple-50/50 text-gray-700'
+                              }`}
+                            >
+                              <FolderOpen size={14} className={booking.savedPlanId === plan.id ? 'text-purple-600' : 'text-gray-400'} />
+                              <span className="flex-1 truncate">{plan.title}</span>
+                              <span className="text-xs text-gray-400">£{Number(plan.totalBudget).toLocaleString('en-GB')}</span>
+                              {booking.savedPlanId === plan.id && <Check size={14} className="text-purple-600" />}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

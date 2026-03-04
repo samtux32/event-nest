@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import AppHeader from './AppHeader';
 import ConfirmModal from './ConfirmModal';
+import BudgetTracker from './BudgetTracker';
 
 const PRIORITY_COLOURS = {
   essential:   { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
@@ -49,10 +50,15 @@ export default function SavedPlans() {
   const [existingChecklists, setExistingChecklists] = useState({}); // { planTitle: checklistId }
   const [renamingPlanId, setRenamingPlanId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
+  const [bookings, setBookings] = useState([]);
 
   useEffect(() => {
     fetchPlans();
     fetchChecklists();
+    fetch('/api/bookings?limit=100')
+      .then(r => r.json())
+      .then(d => setBookings(d.bookings || []))
+      .catch(() => {});
   }, []);
 
   // Auto-expand plan from ?open= param
@@ -521,6 +527,13 @@ export default function SavedPlans() {
                             })}
                           </div>
                         </div>
+
+                        {/* Budget Tracker — spending vs plan */}
+                        {saved.totalBudget && (
+                          <div className="mb-5">
+                            <BudgetTracker plan={saved} bookings={bookings.filter(b => b.savedPlanId === saved.id || b.savedPlan?.id === saved.id)} />
+                          </div>
+                        )}
 
                         {/* Vendor matches by category */}
                         {(Object.entries(vendors).some(([, v]) => v.length > 0) || categories.length > 0) && (

@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Calendar, CheckSquare, FolderOpen, ChevronDown, ChevronUp, MapPin, Clock, Users, Star } from 'lucide-react';
+import { Calendar, CheckSquare, FolderOpen, ChevronDown, ChevronUp, Users, X } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
+import BudgetTracker from '@/components/BudgetTracker';
 
 function StatusBadge({ status }) {
   const colors = {
@@ -40,11 +41,25 @@ export default function MyEvents() {
     });
   }, []);
 
-  // Group items into events by matching plan title ↔ checklist name, and booking eventType overlap
   const events = groupIntoEvents(plans, checklists, bookings);
 
   const toggleExpand = (id) => {
     setExpandedEvents(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleUnlinkBooking = async (bookingId) => {
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId, savedPlanId: null }),
+      });
+      if (res.ok) {
+        setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, savedPlanId: null, savedPlan: null } : b));
+      }
+    } catch (err) {
+      console.error('Failed to unlink booking:', err);
+    }
   };
 
   if (loading) {
@@ -93,6 +108,7 @@ export default function MyEvents() {
         <div className="space-y-4">
           {events.map((event) => {
             const expanded = expandedEvents[event.id] !== false; // default expanded
+            const hasPlanWithBudget = event.plans.some(p => p.totalBudget);
             return (
               <div key={event.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 {/* Header */}
@@ -150,6 +166,11 @@ export default function MyEvents() {
                       </div>
                     )}
 
+                    {/* Budget Tracker */}
+                    {hasPlanWithBudget && (
+                      <BudgetTracker plan={event.plans.find(p => p.totalBudget)} bookings={event.bookings} />
+                    )}
+
                     {/* Checklists */}
                     {event.checklists.length > 0 && (
                       <div>
@@ -188,26 +209,37 @@ export default function MyEvents() {
                         <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Bookings</h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {event.bookings.map(b => (
-                            <Link
+                            <div
                               key={b.id}
-                              href="/my-bookings"
                               className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-purple-200 hover:bg-purple-50/50 transition-colors"
                             >
-                              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                                {b.vendor?.profileImageUrl ? (
-                                  <img src={b.vendor.profileImageUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
-                                ) : (
-                                  <span className="text-xs font-bold text-purple-600">{b.vendor?.businessName?.[0] || 'V'}</span>
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-800 truncate">{b.vendor?.businessName || 'Vendor'}</p>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <StatusBadge status={b.status} />
-                                  {b.package?.name && <span className="text-xs text-gray-500 truncate">{b.package.name}</span>}
+                              <Link href="/my-bookings" className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                                  {b.vendor?.profileImageUrl ? (
+                                    <img src={b.vendor.profileImageUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+                                  ) : (
+                                    <span className="text-xs font-bold text-purple-600">{b.vendor?.businessName?.[0] || 'V'}</span>
+                                  )}
                                 </div>
-                              </div>
-                            </Link>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-800 truncate">{b.vendor?.businessName || 'Vendor'}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <StatusBadge status={b.status} />
+                                    {b.package?.name && <span className="text-xs text-gray-500 truncate">{b.package.name}</span>}
+                                  </div>
+                                </div>
+                              </Link>
+                              {/* Remove from plan button — only show if this booking is linked to a plan in this group */}
+                              {hasPlanWithBudget && b.savedPlanId && (
+                                <button
+                                  onClick={() => handleUnlinkBooking(b.id)}
+                                  title="Remove from plan"
+                                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                                >
+                                  <X size={14} />
+                                </button>
+                              )}
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -225,16 +257,15 @@ export default function MyEvents() {
 }
 
 // Group plans, checklists, and bookings into logical "events"
+// Bookings only group with plans via explicit savedPlanId — no fuzzy matching
 function groupIntoEvents(plans, checklists, bookings) {
   const events = [];
-  const usedPlanIds = new Set();
   const usedChecklistIds = new Set();
   const usedBookingIds = new Set();
 
-  // Helper: normalize string for fuzzy matching
   const norm = (s) => (s || '').toLowerCase().trim();
 
-  // First pass: group plans + checklists by matching title ↔ name
+  // First pass: plans + their explicitly linked bookings + matching checklists
   for (const plan of plans) {
     const event = {
       id: `plan-${plan.id}`,
@@ -244,9 +275,8 @@ function groupIntoEvents(plans, checklists, bookings) {
       checklists: [],
       bookings: [],
     };
-    usedPlanIds.add(plan.id);
 
-    // Find matching checklists
+    // Match checklists by title
     for (const cl of checklists) {
       if (usedChecklistIds.has(cl.id)) continue;
       if (norm(cl.name) === norm(plan.title) || norm(cl.name).includes(norm(plan.title)) || norm(plan.title).includes(norm(cl.name))) {
@@ -255,12 +285,10 @@ function groupIntoEvents(plans, checklists, bookings) {
       }
     }
 
-    // Find matching bookings by event type overlap
-    const planWords = norm(plan.title).split(/\s+/);
+    // Only match bookings with explicit savedPlanId link
     for (const b of bookings) {
       if (usedBookingIds.has(b.id)) continue;
-      const eventTypeNorm = norm(b.eventType);
-      if (eventTypeNorm && planWords.some(w => w.length > 3 && eventTypeNorm.includes(w))) {
+      if (b.savedPlanId === plan.id || b.savedPlan?.id === plan.id) {
         event.bookings.push(b);
         usedBookingIds.add(b.id);
         if (!event.date && b.eventDate) event.date = b.eventDate;
@@ -270,38 +298,23 @@ function groupIntoEvents(plans, checklists, bookings) {
     events.push(event);
   }
 
-  // Second pass: standalone checklists
+  // Second pass: standalone checklists (no fuzzy booking matching)
   for (const cl of checklists) {
     if (usedChecklistIds.has(cl.id)) continue;
-    const event = {
+    events.push({
       id: `checklist-${cl.id}`,
       name: cl.name || 'Untitled Checklist',
       date: null,
       plans: [],
       checklists: [cl],
       bookings: [],
-    };
+    });
     usedChecklistIds.add(cl.id);
-
-    // Try to match bookings
-    const clWords = norm(cl.name).split(/\s+/);
-    for (const b of bookings) {
-      if (usedBookingIds.has(b.id)) continue;
-      const eventTypeNorm = norm(b.eventType);
-      if (eventTypeNorm && clWords.some(w => w.length > 3 && eventTypeNorm.includes(w))) {
-        event.bookings.push(b);
-        usedBookingIds.add(b.id);
-        if (!event.date && b.eventDate) event.date = b.eventDate;
-      }
-    }
-
-    events.push(event);
   }
 
-  // Third pass: ungrouped bookings
+  // Third pass: ungrouped bookings by eventType
   const ungroupedBookings = bookings.filter(b => !usedBookingIds.has(b.id));
   if (ungroupedBookings.length > 0) {
-    // Group by eventType
     const byType = {};
     for (const b of ungroupedBookings) {
       const key = b.eventType || 'Other';
