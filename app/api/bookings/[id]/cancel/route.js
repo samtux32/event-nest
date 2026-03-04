@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { sendBookingCancelledEmail } from '@/lib/email'
 
 // POST — customer cancels a booking
 export async function POST(request, { params }) {
@@ -60,6 +61,19 @@ export async function POST(request, { params }) {
           body: `${dbUser.customerProfile.fullName || 'A customer'} has cancelled their booking.`,
           link: `/`,
         },
+      }).catch(() => {})
+    }
+
+    // Email the vendor
+    if (booking.vendor?.user?.email) {
+      sendBookingCancelledEmail({
+        recipientEmail: booking.vendor.user.email,
+        recipientName: booking.vendor.businessName || 'there',
+        otherPartyName: dbUser.customerProfile.fullName || 'A customer',
+        eventType: booking.eventType || null,
+        eventDate: booking.eventDate
+          ? new Date(booking.eventDate).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+          : null,
       }).catch(() => {})
     }
 

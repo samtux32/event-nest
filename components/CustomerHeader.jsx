@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, MessageSquare, Heart, Menu, X, Sparkles, CheckSquare, Lightbulb, FolderOpen, ChevronDown } from 'lucide-react';
+import { Search, MessageSquare, Heart, Menu, X, Sparkles, CheckSquare, Lightbulb, FolderOpen, ChevronDown, Clock, LayoutDashboard } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import NotificationBell from './NotificationBell';
 import ProfileDropdown from './ProfileDropdown';
@@ -27,6 +27,7 @@ export default function CustomerHeader() {
 
   const mainLinks = [
     { href: '/marketplace', icon: Search, label: 'Discover' },
+    { href: '/my-events', icon: LayoutDashboard, label: 'My Events' },
     { href: '/my-bookings', icon: null, label: 'Bookings' },
     { href: '/wishlist', icon: Heart, label: 'Wishlist' },
     { href: '/plan-my-event', icon: Sparkles, label: 'AI Planner' },
@@ -37,6 +38,7 @@ export default function CustomerHeader() {
     { href: '/my-plans', icon: FolderOpen, label: 'My Plans' },
     { href: '/event-checklist', icon: CheckSquare, label: 'Checklist' },
     { href: '/inspiration', icon: Lightbulb, label: 'Inspiration' },
+    { href: '/recently-viewed', icon: Clock, label: 'Recently Viewed' },
   ];
 
   const allLinks = [...mainLinks, ...moreLinks];

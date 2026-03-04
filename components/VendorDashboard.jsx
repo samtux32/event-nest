@@ -12,7 +12,9 @@ import {
   DollarSign,
   CheckCircle,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  Check,
+  ArrowRight
 } from 'lucide-react';
 
 function formatPrice(val) {
@@ -52,13 +54,17 @@ export default function VendorDashboard() {
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [profileCompletion, setProfileCompletion] = useState(null);
+  const [completionSteps, setCompletionSteps] = useState([]);
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [statsRes, bookingsRes] = await Promise.all([
+        const [statsRes, bookingsRes, profileRes] = await Promise.all([
           fetch('/api/bookings/stats'),
           fetch('/api/bookings?limit=20'),
+          fetch('/api/vendors/profile'),
         ]);
         const [statsData, bookingsData] = await Promise.all([statsRes.json(), bookingsRes.json()]);
         if (statsRes.ok) setStats(statsData);
@@ -67,6 +73,22 @@ export default function VendorDashboard() {
           setHasMore(bookingsData.hasMore ?? false);
           setOffset(bookingsData.bookings.length);
         }
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          const p = profileData.vendor || profileData;
+          // Calculate completion steps
+          const steps = [
+            { label: 'Business Info', done: !!(p.businessName && p.description && p.location), field: 'businessName' },
+            { label: 'Photos', done: !!(p.profileImageUrl || (p.portfolioImages && p.portfolioImages.length > 0)), field: 'photos' },
+            { label: 'Pricing', done: !!(p.packages && p.packages.length > 0), field: 'packages' },
+            { label: 'Portfolio', done: !!(p.portfolioImages && p.portfolioImages.length >= 3), field: 'portfolio' },
+            { label: 'Contact', done: !!(p.contactEmail || p.contactPhone || p.website), field: 'contact' },
+            { label: 'Categories', done: !!(p.categories && p.categories.length > 0), field: 'categories' },
+          ];
+          setCompletionSteps(steps);
+          const pct = Math.round((steps.filter(s => s.done).length / steps.length) * 100);
+          setProfileCompletion(pct);
+        }
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
       } finally {
@@ -74,6 +96,10 @@ export default function VendorDashboard() {
       }
     }
     fetchData();
+    // Check localStorage for dismiss
+    if (typeof window !== 'undefined' && localStorage.getItem('onboarding-dismissed') === 'true') {
+      setOnboardingDismissed(true);
+    }
   }, []);
 
   const loadMoreInquiries = async () => {
@@ -137,6 +163,61 @@ export default function VendorDashboard() {
           </div>
         )}
 
+        {/* Onboarding Progress Card */}
+        {profileCompletion !== null && profileCompletion < 100 && !onboardingDismissed && (
+          <div className="mb-6 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h3 className="font-bold text-gray-900 text-lg">Complete Your Profile</h3>
+                <p className="text-sm text-gray-600 mt-0.5">A complete profile attracts more bookings</p>
+              </div>
+              <button
+                onClick={() => {
+                  setOnboardingDismissed(true);
+                  localStorage.setItem('onboarding-dismissed', 'true');
+                }}
+                className="text-gray-400 hover:text-gray-600 text-sm"
+              >
+                Dismiss
+              </button>
+            </div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-2.5 bg-white rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-purple-600 rounded-full transition-all duration-500"
+                  style={{ width: `${profileCompletion}%` }}
+                />
+              </div>
+              <span className="text-sm font-bold text-purple-700">{profileCompletion}%</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              {completionSteps.map((step) => (
+                <div
+                  key={step.label}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
+                    step.done
+                      ? 'bg-green-50 text-green-700'
+                      : 'bg-white text-gray-600 border border-gray-200'
+                  }`}
+                >
+                  {step.done ? (
+                    <Check size={14} className="text-green-500 flex-shrink-0" />
+                  ) : (
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                  )}
+                  <span className="truncate">{step.label}</span>
+                </div>
+              ))}
+            </div>
+            <Link
+              href="/profile-editor"
+              className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
+            >
+              Complete Profile <ArrowRight size={14} />
+            </Link>
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-2xl sm:text-4xl font-bold mb-2">
             Welcome back, {authProfile?.businessName || 'Vendor'} 👋
@@ -149,7 +230,7 @@ export default function VendorDashboard() {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-gray-600 text-sm mb-2">New Inquiries</p>
-                <p className="text-5xl font-bold">{newInquiries}</p>
+                <p className="text-3xl sm:text-5xl font-bold">{newInquiries}</p>
                 <p className="text-gray-500 text-sm mt-2">Awaiting response</p>
               </div>
               <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
@@ -162,7 +243,7 @@ export default function VendorDashboard() {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-gray-600 text-sm mb-2">Upcoming Bookings</p>
-                <p className="text-5xl font-bold">{upcomingBookings}</p>
+                <p className="text-3xl sm:text-5xl font-bold">{upcomingBookings}</p>
                 <p className="text-gray-500 text-sm mt-2">Events scheduled</p>
               </div>
               <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
@@ -175,7 +256,7 @@ export default function VendorDashboard() {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-gray-600 text-sm mb-2">Total Revenue</p>
-                <p className="text-5xl font-bold">{formatPrice(totalRevenue)}</p>
+                <p className="text-3xl sm:text-5xl font-bold">{formatPrice(totalRevenue)}</p>
                 <p className="text-gray-500 text-sm mt-2">All time earnings</p>
               </div>
               <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
@@ -188,7 +269,7 @@ export default function VendorDashboard() {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-gray-600 text-sm mb-2">Completed Events</p>
-                <p className="text-5xl font-bold">{completedEvents}</p>
+                <p className="text-3xl sm:text-5xl font-bold">{completedEvents}</p>
                 <p className="text-gray-500 text-sm mt-2">Successfully delivered</p>
               </div>
               <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center">

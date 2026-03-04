@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { sendNewReviewEmail } from '@/lib/email'
 
 // Public endpoint: fetch all reviews for a vendor (no auth required)
 export async function GET(request) {
@@ -87,13 +88,25 @@ export async function POST(request) {
     })
     const avgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length
 
-    await prisma.vendorProfile.update({
+    const vendor = await prisma.vendorProfile.update({
       where: { id: booking.vendorId },
       data: {
         averageRating: Math.round(avgRating * 10) / 10,
         totalReviews: allReviews.length,
       },
+      include: { user: { select: { email: true } } },
     })
+
+    // Email the vendor about the new review
+    if (vendor?.user?.email) {
+      sendNewReviewEmail({
+        vendorEmail: vendor.user.email,
+        vendorName: vendor.businessName,
+        customerName: dbUser.customerProfile.fullName || 'A customer',
+        rating,
+        reviewText: text,
+      }).catch(() => {})
+    }
 
     return NextResponse.json({ review })
   } catch (err) {

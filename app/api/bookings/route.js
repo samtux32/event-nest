@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
-import { sendNewInquiryEmail, sendBookingConfirmedEmail } from '@/lib/email'
+import { sendNewInquiryEmail, sendBookingConfirmedEmail, sendBookingCancelledEmail } from '@/lib/email'
 
 export async function POST(request) {
   const supabase = await createClient()
@@ -270,6 +270,18 @@ export async function PUT(request) {
           customerEmail: updated.customer.user.email,
           customerName: updated.customer.fullName || 'there',
           vendorName: dbUser.vendorProfile.businessName,
+          eventDate: updated.eventDate
+            ? new Date(updated.eventDate).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+            : null,
+        }).catch(() => {})
+      }
+
+      if (status === 'cancelled' && updated.customer?.user?.email) {
+        sendBookingCancelledEmail({
+          recipientEmail: updated.customer.user.email,
+          recipientName: updated.customer.fullName || 'there',
+          otherPartyName: dbUser.vendorProfile.businessName,
+          eventType: updated.eventType || null,
           eventDate: updated.eventDate
             ? new Date(updated.eventDate).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
             : null,

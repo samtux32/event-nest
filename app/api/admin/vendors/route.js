@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { sendVendorApprovedEmail } from '@/lib/email'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -53,7 +54,17 @@ export async function PUT(request) {
     const vendor = await prisma.vendorProfile.update({
       where: { id: vendorId },
       data,
+      include: { user: { select: { email: true } } },
     })
+
+    // Send approval email when vendor is newly approved
+    if (isApproved === true && vendor?.user?.email) {
+      sendVendorApprovedEmail({
+        vendorEmail: vendor.user.email,
+        vendorName: vendor.businessName,
+        profileUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/vendor-profile/${vendorId}`,
+      }).catch(() => {})
+    }
 
     return NextResponse.json({ vendor })
   } catch (err) {

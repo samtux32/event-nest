@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Search, Heart, Star, MapPin, SlidersHorizontal, X, GitCompareArrows, Clock } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import AppHeader from './AppHeader';
@@ -62,6 +63,12 @@ export default function CustomerMarketplace() {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestedCategories, setSuggestedCategories] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchContainerRef = useRef(null);
+  const router = useRouter();
   const debounceRef = useRef(null);
 
   // Initialize category filter from URL query params (e.g. ?categories=Venue)
@@ -86,6 +93,37 @@ export default function CustomerMarketplace() {
     }, 400);
     return () => clearTimeout(debounceRef.current);
   }, [searchQuery]);
+
+  // Autocomplete suggestions
+  useEffect(() => {
+    if (searchQuery.trim().length < 2) {
+      setSuggestions([]);
+      setSuggestedCategories([]);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/vendors/suggest?q=${encodeURIComponent(searchQuery.trim())}`)
+      .then(r => r.json())
+      .then(data => {
+        if (cancelled) return;
+        setSuggestions(data.suggestions || []);
+        setSuggestedCategories(data.categories || []);
+        setShowSuggestions(true);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [searchQuery]);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    function handleClick(e) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   // Location state
   const [userLocation, setUserLocation] = useState(null); // { lat, lng, city }
@@ -341,15 +379,60 @@ export default function CustomerMarketplace() {
 
           <div className="bg-white rounded-2xl p-4 max-w-4xl mx-auto shadow-xl">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-              <div className="flex-1 flex items-center gap-3 px-4 border border-gray-200 sm:border-0 rounded-xl sm:rounded-none py-1 sm:py-0">
-                <Search className="text-gray-400 flex-shrink-0" size={20} />
-                <input
-                  type="text"
-                  placeholder="Search vendors..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full py-2 outline-none text-gray-700"
-                />
+              <div className="flex-1 relative" ref={searchContainerRef}>
+                <div className="flex items-center gap-3 px-4 border border-gray-200 sm:border-0 rounded-xl sm:rounded-none py-1 sm:py-0">
+                  <Search className="text-gray-400 flex-shrink-0" size={20} />
+                  <input
+                    type="text"
+                    placeholder="Search vendors..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => { setSearchFocused(true); if (suggestions.length > 0 || suggestedCategories.length > 0) setShowSuggestions(true); }}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setShowSuggestions(false); }}
+                    className="w-full py-2 outline-none text-gray-700"
+                  />
+                </div>
+                {/* Autocomplete dropdown */}
+                {showSuggestions && searchFocused && (suggestions.length > 0 || suggestedCategories.length > 0) && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50 max-h-64 overflow-y-auto">
+                    {suggestedCategories.length > 0 && (
+                      <div className="px-3 py-1.5">
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Categories</p>
+                        {suggestedCategories.map(cat => (
+                          <button
+                            key={cat}
+                            onClick={() => {
+                              setSelectedCategories(prev => prev.includes(cat) ? prev : [...prev, cat]);
+                              setSearchQuery('');
+                              setShowSuggestions(false);
+                            }}
+                            className="w-full text-left px-2 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-lg transition-colors"
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {suggestions.length > 0 && (
+                      <div className="px-3 py-1.5">
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Vendors</p>
+                        {suggestions.map(s => (
+                          <button
+                            key={s.id}
+                            onClick={() => {
+                              setShowSuggestions(false);
+                              router.push(`/vendor-profile/${s.id}`);
+                            }}
+                            className="w-full text-left px-2 py-2 text-sm hover:bg-purple-50 rounded-lg transition-colors flex items-center justify-between"
+                          >
+                            <span className="font-medium text-gray-800">{s.name}</span>
+                            {s.category && <span className="text-xs text-gray-400">{s.category}</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -555,7 +638,7 @@ export default function CustomerMarketplace() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map(i => (
               <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-200">
-                <div className="h-64 bg-gray-200 animate-pulse" />
+                <div className="h-48 sm:h-64 bg-gray-200 animate-pulse" />
                 <div className="p-5 space-y-3">
                   <div className="h-5 bg-gray-200 rounded w-3/4 animate-pulse" />
                   <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse" />
@@ -579,7 +662,7 @@ export default function CustomerMarketplace() {
                 key={vendor.id}
                 className="bg-white rounded-2xl overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer group"
               >
-                <div className="relative h-64">
+                <div className="relative h-48 sm:h-64">
                   {vendor.image ? (
                     <img
                       src={vendor.image}
