@@ -189,6 +189,9 @@ export async function GET(request) {
         review: {
           select: { id: true },
         },
+        customerReview: {
+          select: { id: true },
+        },
         savedPlan: {
           select: { id: true, title: true },
         },

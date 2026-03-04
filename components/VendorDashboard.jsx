@@ -14,7 +14,9 @@ import {
   Loader2,
   AlertTriangle,
   Check,
-  ArrowRight
+  ArrowRight,
+  Star,
+  X
 } from 'lucide-react';
 
 function formatPrice(val) {
@@ -44,6 +46,118 @@ const statusLabels = {
   cancelled: 'Cancelled',
 };
 
+function ReviewCustomerModal({ booking, onClose, onSubmitted }) {
+  const [rating, setRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [text, setText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (rating === 0) { setError('Please select a rating'); return; }
+    if (!text.trim()) { setError('Please write a review'); return; }
+    setError('');
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/customer-reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId: booking.id, rating, text: text.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Failed to submit review'); return; }
+      onSubmitted(booking.id);
+      onClose();
+    } catch {
+      setError('Something went wrong');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="review-modal-title"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 id="review-modal-title" className="text-lg font-bold text-gray-900">
+            Review {booking.customer?.fullName || 'Customer'}
+          </h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full" aria-label="Close">
+            <X size={20} className="text-gray-400" />
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  onMouseEnter={() => setHoveredRating(star)}
+                  onMouseLeave={() => setHoveredRating(0)}
+                  className="p-0.5"
+                >
+                  <Star
+                    size={28}
+                    className={`transition-colors ${
+                      star <= (hoveredRating || rating)
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'text-gray-300'
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Review</label>
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-sm"
+              placeholder="How was your experience working with this customer?"
+            />
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 py-2.5 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {submitting && <Loader2 size={14} className="animate-spin" />}
+              Submit Review
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function VendorDashboard() {
   const { profile: authProfile } = useAuth();
   const [bookings, setBookings] = useState([]);
@@ -57,6 +171,7 @@ export default function VendorDashboard() {
   const [profileCompletion, setProfileCompletion] = useState(null);
   const [completionSteps, setCompletionSteps] = useState([]);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  const [reviewModalBooking, setReviewModalBooking] = useState(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -432,6 +547,66 @@ export default function VendorDashboard() {
               )}
             </div>
           </div>
+        )}
+        {/* Completed Events Section */}
+        {!loading && bookings.filter(b => b.status === 'completed').length > 0 && (
+          <div className="mt-8 bg-white rounded-2xl p-6 border border-gray-200">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Completed Events</h2>
+            </div>
+            <div className="space-y-4">
+              {bookings.filter(b => b.status === 'completed').map((booking) => (
+                <div
+                  key={booking.id}
+                  className="flex items-center justify-between p-4 border border-gray-100 rounded-xl"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">
+                      {(booking.contactName || booking.customer?.fullName || '?')[0]}
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900">{booking.contactName || booking.customer?.fullName || 'Customer'}</p>
+                      <p className="text-sm text-gray-500">
+                        {formatDate(booking.eventDate)}
+                        {booking.eventType ? ` \u2022 ${booking.eventType}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {booking.totalPrice && (
+                      <span className="text-sm font-semibold text-gray-700 hidden sm:block">{formatPrice(booking.totalPrice)}</span>
+                    )}
+                    {booking.customerReview ? (
+                      <span className="text-xs px-3 py-1.5 rounded-full bg-green-50 text-green-700 font-medium flex items-center gap-1">
+                        <Check size={12} /> Reviewed
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => setReviewModalBooking(booking)}
+                        className="bg-purple-600 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors flex items-center gap-1.5"
+                      >
+                        <Star size={14} />
+                        Review Customer
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Review Customer Modal */}
+        {reviewModalBooking && (
+          <ReviewCustomerModal
+            booking={reviewModalBooking}
+            onClose={() => setReviewModalBooking(null)}
+            onSubmitted={(bookingId) => {
+              setBookings(prev => prev.map(b =>
+                b.id === bookingId ? { ...b, customerReview: { id: 'new' } } : b
+              ));
+            }}
+          />
         )}
       </main>
     </div>

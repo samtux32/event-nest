@@ -83,22 +83,25 @@ model User {
 }
 
 model CustomerProfile {
-  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String  @unique @map("user_id") @db.Uuid
-  fullName  String  @map("full_name")
-  phone     String?
-  avatarUrl String? @map("avatar_url")
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String   @unique @map("user_id") @db.Uuid
+  fullName         String   @map("full_name")
+  phone            String?
+  avatarUrl        String?  @map("avatar_url")
+  averageRating    Decimal? @map("average_rating") @db.Decimal(2, 1)
+  totalReviews     Int      @default(0) @map("total_reviews")
 
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  events         Event[]
-  bookings       Booking[]
-  reviews        Review[]
-  wishlists      Wishlist[]
-  wishlistGroups WishlistGroup[]
-  conversations  Conversation[]
-  quotes         Quote[]
-  savedPlans     SavedPlan[]
-  checklists     Checklist[]
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events           Event[]
+  bookings         Booking[]
+  reviews          Review[]
+  wishlists        Wishlist[]
+  wishlistGroups   WishlistGroup[]
+  conversations    Conversation[]
+  quotes           Quote[]
+  savedPlans       SavedPlan[]
+  checklists       Checklist[]
+  customerReviews  CustomerReview[]
 
   @@map("customer_profiles")
 }
@@ -144,14 +147,15 @@ model VendorProfile {
   createdAt            DateTime     @default(now()) @map("created_at")
   updatedAt            DateTime     @updatedAt @map("updated_at")
 
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  packages        Package[]
-  portfolioImages PortfolioImage[]
-  documents       Document[]
-  awards          Award[]
-  bookings        Booking[]
-  reviews         Review[]
-  reviewReplies   ReviewReply[]
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packages         Package[]
+  portfolioImages  PortfolioImage[]
+  documents        Document[]
+  awards           Award[]
+  bookings         Booking[]
+  reviews          Review[]
+  reviewReplies    ReviewReply[]
+  customerReviews  CustomerReview[]
   wishlists            Wishlist[]
   wishlistGroupVendors WishlistGroupVendor[]
   conversations        Conversation[]
@@ -276,14 +280,15 @@ model Booking {
   createdAt          DateTime      @default(now()) @map("created_at")
   updatedAt          DateTime      @updatedAt @map("updated_at")
 
-  event        Event?          @relation(fields: [eventId], references: [id], onDelete: SetNull)
-  vendor       VendorProfile   @relation(fields: [vendorId], references: [id])
-  customer     CustomerProfile @relation(fields: [customerId], references: [id])
-  package      Package?        @relation(fields: [packageId], references: [id], onDelete: SetNull)
-  savedPlan    SavedPlan?      @relation(fields: [savedPlanId], references: [id], onDelete: SetNull)
-  conversation Conversation?
-  review       Review?
-  quote        Quote?
+  event           Event?          @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  vendor          VendorProfile   @relation(fields: [vendorId], references: [id])
+  customer        CustomerProfile @relation(fields: [customerId], references: [id])
+  package         Package?        @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  savedPlan       SavedPlan?      @relation(fields: [savedPlanId], references: [id], onDelete: SetNull)
+  conversation    Conversation?
+  review          Review?
+  customerReview  CustomerReview?
+  quote           Quote?
 
   @@index([vendorId, status])
   @@index([customerId])
@@ -399,6 +404,24 @@ model ReviewReply {
   vendor VendorProfile @relation(fields: [vendorId], references: [id])
 
   @@map("review_replies")
+}
+
+/// Vendors can review customers (mutual reviews)
+model CustomerReview {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vendorId   String   @map("vendor_id") @db.Uuid
+  customerId String   @map("customer_id") @db.Uuid
+  bookingId  String   @unique @map("booking_id") @db.Uuid // One review per booking
+  rating     Int      // 1-5
+  text       String   @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  vendor   VendorProfile   @relation(fields: [vendorId], references: [id])
+  customer CustomerProfile @relation(fields: [customerId], references: [id])
+  booking  Booking         @relation(fields: [bookingId], references: [id])
+
+  @@index([vendorId, createdAt])
+  @@map("customer_reviews")
 }
 
 // ═══════════════════════════════════════════════════
