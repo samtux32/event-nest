@@ -79,6 +79,7 @@ export default function VendorCalendar() {
   const [blockingDate, setBlockingDate] = useState(null); // day being blocked (shows reason input)
   const [blockReason, setBlockReason] = useState('');
   const [blockSubmitting, setBlockSubmitting] = useState(false);
+  const [quickBlocking, setQuickBlocking] = useState(false);
 
   // Fetch blocked dates
   useEffect(() => {
@@ -240,6 +241,83 @@ export default function VendorCalendar() {
       setBlockSubmitting(false);
       setBlockingDate(null);
       setBlockReason('');
+    }
+  };
+
+  const quickBlockDates = async (dates, reason) => {
+    if (quickBlocking) return;
+    setQuickBlocking(true);
+    const blockedSet = new Set(blockedDates.map(bd => new Date(bd.date).toISOString().split('T')[0]));
+    const toBlock = dates.filter(d => !blockedSet.has(d));
+    try {
+      const results = await Promise.all(
+        toBlock.map(date =>
+          fetch('/api/vendors/blocked-dates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date, reason }),
+          }).then(r => r.ok ? r.json() : null)
+        )
+      );
+      const newBlocked = results.filter(Boolean).map(r => r.blockedDate);
+      if (newBlocked.length > 0) {
+        setBlockedDates(prev => [...prev, ...newBlocked]);
+      }
+    } catch (err) {
+      console.error('Quick block failed:', err);
+    } finally {
+      setQuickBlocking(false);
+    }
+  };
+
+  const getQuickBlockDates = (type) => {
+    const dates = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (type === 'next2weeks') {
+      for (let i = 0; i < 14; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() + i);
+        dates.push(d.toISOString().split('T')[0]);
+      }
+    } else if (type === 'nextMonth') {
+      const start = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+      const end = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        dates.push(new Date(d).toISOString().split('T')[0]);
+      }
+    } else if (type === 'thisWeekend') {
+      const d = new Date(today);
+      const dayOfWeek = d.getDay();
+      const daysUntilSat = dayOfWeek <= 6 ? (6 - dayOfWeek) : 0;
+      const sat = new Date(d);
+      sat.setDate(sat.getDate() + daysUntilSat);
+      const sun = new Date(sat);
+      sun.setDate(sun.getDate() + 1);
+      dates.push(sat.toISOString().split('T')[0]);
+      dates.push(sun.toISOString().split('T')[0]);
+    }
+    return dates;
+  };
+
+  const clearAllBlockedDates = async () => {
+    if (quickBlocking) return;
+    setQuickBlocking(true);
+    try {
+      await Promise.all(
+        blockedDates.map(bd =>
+          fetch('/api/vendors/blocked-dates', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: bd.id }),
+          })
+        )
+      );
+      setBlockedDates([]);
+    } catch (err) {
+      console.error('Clear blocked dates failed:', err);
+    } finally {
+      setQuickBlocking(false);
     }
   };
 
@@ -406,6 +484,49 @@ export default function VendorCalendar() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Availability Management */}
+              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                <h3 className="text-lg font-bold mb-2">Manage Availability</h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  Block dates when you're unavailable. Customers will see these dates as unavailable when booking.
+                  Click any empty day on the calendar to block it, or use the shortcuts below.
+                </p>
+
+                <div className="space-y-2 mb-4">
+                  <button
+                    onClick={() => quickBlockDates(getQuickBlockDates('next2weeks'), 'Unavailable')}
+                    disabled={quickBlocking}
+                    className="w-full text-left px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-red-50 hover:border-red-200 hover:text-red-700 transition-colors disabled:opacity-50"
+                  >
+                    Block next 2 weeks
+                  </button>
+                  <button
+                    onClick={() => quickBlockDates(getQuickBlockDates('thisWeekend'), 'Weekend')}
+                    disabled={quickBlocking}
+                    className="w-full text-left px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-red-50 hover:border-red-200 hover:text-red-700 transition-colors disabled:opacity-50"
+                  >
+                    Block this weekend
+                  </button>
+                  <button
+                    onClick={() => quickBlockDates(getQuickBlockDates('nextMonth'), 'Unavailable')}
+                    disabled={quickBlocking}
+                    className="w-full text-left px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-red-50 hover:border-red-200 hover:text-red-700 transition-colors disabled:opacity-50"
+                  >
+                    Block all of {monthNames[(new Date().getMonth() + 1) % 12]}
+                  </button>
+                </div>
+
+                {blockedDates.length > 0 && (
+                  <button
+                    onClick={clearAllBlockedDates}
+                    disabled={quickBlocking}
+                    className="w-full text-center px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
+                  >
+                    {quickBlocking ? 'Processing...' : `Clear all blocked dates (${blockedDates.length})`}
+                  </button>
+                )}
               </div>
 
               {/* Unscheduled bookings */}
