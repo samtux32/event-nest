@@ -1,6 +1,21 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { AlertCircle } from 'lucide-react';
 
-export default function EventDetailsForm({ formData, onFormChange }) {
+export default function EventDetailsForm({ formData, onFormChange, blockedDates = [] }) {
+  // Build a Set of blocked date strings for fast lookup
+  const blockedDateSet = useMemo(() => {
+    const set = new Set();
+    blockedDates.forEach(bd => {
+      const d = new Date(bd.date);
+      // Format as YYYY-MM-DD to match input value
+      const str = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      set.add(str);
+    });
+    return set;
+  }, [blockedDates]);
+
+  const isSelectedDateBlocked = formData.eventDate && blockedDateSet.has(formData.eventDate);
+
   const eventTypes = [
     'Wedding',
     'Corporate Event',
@@ -43,8 +58,16 @@ export default function EventDetailsForm({ formData, onFormChange }) {
             value={formData.eventDate}
             onChange={onFormChange}
             required
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-purple-600"
+            className={`w-full px-4 py-3 border rounded-xl outline-none focus:border-purple-600 ${
+              isSelectedDateBlocked ? 'border-red-400 bg-red-50' : 'border-gray-200'
+            }`}
           />
+          {isSelectedDateBlocked && (
+            <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
+              <AlertCircle size={14} className="flex-shrink-0" />
+              <span>This date is unavailable. The vendor has blocked this date. Please choose another date.</span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -163,6 +163,7 @@ model VendorProfile {
   quotes               Quote[]
   promotions           Promotion[]
   faqs                 VendorFAQ[]
+  blockedDates         BlockedDate[]
 
   @@index([isApproved, averageRating])
   @@map("vendor_profiles")
@@ -591,6 +592,20 @@ model ChecklistItem {
 
   @@index([checklistId])
   @@map("checklist_items")
+}
+
+model BlockedDate {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vendorId  String   @map("vendor_id") @db.Uuid
+  date      DateTime @db.Date
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorId, date])
+  @@index([vendorId])
+  @@map("blocked_dates")
 }
 
 /// Tracks each time a customer views a vendor profile

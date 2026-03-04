@@ -11,7 +11,9 @@ import {
   DollarSign,
   Mail,
   Phone,
-  Loader2
+  Loader2,
+  Ban,
+  X
 } from 'lucide-react';
 import AddToCalendarButton from './AddToCalendarButton';
 
@@ -73,6 +75,20 @@ export default function VendorCalendar() {
   const [proposeDateInput, setProposeDateInput] = useState('');
   const [proposalSubmitting, setProposalSubmitting] = useState(false);
   const [proposalSentIds, setProposalSentIds] = useState(new Set()); // bookingIds with pending proposals
+  const [blockedDates, setBlockedDates] = useState([]);
+  const [blockingDate, setBlockingDate] = useState(null); // day being blocked (shows reason input)
+  const [blockReason, setBlockReason] = useState('');
+  const [blockSubmitting, setBlockSubmitting] = useState(false);
+
+  // Fetch blocked dates
+  useEffect(() => {
+    fetch('/api/vendors/blocked-dates')
+      .then(r => r.json())
+      .then(data => {
+        if (data.blockedDates) setBlockedDates(data.blockedDates);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch('/api/bookings')
@@ -171,6 +187,62 @@ export default function VendorCalendar() {
     }
   };
 
+  const getBlockedDateForDay = (day) => {
+    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    return blockedDates.find(bd => {
+      const bdDate = new Date(bd.date);
+      return bdDate.getFullYear() === date.getFullYear() &&
+             bdDate.getMonth() === date.getMonth() &&
+             bdDate.getDate() === date.getDate();
+    });
+  };
+
+  const handleBlockDate = async (day) => {
+    const blocked = getBlockedDateForDay(day);
+    if (blocked) {
+      // Unblock
+      try {
+        const res = await fetch('/api/vendors/blocked-dates', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: blocked.id }),
+        });
+        if (res.ok) {
+          setBlockedDates(prev => prev.filter(bd => bd.id !== blocked.id));
+        }
+      } catch (err) {
+        console.error('Failed to unblock date:', err);
+      }
+    } else {
+      // Show reason input
+      setBlockingDate(day);
+      setBlockReason('');
+    }
+  };
+
+  const confirmBlockDate = async () => {
+    if (blockSubmitting || !blockingDate) return;
+    setBlockSubmitting(true);
+    try {
+      const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(blockingDate).padStart(2, '0')}`;
+      const res = await fetch('/api/vendors/blocked-dates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: dateStr, reason: blockReason || null }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBlockedDates(prev => [...prev, data.blockedDate]);
+      }
+    } catch (err) {
+      console.error('Failed to block date:', err);
+    } finally {
+      setBlockSubmitting(false);
+      setBlockingDate(null);
+      setBlockReason('');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <AppHeader />
@@ -219,21 +291,33 @@ export default function VendorCalendar() {
                   if (day === null) return <div key={index} className="aspect-square" />;
                   const dayBookings = getBookingsForDate(day);
                   const today = isToday(day);
+                  const blocked = getBlockedDateForDay(day);
                   return (
                     <div
                       key={index}
-                      className={`aspect-square border rounded-lg p-2 transition-all ${
-                        today ? 'border-purple-600 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
-                      } ${dayBookings.length > 0 ? 'cursor-pointer' : ''}`}
+                      className={`aspect-square border rounded-lg p-2 transition-all cursor-pointer relative group ${
+                        blocked
+                          ? 'border-red-300 bg-red-50'
+                          : today
+                            ? 'border-purple-600 bg-purple-50'
+                            : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                      onClick={() => {
+                        if (dayBookings.length === 0) handleBlockDate(day);
+                      }}
+                      title={blocked ? (blocked.reason ? `Blocked: ${blocked.reason}` : 'Blocked — click to unblock') : 'Click to block this date'}
                     >
-                      <div className={`text-sm font-semibold mb-1 ${today ? 'text-purple-600' : 'text-gray-900'}`}>
+                      <div className={`text-sm font-semibold mb-1 flex items-center gap-1 ${
+                        blocked ? 'text-red-600 line-through' : today ? 'text-purple-600' : 'text-gray-900'
+                      }`}>
                         {day}
+                        {blocked && <Ban size={10} className="text-red-400" />}
                       </div>
                       <div className="space-y-1">
                         {dayBookings.slice(0, 2).map(booking => (
                           <button
                             key={booking.id}
-                            onClick={() => setSelectedBooking(booking)}
+                            onClick={(e) => { e.stopPropagation(); setSelectedBooking(booking); }}
                             className={`w-full text-left text-xs px-1.5 py-1 rounded ${statusColors[booking.status] || 'bg-gray-400'} text-white truncate hover:opacity-80 transition-opacity`}
                           >
                             {booking.clientName.split(' ')[0]}
@@ -251,7 +335,7 @@ export default function VendorCalendar() {
               </div>
 
               {/* Legend */}
-              <div className="flex items-center gap-6 mt-6 pt-6 border-t border-gray-200">
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 mt-6 pt-6 border-t border-gray-200">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-green-500" />
                   <span className="text-sm text-gray-600">Confirmed</span>
@@ -264,7 +348,12 @@ export default function VendorCalendar() {
                   <div className="w-3 h-3 rounded-full bg-blue-500" />
                   <span className="text-sm text-gray-600">Completed</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-400" />
+                  <span className="text-sm text-gray-600">Blocked</span>
+                </div>
               </div>
+              <p className="text-xs text-gray-400 mt-2">Click an empty day to block/unblock it.</p>
             </div>
 
             {/* Upcoming Bookings Sidebar — 1 column */}
@@ -500,6 +589,47 @@ export default function VendorCalendar() {
                   className="flex-1 border-2 border-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Block Date Reason Modal */}
+        {blockingDate && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-6">
+            <div className="bg-white rounded-2xl p-4 sm:p-8 w-[95vw] sm:w-full max-w-md">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Block Date</h2>
+                <button onClick={() => setBlockingDate(null)} className="text-gray-400 hover:text-gray-600">
+                  <X size={20} />
+                </button>
+              </div>
+              <p className="text-sm text-gray-500 mb-4">
+                Block <strong>{blockingDate} {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</strong> so customers cannot book this date.
+              </p>
+
+              <label className="block text-sm font-medium text-gray-700 mb-2">Reason (optional)</label>
+              <input
+                type="text"
+                value={blockReason}
+                onChange={e => setBlockReason(e.target.value)}
+                placeholder="e.g. Personal day, other booking, holiday"
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent mb-6"
+              />
+
+              <div className="flex gap-3">
+                <button
+                  onClick={confirmBlockDate}
+                  disabled={blockSubmitting}
+                  className="flex-1 bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors disabled:opacity-60"
+                >
+                  {blockSubmitting ? 'Blocking...' : 'Block Date'}
+                </button>
+                <button
+                  onClick={() => setBlockingDate(null)}
+                  className="flex-1 border-2 border-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
                 </button>
               </div>
             </div>

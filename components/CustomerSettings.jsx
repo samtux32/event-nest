@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useAuth } from './AuthProvider'
 import { createClient } from '@/lib/supabase/client'
 import AppHeader from './AppHeader'
-import { HelpCircle, FileText, Shield, Eye, EyeOff } from 'lucide-react'
+import { HelpCircle, FileText, Shield, Eye, EyeOff, Star, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 
 export default function CustomerSettings() {
   const { user, profile, refreshProfile } = useAuth()
@@ -24,11 +24,28 @@ export default function CustomerSettings() {
   const [businessName, setBusinessName] = useState('')
   const [vendorSaving, setVendorSaving] = useState(false)
   const [vendorMsg, setVendorMsg] = useState(null)
+  const [reviewsOpen, setReviewsOpen] = useState(false)
+  const [reviews, setReviews] = useState([])
+  const [reviewsLoading, setReviewsLoading] = useState(false)
+  const [reviewsFetched, setReviewsFetched] = useState(false)
 
   useEffect(() => {
     if (profile) setFullName(profile.fullName || '')
     if (user) setEmail(user.email || '')
   }, [profile, user])
+
+  useEffect(() => {
+    if (!reviewsOpen || reviewsFetched) return
+    setReviewsLoading(true)
+    fetch('/api/customer-reviews/received')
+      .then(r => r.json())
+      .then(data => {
+        if (data.reviews) setReviews(data.reviews)
+        setReviewsFetched(true)
+      })
+      .catch(() => {})
+      .finally(() => setReviewsLoading(false))
+  }, [reviewsOpen, reviewsFetched])
 
   async function handleSave(e) {
     e.preventDefault()
@@ -197,6 +214,99 @@ export default function CustomerSettings() {
               {saving ? 'Saving...' : 'Save Account Info'}
             </button>
           </form>
+        </section>
+
+        {/* Reviews About Me */}
+        <section className="bg-white rounded-xl border border-gray-200">
+          <button
+            onClick={() => setReviewsOpen(p => !p)}
+            className="w-full flex items-center justify-between p-6 text-left"
+          >
+            <div className="flex items-center gap-3">
+              <Star size={20} className="text-amber-500" />
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Reviews About Me</h2>
+                <p className="text-sm text-gray-500">See what vendors have said about you</p>
+              </div>
+            </div>
+            {reviewsOpen ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+          </button>
+
+          {reviewsOpen && (
+            <div className="px-6 pb-6 border-t border-gray-100 pt-4">
+              {reviewsLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="animate-spin text-purple-600" size={24} />
+                </div>
+              ) : reviews.length === 0 ? (
+                <div className="text-center py-8 text-gray-400">
+                  <Star className="mx-auto mb-2" size={32} />
+                  <p className="text-sm">No reviews yet. Vendors can leave reviews after completed bookings.</p>
+                </div>
+              ) : (
+                <>
+                  {/* Summary */}
+                  <div className="flex items-center gap-4 mb-6 p-4 bg-purple-50 rounded-xl">
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-purple-700">
+                        {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
+                      </p>
+                      <div className="flex gap-0.5 justify-center mt-1">
+                        {[1, 2, 3, 4, 5].map(s => (
+                          <Star
+                            key={s}
+                            size={14}
+                            className={s <= Math.round(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      <p className="font-medium text-gray-900">{reviews.length} review{reviews.length !== 1 ? 's' : ''}</p>
+                      <p>from vendors you've worked with</p>
+                    </div>
+                  </div>
+
+                  {/* Review list */}
+                  <div className="space-y-4">
+                    {reviews.map(review => (
+                      <div key={review.id} className="border border-gray-200 rounded-xl p-4">
+                        <div className="flex items-start gap-3 mb-2">
+                          {review.vendor?.profileImageUrl ? (
+                            <img src={review.vendor.profileImageUrl} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-semibold text-sm flex-shrink-0">
+                              {review.vendor?.businessName?.[0] || 'V'}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 text-sm">{review.vendor?.businessName || 'Vendor'}</p>
+                            <div className="flex items-center gap-2">
+                              <div className="flex gap-0.5">
+                                {[1, 2, 3, 4, 5].map(s => (
+                                  <Star key={s} size={12} className={s <= review.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-300'} />
+                                ))}
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                {new Date(review.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-700">{review.text}</p>
+                        {review.booking?.eventType && (
+                          <p className="text-xs text-gray-500 mt-2">
+                            {review.booking.eventType}
+                            {review.booking.eventDate && ` — ${new Date(review.booking.eventDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Become a Vendor */}

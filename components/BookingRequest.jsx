@@ -29,6 +29,8 @@ export default function BookingRequest({ vendorId }) {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [savedPlans, setSavedPlans] = useState([]);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [blockedDates, setBlockedDates] = useState([]);
+
   const [formData, setFormData] = useState({
     eventDate: '',
     eventType: 'Wedding',
@@ -93,6 +95,17 @@ export default function BookingRequest({ vendorId }) {
     fetchVendor();
   }, [vendorId]);
 
+  // Fetch vendor's blocked dates
+  useEffect(() => {
+    if (!vendorId) return;
+    fetch(`/api/vendors/blocked-dates?vendorId=${vendorId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.blockedDates) setBlockedDates(data.blockedDates);
+      })
+      .catch(() => {});
+  }, [vendorId]);
+
   // Fetch saved plans for linking
   useEffect(() => {
     if (!user) return;
@@ -124,6 +137,17 @@ export default function BookingRequest({ vendorId }) {
 
     if (!user) {
       setShowAuthModal(true);
+      return;
+    }
+
+    // Check if selected date is blocked
+    const isBlocked = blockedDates.some(bd => {
+      const d = new Date(bd.date);
+      const str = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      return str === formData.eventDate;
+    });
+    if (isBlocked) {
+      setSubmitError('The selected date is unavailable. Please choose a different date.');
       return;
     }
 
@@ -335,6 +359,7 @@ export default function BookingRequest({ vendorId }) {
               <EventDetailsForm
                 formData={formData}
                 onFormChange={handleInputChange}
+                blockedDates={blockedDates}
               />
 
               {/* Additional Services */}
