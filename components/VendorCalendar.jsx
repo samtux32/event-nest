@@ -13,6 +13,7 @@ import {
   Phone,
   Loader2
 } from 'lucide-react';
+import AddToCalendarButton from './AddToCalendarButton';
 
 const DB_STATUS_MAP = {
   new_inquiry: 'Pending',
@@ -492,10 +493,11 @@ export default function VendorCalendar() {
                 )}
               </div>
 
-              <div className="mt-6">
+              <div className="mt-6 flex gap-3">
+                <AddToCalendarButton booking={selectedBooking} role="vendor" />
                 <button
                   onClick={() => setSelectedBooking(null)}
-                  className="w-full border-2 border-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                  className="flex-1 border-2 border-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
                 >
                   Close
                 </button>

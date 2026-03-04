@@ -18,6 +18,7 @@ import {
   Star,
   X
 } from 'lucide-react';
+import AddToCalendarButton from './AddToCalendarButton';
 
 function formatPrice(val) {
   const num = Number(val);
@@ -576,6 +577,7 @@ export default function VendorDashboard() {
                     {booking.totalPrice && (
                       <span className="text-sm font-semibold text-gray-700 hidden sm:block">{formatPrice(booking.totalPrice)}</span>
                     )}
+                    <AddToCalendarButton booking={booking} role="vendor" />
                     {booking.customerReview ? (
                       <span className="text-xs px-3 py-1.5 rounded-full bg-green-50 text-green-700 font-medium flex items-center gap-1">
                         <Check size={12} /> Reviewed
