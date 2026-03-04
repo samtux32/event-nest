@@ -8,13 +8,19 @@ export async function GET() {
   if (error || !user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
   try {
-    let vendor = await prisma.vendorProfile.findUnique({ where: { userId: user.id }, select: { id: true } })
+    const profileSelect = {
+      id: true, businessName: true, description: true, location: true,
+      profileImageUrl: true, portfolioImages: true, categories: true,
+      contactEmail: true, contactPhone: true, website: true,
+      packages: { select: { id: true } },
+    }
+    let vendor = await prisma.vendorProfile.findUnique({ where: { userId: user.id }, select: profileSelect })
     if (!vendor) {
-      const dbUser = await prisma.user.findUnique({ where: { email: user.email }, select: { vendorProfile: { select: { id: true } } } })
+      const dbUser = await prisma.user.findUnique({ where: { email: user.email }, select: { vendorProfile: { select: profileSelect } } })
       vendor = dbUser?.vendorProfile ?? null
     }
     if (!vendor) return NextResponse.json({ error: 'No profile yet' }, { status: 404 })
-    return NextResponse.json({ id: vendor.id })
+    return NextResponse.json({ id: vendor.id, vendor })
   } catch (err) {
     console.error('GET /api/vendors/profile error:', err)
     return NextResponse.json({ error: 'Failed' }, { status: 500 })

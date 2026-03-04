@@ -119,6 +119,14 @@ export default function EventChecklist() {
     fetchChecklists();
   }, []);
 
+  // Auto-expand checklist from ?open= param
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const openId = params.get('open');
+    if (openId) setExpandedId(openId);
+  }, []);
+
   async function fetchChecklists() {
     try {
       const res = await fetch('/api/checklists');

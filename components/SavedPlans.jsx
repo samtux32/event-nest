@@ -55,6 +55,14 @@ export default function SavedPlans() {
     fetchChecklists();
   }, []);
 
+  // Auto-expand plan from ?open= param
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const openId = params.get('open');
+    if (openId) setExpandedId(openId);
+  }, []);
+
   async function fetchPlans() {
     try {
       const res = await fetch('/api/saved-plans');

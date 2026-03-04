@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Calendar, CheckSquare, FolderOpen, ChevronDown, ChevronUp, MapPin, Clock, Users, Star } from 'lucide-react';
+import AppHeader from '@/components/AppHeader';
 
 function StatusBadge({ status }) {
   const colors = {
@@ -48,6 +49,8 @@ export default function MyEvents() {
 
   if (loading) {
     return (
+      <div className="min-h-screen bg-gray-50">
+      <AppHeader />
       <div className="max-w-5xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">My Events</h1>
         <div className="space-y-4">
@@ -59,12 +62,15 @@ export default function MyEvents() {
           ))}
         </div>
       </div>
+      </div>
     );
   }
 
   const isEmpty = events.length === 0;
 
   return (
+    <div className="min-h-screen bg-gray-50">
+    <AppHeader />
     <div className="max-w-5xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-2">My Events</h1>
       <p className="text-gray-500 text-sm mb-6">All your plans, checklists, and bookings in one place.</p>
@@ -128,7 +134,7 @@ export default function MyEvents() {
                           {event.plans.map(plan => (
                             <Link
                               key={plan.id}
-                              href="/my-plans"
+                              href={`/my-plans?open=${plan.id}`}
                               className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-purple-200 hover:bg-purple-50/50 transition-colors"
                             >
                               <FolderOpen size={16} className="text-purple-500 flex-shrink-0" />
@@ -151,12 +157,12 @@ export default function MyEvents() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {event.checklists.map(cl => {
                             const total = cl.items?.length || 0;
-                            const done = cl.items?.filter(i => i.completed).length || 0;
+                            const done = cl.items?.filter(i => i.done).length || 0;
                             const pct = total > 0 ? Math.round((done / total) * 100) : 0;
                             return (
                               <Link
                                 key={cl.id}
-                                href="/event-checklist"
+                                href={`/event-checklist?open=${cl.id}`}
                                 className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-purple-200 hover:bg-purple-50/50 transition-colors"
                               >
                                 <CheckSquare size={16} className="text-green-500 flex-shrink-0" />
@@ -213,6 +219,7 @@ export default function MyEvents() {
           })}
         </div>
       )}
+    </div>
     </div>
   );
 }
