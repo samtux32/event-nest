@@ -32,6 +32,23 @@ export async function GET() {
       vendor = dbUser?.vendorProfile ?? null
     }
     if (!vendor) return NextResponse.json({ error: 'No profile yet' }, { status: 404 })
+
+    // Auto-generate referral code if missing
+    if (!vendor.referralCode) {
+      const nameSlug = (vendor.businessName || 'vendor')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 30)
+      const rand = Math.random().toString(36).slice(2, 6)
+      const referralCode = `${nameSlug}-${rand}`
+      await prisma.vendorProfile.update({
+        where: { id: vendor.id },
+        data: { referralCode },
+      })
+      vendor.referralCode = referralCode
+    }
+
     return NextResponse.json({
       id: vendor.id,
       vendor: {

@@ -604,25 +604,27 @@ export default function VendorDashboard() {
         )}
 
         {/* Share & Promote Link */}
-        {referralCode && (
-          <div className="mt-6">
-            <Link
-              href="/qr-code"
-              className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-200 hover:shadow-md hover:scale-[1.01] transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
-                  <Share2 size={20} className="text-purple-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">Share & Promote</p>
-                  <p className="text-sm text-gray-500">QR code, referral link ({referralCount} referral{referralCount !== 1 ? 's' : ''})</p>
-                </div>
+        <div className="mt-6">
+          <Link
+            href="/qr-code"
+            className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-200 hover:shadow-md hover:scale-[1.01] transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
+                <Share2 size={20} className="text-purple-600" />
               </div>
-              <ArrowRight size={18} className="text-gray-400" />
-            </Link>
-          </div>
-        )}
+              <div>
+                <p className="font-semibold text-gray-900">Share & Promote</p>
+                <p className="text-sm text-gray-500">
+                  {referralCode
+                    ? `QR code, referral link (${referralCount} referral${referralCount !== 1 ? 's' : ''})`
+                    : 'QR code & referral link'}
+                </p>
+              </div>
+            </div>
+            <ArrowRight size={18} className="text-gray-400" />
+          </Link>
+        </div>
 
         {/* Review Customer Modal */}
         {reviewModalBooking && (
