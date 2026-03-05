@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
-import { Download, Printer, Palette, ExternalLink, Loader2 } from 'lucide-react';
+import { Download, Printer, Palette, ExternalLink, Loader2, Copy, Check, Users, Share2 } from 'lucide-react';
 import AppHeader from './AppHeader';
 
 const SCHEMES = {
@@ -15,6 +15,9 @@ export default function VendorQRCode() {
   const [vendorProfile, setVendorProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [scheme, setScheme] = useState('purple');
+  const [referralCode, setReferralCode] = useState(null);
+  const [referralCount, setReferralCount] = useState(0);
+  const [copied, setCopied] = useState(false);
   const qrRef = useRef(null);
 
   useEffect(() => {
@@ -27,10 +30,13 @@ export default function VendorQRCode() {
         const profileData = profileRes.ok ? await profileRes.json() : null;
         const fullData = fullRes.ok ? await fullRes.json() : null;
         if (profileData?.id) {
+          const v = profileData.vendor || profileData;
           setVendorProfile({
             id: profileData.id,
-            businessName: fullData?.profile?.businessName || 'My Business',
+            businessName: v.businessName || fullData?.profile?.businessName || 'My Business',
           });
+          if (v.referralCode) setReferralCode(v.referralCode);
+          if (v.referralCount !== undefined) setReferralCount(v.referralCount);
         }
       } catch {}
       setLoading(false);
@@ -128,8 +134,54 @@ export default function VendorQRCode() {
       <AppHeader />
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-2xl mx-auto px-4 py-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Your QR Code</h1>
-          <p className="text-gray-500 mb-8">Share your profile with a scannable QR code. Perfect for business cards, flyers, and shop windows.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Share & Promote</h1>
+          <p className="text-gray-500 mb-8">Share your profile and grow your network on Event Nest.</p>
+
+          {/* Referral Link Section */}
+          {referralCode && (
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
+                  <Share2 size={20} className="text-purple-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Referral Link</h2>
+                  <p className="text-sm text-gray-500">Invite other vendors to join Event Nest</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-700 font-mono truncate">
+                  {(process.env.NEXT_PUBLIC_APP_URL || window.location.origin)}/register?ref={referralCode}
+                </div>
+                <button
+                  onClick={() => {
+                    const url = `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/register?ref=${referralCode}`;
+                    navigator.clipboard.writeText(url);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                    copied
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-purple-600 text-white hover:bg-purple-700'
+                  }`}
+                >
+                  {copied ? <><Check size={16} /> Copied!</> : <><Copy size={16} /> Copy</>}
+                </button>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Users size={16} className="text-gray-400" />
+                <span>
+                  <span className="font-semibold text-gray-900">{referralCount}</span>{' '}
+                  vendor{referralCount !== 1 ? 's' : ''} joined using your link
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* QR Code Section */}
+          <h2 className="text-lg font-bold text-gray-900 mb-1">QR Code</h2>
+          <p className="text-sm text-gray-500 mb-6">Share your profile with a scannable QR code. Perfect for business cards, flyers, and shop windows.</p>
 
           {/* Colour scheme picker */}
           <div className="flex items-center gap-3 mb-6">

@@ -17,8 +17,6 @@ import {
   ArrowRight,
   Star,
   X,
-  Copy,
-  Users,
   Share2
 } from 'lucide-react';
 import AddToCalendarButton from './AddToCalendarButton';
@@ -178,7 +176,6 @@ export default function VendorDashboard() {
   const [reviewModalBooking, setReviewModalBooking] = useState(null);
   const [referralCode, setReferralCode] = useState(null);
   const [referralCount, setReferralCount] = useState(0);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -606,46 +603,24 @@ export default function VendorDashboard() {
           </div>
         )}
 
-        {/* Referral Link Card */}
+        {/* Share & Promote Link */}
         {referralCode && (
-          <div className="mt-8 bg-white rounded-2xl p-6 border border-gray-200">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
-                <Share2 size={20} className="text-purple-600" />
+          <div className="mt-6">
+            <Link
+              href="/qr-code"
+              className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-200 hover:shadow-md hover:scale-[1.01] transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
+                  <Share2 size={20} className="text-purple-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Share & Promote</p>
+                  <p className="text-sm text-gray-500">QR code, referral link ({referralCount} referral{referralCount !== 1 ? 's' : ''})</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">Share Your Referral Link</h2>
-                <p className="text-sm text-gray-500">Invite other vendors to join Event Nest</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-700 font-mono truncate">
-                {(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')}/register?ref={referralCode}
-              </div>
-              <button
-                onClick={() => {
-                  const url = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/register?ref=${referralCode}`;
-                  navigator.clipboard.writeText(url);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
-                }}
-                className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  copied
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-purple-600 text-white hover:bg-purple-700'
-                }`}
-              >
-                {copied ? <Check size={16} /> : <Copy size={16} />}
-                {copied ? 'Copied!' : 'Copy'}
-              </button>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Users size={16} className="text-gray-400" />
-              <span>
-                <span className="font-semibold text-gray-900">{referralCount}</span>{' '}
-                vendor{referralCount !== 1 ? 's' : ''} joined using your link
-              </span>
-            </div>
+              <ArrowRight size={18} className="text-gray-400" />
+            </Link>
           </div>
         )}
 

@@ -59,7 +59,7 @@ export default function VendorHeader() {
     { href: '/portfolio', icon: ImageIcon, label: 'Portfolio' },
     { href: '/promotions', icon: Tag, label: 'Offers' },
     { href: '/vendor-faqs', icon: HelpCircle, label: 'FAQs' },
-    { href: '/qr-code', icon: QrCode, label: 'QR Code' },
+    { href: '/qr-code', icon: QrCode, label: 'Share & Promote' },
   ];
 
   const allLinks = [...mainLinks, ...moreLinks];
