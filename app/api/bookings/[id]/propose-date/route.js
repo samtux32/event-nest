@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendDateProposedEmail, sendDateAcceptedEmail } from '@/lib/email'
+import { createNotification } from '@/lib/notifications'
 
 // POST — vendor proposes a date for the booking
 export async function POST(request, { params }) {
@@ -92,14 +93,12 @@ export async function POST(request, { params }) {
     // Notify the customer
     const customerUserId = booking.customer?.user?.id
     if (customerUserId) {
-      await prisma.notification.create({
-        data: {
-          userId: customerUserId,
-          type: 'date_proposed',
-          title: `${dbUser.vendorProfile.businessName} proposed a date`,
-          body: `Proposed date: ${formatted}`,
-          link: `/customer-messages?conv=${conversation.id}`,
-        },
+      await createNotification({
+        userId: customerUserId,
+        type: 'date_proposed',
+        title: `${dbUser.vendorProfile.businessName} proposed a date`,
+        body: `Proposed date: ${formatted}`,
+        link: `/customer-messages?conv=${conversation.id}`,
       }).catch(() => {})
     }
 
@@ -193,14 +192,12 @@ export async function PATCH(request, { params }) {
         : `${dbUser.customerProfile.fullName || 'The customer'} declined ${formatted}. You can propose a new date.`
       const conversationId = booking.conversation?.id
 
-      await prisma.notification.create({
-        data: {
-          userId: vendorUserId,
-          type: action === 'accept' ? 'date_accepted' : 'date_declined',
-          title,
-          body,
-          link: conversationId ? `/messages?conv=${conversationId}` : '/calendar',
-        },
+      await createNotification({
+        userId: vendorUserId,
+        type: action === 'accept' ? 'date_accepted' : 'date_declined',
+        title,
+        body,
+        link: conversationId ? `/messages?conv=${conversationId}` : '/calendar',
       }).catch(() => {})
     }
 

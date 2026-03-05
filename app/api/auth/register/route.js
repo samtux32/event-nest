@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { sendWelcomeEmail } from '@/lib/email'
 
 export async function POST(request) {
   const body = await request.json()
@@ -75,6 +76,13 @@ export async function POST(request) {
         },
       })
     }
+
+    // Fire-and-forget welcome email
+    sendWelcomeEmail({
+      recipientEmail: email,
+      recipientName: role === 'customer' ? (fullName || email.split('@')[0]) : (businessName || 'there'),
+      isVendor: role === 'vendor',
+    }).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (err) {

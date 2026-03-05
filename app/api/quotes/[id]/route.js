@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendQuoteAcceptedEmail, sendQuoteDeclinedEmail } from '@/lib/email'
+import { createNotification } from '@/lib/notifications'
 
 async function getDbUserId(authUserId, email) {
   let dbUser = await prisma.user.findUnique({ where: { id: authUserId }, select: { id: true } })
@@ -98,14 +99,12 @@ export async function PATCH(request, { params }) {
           dbUser = await prisma.user.findUnique({ where: { email: user.email }, include: { customerProfile: true } })
         }
         const customerName = dbUser?.customerProfile?.fullName || 'A customer'
-        await prisma.notification.create({
-          data: {
-            userId: quote.vendor.user.id,
-            type: 'quote_declined',
-            title: 'Quote declined',
-            body: `${customerName} declined your quote.`,
-            link: `/messages?conv=${quote.conversationId}`,
-          },
+        await createNotification({
+          userId: quote.vendor.user.id,
+          type: 'quote_declined',
+          title: 'Quote declined',
+          body: `${customerName} declined your quote.`,
+          link: `/messages?conv=${quote.conversationId}`,
         }).catch(() => {})
 
         if (quote.vendor.user.email) {
@@ -198,14 +197,12 @@ export async function PATCH(request, { params }) {
 
     // Notify vendor — booking is confirmed
     const customerName = dbUser?.customerProfile?.fullName || 'A customer'
-    await prisma.notification.create({
-      data: {
-        userId: quote.vendor.userId,
-        type: 'quote_accepted',
-        title: '🎉 Booking confirmed!',
-        body: `${customerName} accepted your quote. The booking is confirmed.`,
-        link: `/`,
-      },
+    await createNotification({
+      userId: quote.vendor.userId,
+      type: 'quote_accepted',
+      title: 'Booking confirmed!',
+      body: `${customerName} accepted your quote. The booking is confirmed.`,
+      link: `/`,
     }).catch(() => {})
 
     if (quote.vendor.user?.email) {

@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { useAuth } from './AuthProvider'
 import { createClient } from '@/lib/supabase/client'
 import AppHeader from './AppHeader'
-import { HelpCircle, FileText, Shield, Eye, EyeOff } from 'lucide-react'
+import { HelpCircle, FileText, Shield, Eye, EyeOff, Trash2 } from 'lucide-react'
+import ConfirmModal from './ConfirmModal'
 
 export default function VendorSettings() {
   const { user, profile, refreshProfile } = useAuth()
@@ -27,6 +28,11 @@ export default function VendorSettings() {
   const [customQuotesEnabled, setCustomQuotesEnabled] = useState(true)
   const [quotesSaving, setQuotesSaving] = useState(false)
   const [quotesMsg, setQuotesMsg] = useState(null)
+
+  // Delete account state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState(null)
 
   useEffect(() => {
     if (profile) {
@@ -262,6 +268,53 @@ export default function VendorSettings() {
             </Link>
           </div>
         </section>
+
+        {/* Danger Zone */}
+        <section className="bg-white rounded-xl border-2 border-red-200 p-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Trash2 size={20} className="text-red-600" />
+            <h2 className="text-lg font-semibold text-red-700">Delete Account</h2>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">
+            This will permanently delete your account and all associated data including your vendor profile, bookings, messages, and reviews. This action cannot be undone.
+          </p>
+          {deleteError && (
+            <p className="text-sm text-red-600 mb-3">{deleteError}</p>
+          )}
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={deleting}
+            className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg"
+          >
+            {deleting ? 'Deleting...' : 'Delete My Account'}
+          </button>
+        </section>
+
+        {showDeleteConfirm && (
+          <ConfirmModal
+            title="Delete your account?"
+            message="All your data will be permanently deleted. This includes your vendor profile, bookings, conversations, reviews, and all other associated data. This cannot be undone."
+            confirmLabel={deleting ? 'Deleting...' : 'Yes, delete everything'}
+            onCancel={() => setShowDeleteConfirm(false)}
+            onConfirm={async () => {
+              setDeleting(true)
+              setDeleteError(null)
+              try {
+                const res = await fetch('/api/auth/delete-account', { method: 'DELETE' })
+                if (!res.ok) {
+                  const data = await res.json()
+                  throw new Error(data.error || 'Failed to delete account')
+                }
+                await supabase.auth.signOut()
+                window.location.href = '/'
+              } catch (err) {
+                setDeleteError(err.message)
+                setDeleting(false)
+                setShowDeleteConfirm(false)
+              }
+            }}
+          />
+        )}
       </div>
     </div>
   )

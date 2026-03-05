@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendEventReminderEmail } from '@/lib/email'
+import { createNotificationInTx } from '@/lib/notifications'
 
 export async function GET(request) {
   // Auth: accept CRON_SECRET bearer token or Vercel's built-in cron auth header
@@ -49,27 +50,23 @@ export async function GET(request) {
       for (const booking of upcomingBookings) {
         // Notification for vendor
         if (booking.vendor?.user) {
-          await tx.notification.create({
-            data: {
-              userId: booking.vendor.user.id,
-              type: 'event_reminder',
-              title: 'Event in 3 days',
-              body: `Your event with ${booking.customer?.fullName || 'a customer'} is in 3 days. Make sure everything is prepared!`,
-              link: '/calendar',
-            },
+          await createNotificationInTx(tx, {
+            userId: booking.vendor.user.id,
+            type: 'event_reminder',
+            title: 'Event in 3 days',
+            body: `Your event with ${booking.customer?.fullName || 'a customer'} is in 3 days. Make sure everything is prepared!`,
+            link: '/calendar',
           })
         }
 
         // Notification for customer
         if (booking.customer?.user) {
-          await tx.notification.create({
-            data: {
-              userId: booking.customer.user.id,
-              type: 'event_reminder',
-              title: 'Event in 3 days',
-              body: `Your event with ${booking.vendor?.businessName || 'a vendor'} is in 3 days. Get ready!`,
-              link: '/my-bookings',
-            },
+          await createNotificationInTx(tx, {
+            userId: booking.customer.user.id,
+            type: 'event_reminder',
+            title: 'Event in 3 days',
+            body: `Your event with ${booking.vendor?.businessName || 'a vendor'} is in 3 days. Get ready!`,
+            link: '/my-bookings',
           })
         }
       }

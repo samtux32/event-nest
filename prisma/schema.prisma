@@ -76,8 +76,9 @@ model User {
 
   customerProfile CustomerProfile?
   vendorProfile   VendorProfile?
-  sentMessages    Message[]        @relation("MessageSender")
-  notifications   Notification[]
+  sentMessages      Message[]          @relation("MessageSender")
+  notifications     Notification[]
+  pushSubscriptions PushSubscription[]
 
   @@map("users")
 }
@@ -610,6 +611,21 @@ model BlockedDate {
   @@unique([vendorId, date])
   @@index([vendorId])
   @@map("blocked_dates")
+}
+
+/// Push notification subscriptions (Web Push API / VAPID)
+model PushSubscription {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
+  @@map("push_subscriptions")
 }
 
 /// Tracks each time a customer views a vendor profile

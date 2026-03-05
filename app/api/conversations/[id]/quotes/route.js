@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendQuoteReceivedEmail } from '@/lib/email'
+import { createNotification } from '@/lib/notifications'
 
 async function getDbUserId(authUserId, email) {
   let dbUser = await prisma.user.findUnique({ where: { id: authUserId }, select: { id: true } })
@@ -117,14 +118,12 @@ export async function POST(request, { params }) {
     })
 
     // Notify customer
-    await prisma.notification.create({
-      data: {
-        userId: conversation.customer.userId,
-        type: 'quote_received',
-        title: 'New custom quote received',
-        body: `${conversation.vendor.businessName} has sent you a custom quote: ${title.trim()}`,
-        link: `/customer-messages?conv=${id}`,
-      },
+    await createNotification({
+      userId: conversation.customer.userId,
+      type: 'quote_received',
+      title: 'New custom quote received',
+      body: `${conversation.vendor.businessName} has sent you a custom quote: ${title.trim()}`,
+      link: `/customer-messages?conv=${id}`,
     })
 
     if (conversation.customer.user?.email) {

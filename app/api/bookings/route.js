@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendNewInquiryEmail, sendBookingConfirmedEmail, sendBookingCancelledEmail } from '@/lib/email'
+import { createNotification } from '@/lib/notifications'
 
 export async function POST(request) {
   const supabase = await createClient()
@@ -98,14 +99,12 @@ export async function POST(request) {
       include: { user: true },
     })
     if (vendor?.user) {
-      await prisma.notification.create({
-        data: {
-          userId: vendor.user.id,
-          type: 'new_inquiry',
-          title: 'New booking inquiry',
-          body: `${dbUser.customerProfile.fullName || 'A customer'} has sent you a quote request.`,
-          link: '/',
-        },
+      await createNotification({
+        userId: vendor.user.id,
+        type: 'new_inquiry',
+        title: 'New booking inquiry',
+        body: `${dbUser.customerProfile.fullName || 'A customer'} has sent you a quote request.`,
+        link: '/',
       })
 
       sendNewInquiryEmail({
@@ -259,16 +258,14 @@ export async function PUT(request) {
     if (status === 'confirmed' || status === 'cancelled') {
       const customerUserId = updated.customer?.user?.id
       if (customerUserId) {
-        await prisma.notification.create({
-          data: {
-            userId: customerUserId,
-            type: status === 'confirmed' ? 'booking_confirmed' : 'booking_cancelled',
-            title: status === 'confirmed' ? 'Booking confirmed! 🎉' : 'Booking cancelled',
-            body: status === 'confirmed'
-              ? `${dbUser.vendorProfile.businessName} has confirmed your booking.`
-              : `${dbUser.vendorProfile.businessName} has cancelled your booking.`,
-            link: '/my-bookings',
-          },
+        await createNotification({
+          userId: customerUserId,
+          type: status === 'confirmed' ? 'booking_confirmed' : 'booking_cancelled',
+          title: status === 'confirmed' ? 'Booking confirmed!' : 'Booking cancelled',
+          body: status === 'confirmed'
+            ? `${dbUser.vendorProfile.businessName} has confirmed your booking.`
+            : `${dbUser.vendorProfile.businessName} has cancelled your booking.`,
+          link: '/my-bookings',
         })
       }
 

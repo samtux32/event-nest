@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendBookingCancelledEmail } from '@/lib/email'
+import { createNotification } from '@/lib/notifications'
 
 // POST — customer cancels a booking
 export async function POST(request, { params }) {
@@ -53,14 +54,12 @@ export async function POST(request, { params }) {
     // Notify the vendor
     const vendorUserId = booking.vendor?.user?.id
     if (vendorUserId) {
-      await prisma.notification.create({
-        data: {
-          userId: vendorUserId,
-          type: 'booking_cancelled',
-          title: 'Booking cancelled by customer',
-          body: `${dbUser.customerProfile.fullName || 'A customer'} has cancelled their booking.`,
-          link: `/`,
-        },
+      await createNotification({
+        userId: vendorUserId,
+        type: 'booking_cancelled',
+        title: 'Booking cancelled by customer',
+        body: `${dbUser.customerProfile.fullName || 'A customer'} has cancelled their booking.`,
+        link: `/`,
       }).catch(() => {})
     }
 

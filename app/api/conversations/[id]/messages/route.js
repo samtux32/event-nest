@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendNewMessageEmail } from '@/lib/email'
+import { createNotification } from '@/lib/notifications'
 
 async function getDbUserId(authUserId, email) {
   let dbUser = await prisma.user.findUnique({ where: { id: authUserId }, select: { id: true } })
@@ -244,14 +245,12 @@ export async function POST(request, { params }) {
       ? `/customer-messages?conv=${id}`
       : `/messages?conv=${id}`
 
-    await prisma.notification.create({
-      data: {
-        userId: recipientUserId,
-        type: 'message_received',
-        title: 'New message',
-        body: text?.trim() ? text.trim().slice(0, 100) : `📎 Sent an attachment: ${attachmentName || 'file'}`,
-        link: recipientLink,
-      },
+    await createNotification({
+      userId: recipientUserId,
+      type: 'message_received',
+      title: 'New message',
+      body: text?.trim() ? text.trim().slice(0, 100) : `Sent an attachment: ${attachmentName || 'file'}`,
+      link: recipientLink,
     }).catch(() => {}) // fire-and-forget, don't fail the request
 
     const recipientEmail = isVendor

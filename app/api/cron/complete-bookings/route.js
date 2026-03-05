@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendReviewRequestEmail } from '@/lib/email'
+import { createNotificationInTx } from '@/lib/notifications'
 
 export async function GET(request) {
   // Auth: accept CRON_SECRET bearer token or Vercel's built-in cron auth header
@@ -53,27 +54,23 @@ export async function GET(request) {
 
         // Create notification for vendor
         if (booking.vendor?.user) {
-          await tx.notification.create({
-            data: {
-              userId: booking.vendor.user.id,
-              type: 'booking_completed',
-              title: 'Event completed',
-              body: `Your event with ${booking.customer?.fullName || 'a customer'} has been marked as completed. Leave a review!`,
-              link: '/',
-            },
+          await createNotificationInTx(tx, {
+            userId: booking.vendor.user.id,
+            type: 'booking_completed',
+            title: 'Event completed',
+            body: `Your event with ${booking.customer?.fullName || 'a customer'} has been marked as completed. Leave a review!`,
+            link: '/',
           })
         }
 
         // Create notification for customer
         if (booking.customer?.user) {
-          await tx.notification.create({
-            data: {
-              userId: booking.customer.user.id,
-              type: 'booking_completed',
-              title: 'Event completed',
-              body: `Your event with ${booking.vendor?.businessName || 'a vendor'} has been marked as completed. Leave a review!`,
-              link: '/my-bookings',
-            },
+          await createNotificationInTx(tx, {
+            userId: booking.customer.user.id,
+            type: 'booking_completed',
+            title: 'Event completed',
+            body: `Your event with ${booking.vendor?.businessName || 'a vendor'} has been marked as completed. Leave a review!`,
+            link: '/my-bookings',
           })
         }
       }
