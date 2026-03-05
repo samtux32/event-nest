@@ -13,6 +13,8 @@ export async function GET() {
       profileImageUrl: true, portfolioImages: true, categories: true,
       contactEmail: true, contactPhone: true, website: true,
       packages: { select: { id: true } },
+      referralCode: true,
+      _count: { select: { referrals: true } },
     }
     let vendor = await prisma.vendorProfile.findUnique({ where: { userId: user.id }, select: profileSelect })
     if (!vendor) {
@@ -20,7 +22,14 @@ export async function GET() {
       vendor = dbUser?.vendorProfile ?? null
     }
     if (!vendor) return NextResponse.json({ error: 'No profile yet' }, { status: 404 })
-    return NextResponse.json({ id: vendor.id, vendor })
+    return NextResponse.json({
+      id: vendor.id,
+      vendor: {
+        ...vendor,
+        referralCount: vendor._count?.referrals ?? 0,
+        _count: undefined,
+      },
+    })
   } catch (err) {
     console.error('GET /api/vendors/profile error:', err)
     return NextResponse.json({ error: 'Failed' }, { status: 500 })
@@ -102,6 +111,18 @@ export async function PUT(request) {
     const filledFields = fields.filter(Boolean).length
     const profileCompletion = Math.round((filledFields / fields.length) * 100)
 
+    // Auto-generate referral code if not set
+    let referralCode = undefined;
+    if (!vendorProfile.referralCode) {
+      const nameSlug = (body.businessName || vendorProfile.businessName || 'vendor')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 30);
+      const rand = Math.random().toString(36).slice(2, 6);
+      referralCode = `${nameSlug}-${rand}`;
+    }
+
     // Update vendor profile
     const updated = await prisma.vendorProfile.update({
       where: { id: vendorProfile.id },
@@ -128,6 +149,7 @@ export async function PUT(request) {
         ...(latitude !== undefined ? { latitude, longitude } : {}),
         ...(body.coverImageUrl ? { coverImageUrl: body.coverImageUrl } : {}),
         ...(body.profileImageUrl ? { profileImageUrl: body.profileImageUrl } : {}),
+        ...(referralCode ? { referralCode } : {}),
       },
     })
 

@@ -30,6 +30,7 @@ function RegisterForm() {
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const searchParams = useSearchParams()
   const isOAuth = searchParams.get('oauth') === 'true'
+  const refCode = searchParams.get('ref') || ''
   const supabase = createClient()
 
   const categories = [
@@ -64,6 +65,7 @@ function RegisterForm() {
             fullName: fullName || undefined,
             businessName: businessName || undefined,
             category: role === 'vendor' ? category : undefined,
+            ref: role === 'vendor' && refCode ? refCode : undefined,
           }),
         })
 
@@ -98,6 +100,7 @@ function RegisterForm() {
           category: role === 'vendor' ? category : undefined,
           userId: data.user?.id,
           userEmail: data.user?.email,
+          ref: role === 'vendor' && refCode ? refCode : undefined,
         }),
       })
 

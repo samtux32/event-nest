@@ -16,7 +16,10 @@ import {
   Check,
   ArrowRight,
   Star,
-  X
+  X,
+  Copy,
+  Users,
+  Share2
 } from 'lucide-react';
 import AddToCalendarButton from './AddToCalendarButton';
 
@@ -173,6 +176,9 @@ export default function VendorDashboard() {
   const [completionSteps, setCompletionSteps] = useState([]);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const [reviewModalBooking, setReviewModalBooking] = useState(null);
+  const [referralCode, setReferralCode] = useState(null);
+  const [referralCount, setReferralCount] = useState(0);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -204,6 +210,8 @@ export default function VendorDashboard() {
           setCompletionSteps(steps);
           const pct = Math.round((steps.filter(s => s.done).length / steps.length) * 100);
           setProfileCompletion(pct);
+          if (p.referralCode) setReferralCode(p.referralCode);
+          if (p.referralCount !== undefined) setReferralCount(p.referralCount);
         }
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
@@ -594,6 +602,49 @@ export default function VendorDashboard() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Referral Link Card */}
+        {referralCode && (
+          <div className="mt-8 bg-white rounded-2xl p-6 border border-gray-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
+                <Share2 size={20} className="text-purple-600" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Share Your Referral Link</h2>
+                <p className="text-sm text-gray-500">Invite other vendors to join Event Nest</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-700 font-mono truncate">
+                {(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')}/register?ref={referralCode}
+              </div>
+              <button
+                onClick={() => {
+                  const url = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/register?ref=${referralCode}`;
+                  navigator.clipboard.writeText(url);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  copied
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-purple-600 text-white hover:bg-purple-700'
+                }`}
+              >
+                {copied ? <Check size={16} /> : <Copy size={16} />}
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Users size={16} className="text-gray-400" />
+              <span>
+                <span className="font-semibold text-gray-900">{referralCount}</span>{' '}
+                vendor{referralCount !== 1 ? 's' : ''} joined using your link
+              </span>
             </div>
           </div>
         )}

@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(request) {
   const body = await request.json()
-  const { role, fullName, businessName, category, userId, userEmail } = body
+  const { role, fullName, businessName, category, userId, userEmail, ref: referralCode } = body
 
   if (!role || (role !== 'customer' && role !== 'vendor')) {
     return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
@@ -50,6 +50,16 @@ export async function POST(request) {
         },
       })
     } else {
+      // Look up referrer if a referral code was provided
+      let referredByVendorId = null;
+      if (referralCode) {
+        const referrer = await prisma.vendorProfile.findUnique({
+          where: { referralCode },
+          select: { id: true },
+        });
+        if (referrer) referredByVendorId = referrer.id;
+      }
+
       await prisma.user.create({
         data: {
           id,
@@ -59,6 +69,7 @@ export async function POST(request) {
             create: {
               businessName: businessName || 'My Business',
               categories: category ? [category] : ['Other'],
+              ...(referredByVendorId ? { referredByVendorId } : {}),
             },
           },
         },
