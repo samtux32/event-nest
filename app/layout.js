@@ -4,7 +4,14 @@ import { AuthProvider } from '@/components/AuthProvider'
 export const metadata = {
   title: 'Event Nest - Find Perfect Event Vendors',
   description: 'Browse top-rated caterers, photographers, DJs, florists and more. Plan your dream event with confidence.',
-  icons: { icon: '/favicon.ico' },
+  icons: { icon: '/favicon.ico', apple: '/logo.png' },
+  manifest: '/manifest.json',
+  themeColor: '#7c3aed',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Event Nest',
+  },
   openGraph: {
     title: 'Event Nest - Find Perfect Event Vendors',
     description: 'Browse top-rated caterers, photographers, DJs, florists and more. Plan your dream event with confidence.',

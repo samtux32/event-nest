@@ -275,10 +275,10 @@ export default function VendorPublicProfile({ vendorId }) {
       <div className="min-h-screen bg-gray-50">
         <PublicHeader />
 
-        <div className="h-96 bg-gray-200 animate-pulse" />
+        <div className="h-48 sm:h-96 bg-gray-200 animate-pulse" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="relative -mt-32 mb-8">
+          <div className="relative -mt-20 sm:-mt-32 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-xl">
               <div className="flex items-start gap-6">
                 <div className="w-32 h-32 rounded-2xl bg-gray-200 animate-pulse" />
@@ -349,7 +349,7 @@ export default function VendorPublicProfile({ vendorId }) {
       <PublicHeader />
 
       {/* Cover Image */}
-      <div className="relative h-96 bg-gray-200">
+      <div className="relative h-48 sm:h-96 bg-gray-200">
         {vendor.coverImageUrl ? (
           <img
             src={vendor.coverImageUrl}
@@ -365,7 +365,7 @@ export default function VendorPublicProfile({ vendorId }) {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Profile Header */}
-        <div className="relative -mt-32 mb-8">
+        <div className="relative -mt-20 sm:-mt-32 mb-8">
           <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-8 shadow-xl relative">
             {!isOwner && (
               <div className="absolute top-4 right-4 sm:top-6 sm:right-6">

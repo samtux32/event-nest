@@ -3,4 +3,4 @@ Allow: /
 Disallow: /api/
 Disallow: /admin/
 
-Sitemap: https://eventnest.co.uk/sitemap.xml
+Sitemap: https://eventnestgroup.com/sitemap.xml

@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://eventnest.co.uk';
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://eventnestgroup.com';
 
 export default async function sitemap() {
   const staticPages = [
