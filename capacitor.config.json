@@ -1,0 +1,14 @@
+{
+  "appId": "com.eventnestgroup.app",
+  "appName": "Event Nest",
+  "webDir": "public",
+  "server": {
+    "url": "https://eventnestgroup.com",
+    "cleartext": false
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "allowsLinkPreview": false,
+    "scheme": "Event Nest"
+  }
+}
