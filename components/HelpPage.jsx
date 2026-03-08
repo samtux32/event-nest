@@ -217,12 +217,12 @@ export default function HelpPage() {
           <p className="text-sm text-purple-700 mb-4">
             Can&apos;t find what you&apos;re looking for? Get in touch and we&apos;ll be happy to help.
           </p>
-          <a
-            href="mailto:hello@eventnestgroup.com"
+          <Link
+            href="/contact"
             className="inline-block px-6 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
           >
             Contact Us
-          </a>
+          </Link>
         </div>
       </div>
     </div>
