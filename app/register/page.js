@@ -4,7 +4,7 @@ import { useState, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { User, Store, Eye, EyeOff } from 'lucide-react'
+import { User, Store, Eye, EyeOff, Check } from 'lucide-react'
 
 export default function RegisterPage() {
   return (
@@ -21,7 +21,7 @@ function RegisterForm() {
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [businessName, setBusinessName] = useState('')
-  const [category, setCategory] = useState('Photography')
+  const [categories, setCategories] = useState([])
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -32,11 +32,6 @@ function RegisterForm() {
   const isOAuth = searchParams.get('oauth') === 'true'
   const refCode = searchParams.get('ref') || ''
   const supabase = createClient()
-
-  const categories = [
-    'Photography', 'Videography', 'Catering', 'Florist',
-    'DJ', 'Live Band/Music', 'Venue', 'Decorator/Stylist', 'Cake', 'Other'
-  ]
 
   async function handleRegister(e) {
     e.preventDefault()
@@ -64,7 +59,7 @@ function RegisterForm() {
             role,
             fullName: fullName || undefined,
             businessName: businessName || undefined,
-            category: role === 'vendor' ? category : undefined,
+            categories: role === 'vendor' ? categories : undefined,
             ref: role === 'vendor' && refCode ? refCode : undefined,
           }),
         })
@@ -280,16 +275,28 @@ function RegisterForm() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-                    >
-                      {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Categories</label>
+                    <p className="text-xs text-gray-400 mb-2">Select all that apply</p>
+                    <div className="flex flex-wrap gap-2">
+                      {['Photography', 'Videography', 'Catering', 'Florist', 'DJ', 'Live Band/Music', 'Venue', 'Decorator/Stylist', 'Cake', 'Other'].map(cat => {
+                        const selected = categories.includes(cat);
+                        return (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => setCategories(prev => selected ? prev.filter(c => c !== cat) : [...prev, cat])}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                              selected
+                                ? 'bg-purple-600 text-white border-purple-600'
+                                : 'bg-white text-gray-700 border-gray-300 hover:border-purple-300'
+                            }`}
+                          >
+                            {selected && <Check size={14} />}
+                            {cat}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </>
               )}
@@ -312,7 +319,7 @@ function RegisterForm() {
 
               <button
                 type="submit"
-                disabled={loading || !agreedToTerms}
+                disabled={loading || !agreedToTerms || (role === 'vendor' && categories.length === 0)}
                 className="w-full py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
               >
                 {loading ? 'Creating account...' : 'Create Account'}

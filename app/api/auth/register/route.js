@@ -5,7 +5,7 @@ import { sendWelcomeEmail } from '@/lib/email'
 
 export async function POST(request) {
   const body = await request.json()
-  const { role, fullName, businessName, category, userId, userEmail, ref: referralCode } = body
+  const { role, fullName, businessName, categories, category, userId, userEmail, ref: referralCode } = body
 
   if (!role || (role !== 'customer' && role !== 'vendor')) {
     return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
@@ -69,7 +69,7 @@ export async function POST(request) {
           vendorProfile: {
             create: {
               businessName: businessName || 'My Business',
-              categories: category ? [category] : ['Other'],
+              categories: Array.isArray(categories) && categories.length > 0 ? categories : category ? [category] : ['Other'],
               ...(referredByVendorId ? { referredByVendorId } : {}),
             },
           },
