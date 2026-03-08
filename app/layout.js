@@ -6,7 +6,7 @@ import CookieConsent from '@/components/CookieConsent'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 export const metadata = {
-  title: 'Event Nest - Find Perfect Event Vendors',
+  title: 'Event Nest - The Smarter Way to Plan Events',
   description: 'Browse top-rated caterers, photographers, DJs, florists and more. Plan your dream event with confidence.',
   icons: {
     icon: [
@@ -24,14 +24,14 @@ export const metadata = {
     title: 'Event Nest',
   },
   openGraph: {
-    title: 'Event Nest - Find Perfect Event Vendors',
+    title: 'Event Nest - The Smarter Way to Plan Events',
     description: 'Browse top-rated caterers, photographers, DJs, florists and more. Plan your dream event with confidence.',
     type: 'website',
     images: [{ url: '/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Event Nest - Find Perfect Event Vendors',
+    title: 'Event Nest - The Smarter Way to Plan Events',
     description: 'Browse top-rated caterers, photographers, DJs, florists and more. Plan your dream event with confidence.',
     images: ['/og-image.png'],
   },
