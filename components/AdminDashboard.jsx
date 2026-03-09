@@ -296,7 +296,7 @@ export default function AdminDashboard() {
                         <div className="flex items-center justify-end gap-2">
                           {vendor.verificationStatus === 'verified' ? (
                             <button
-                              onClick={() => verifyVendor(vendor.id, 'unverified')}
+                              onClick={() => verifyVendor(vendor.id, 'pending')}
                               disabled={verifyingId === vendor.id}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-50"
                             >
@@ -496,7 +496,7 @@ export default function AdminDashboard() {
                 </button>
               ) : (
                 <button
-                  onClick={() => { verifyVendor(docsVendor.id, 'unverified'); setDocsVendor(null); }}
+                  onClick={() => { verifyVendor(docsVendor.id, 'pending'); setDocsVendor(null); }}
                   className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-red-600 text-sm font-medium rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
                 >
                   <XCircle size={15} />

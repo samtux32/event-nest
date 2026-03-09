@@ -34,7 +34,7 @@ export async function PATCH(request, { params }) {
 
     const { done } = await request.json()
     const item = await prisma.checklistItem.update({
-      where: { id: itemId },
+      where: { id: itemId, checklistId: id },
       data: { done },
     })
 
@@ -60,7 +60,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
-    await prisma.checklistItem.delete({ where: { id: itemId } })
+    await prisma.checklistItem.delete({ where: { id: itemId, checklistId: id } })
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('DELETE /api/checklists/[id]/items/[itemId] error:', err)

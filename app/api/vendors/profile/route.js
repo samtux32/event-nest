@@ -244,6 +244,29 @@ export async function PUT(request) {
       }
     }
 
+    // Auto-verify: approved + image + description + location + package = verified
+    try {
+      const freshVendor = await prisma.vendorProfile.findUnique({
+        where: { id: vendorProfile.id },
+        include: { packages: { select: { id: true }, take: 1 } },
+      })
+      const isComplete = freshVendor.profileImageUrl && freshVendor.description && freshVendor.location && freshVendor.packages.length > 0
+      const shouldBeVerified = freshVendor.isApproved && isComplete
+      if (shouldBeVerified && freshVendor.verificationStatus !== 'verified') {
+        await prisma.vendorProfile.update({
+          where: { id: vendorProfile.id },
+          data: { verificationStatus: 'verified' },
+        })
+      } else if (!isComplete && freshVendor.verificationStatus === 'verified') {
+        await prisma.vendorProfile.update({
+          where: { id: vendorProfile.id },
+          data: { verificationStatus: 'pending' },
+        })
+      }
+    } catch (verifyErr) {
+      console.error('Auto-verify check failed (non-blocking):', verifyErr)
+    }
+
     // Fetch updated profile with packages
     const result = await prisma.vendorProfile.findUnique({
       where: { id: vendorProfile.id },

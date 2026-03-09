@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Star, MapPin, Search, Calendar, PartyPopper } from 'lucide-react';
+import { Star, MapPin, Search, Calendar, PartyPopper, BadgeCheck } from 'lucide-react';
 
 const CATEGORY_ICONS = {
   'Photography': '📸',
@@ -54,7 +54,10 @@ function VendorCard({ vendor }) {
         <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
           {vendor.category}
         </span>
-        <h3 className="font-semibold text-gray-900 mt-2 text-lg">{vendor.name}</h3>
+        <h3 className="font-semibold text-gray-900 mt-2 text-lg flex items-center gap-1.5">
+          {vendor.name}
+          {vendor.verified && <BadgeCheck className="text-blue-500 flex-shrink-0" size={18} title="Verified vendor" />}
+        </h3>
         {vendor.location && (
           <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
             <MapPin size={14} /> {vendor.location}

@@ -141,6 +141,7 @@ model VendorProfile {
   completedEventsCount Int          @default(0) @map("completed_events_count")
   isAvailable          Boolean      @default(true) @map("is_available")
   isApproved           Boolean      @default(false) @map("is_approved") // Admin verification gate
+  verificationStatus   VerificationStatus @default(pending) @map("vendor_verification_status")
   profileCompletion    Int          @default(0) @map("profile_completion")
   averageRating        Decimal?     @map("average_rating") @db.Decimal(2, 1)
   totalReviews         Int          @default(0) @map("total_reviews")

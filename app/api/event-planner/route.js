@@ -52,6 +52,11 @@ Rules:
 
 export async function POST(request) {
   try {
+    // AI kill switch — set AI_ENABLED=false in Vercel env vars to disable
+    if (process.env.AI_ENABLED === 'false') {
+      return NextResponse.json({ error: 'The AI event planner is temporarily unavailable. Please try again later.' }, { status: 503 });
+    }
+
     const limited = await rateLimit(request, limiters.ai);
     if (limited) return limited;
 

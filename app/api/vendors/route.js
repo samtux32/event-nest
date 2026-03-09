@@ -67,6 +67,7 @@ export async function GET(request) {
         : null,
       description: v.tagline || (v.description ? v.description.slice(0, 80) + '...' : ''),
       keywords: v.keywords || [],
+      verified: v.verificationStatus === 'verified',
     }))
 
     return NextResponse.json({ vendors: mapped, hasMore })

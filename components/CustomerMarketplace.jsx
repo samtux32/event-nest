@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Heart, Star, MapPin, SlidersHorizontal, X, GitCompareArrows, Clock } from 'lucide-react';
+import { Search, Heart, Star, MapPin, SlidersHorizontal, X, GitCompareArrows, Clock, BadgeCheck } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import AppHeader from './AppHeader';
 import AuthPromptModal from './AuthPromptModal';
@@ -704,7 +704,10 @@ export default function CustomerMarketplace() {
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h3 className="font-bold text-lg text-gray-900">{vendor.name}</h3>
+                      <h3 className="font-bold text-lg text-gray-900 flex items-center gap-1.5">
+                        {vendor.name}
+                        {vendor.verified && <BadgeCheck className="text-blue-500 flex-shrink-0" size={18} title="Verified vendor" />}
+                      </h3>
                       <p className="text-sm text-purple-600 font-medium">{vendor.category}</p>
                     </div>
                   </div>
