@@ -3,8 +3,12 @@ import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendNewInquiryEmail, sendBookingConfirmedEmail, sendBookingCancelledEmail } from '@/lib/email'
 import { createNotification } from '@/lib/notifications'
+import { rateLimit, limiters } from '@/lib/rate-limit'
 
 export async function POST(request) {
+  const limited = await rateLimit(request, limiters.bookings)
+  if (limited) return limited
+
   const supabase = await createClient()
   const { data: { user }, error } = await supabase.auth.getUser()
 

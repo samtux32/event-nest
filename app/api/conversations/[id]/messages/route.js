@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { sendNewMessageEmail } from '@/lib/email'
 import { createNotification } from '@/lib/notifications'
 import { sendMessageSchema } from '@/lib/validation/messageSchemas'
+import { rateLimit, limiters } from '@/lib/rate-limit'
 
 async function getDbUserId(authUserId, email) {
   let dbUser = await prisma.user.findUnique({ where: { id: authUserId }, select: { id: true } })
@@ -155,6 +156,9 @@ export async function GET(request, { params }) {
 }
 
 export async function POST(request, { params }) {
+  const limited = await rateLimit(request, limiters.messages)
+  if (limited) return limited
+
   const { id } = await params
 
   const supabase = await createClient()

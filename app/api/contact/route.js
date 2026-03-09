@@ -3,31 +3,14 @@ import { Resend } from 'resend';
 import { escapeHtml } from '@/lib/sanitize';
 import { contactFormSchema } from '@/lib/validation/messageSchemas';
 import { validateBody } from '@/lib/validation/helpers';
+import { rateLimit, limiters } from '@/lib/rate-limit';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Simple in-memory rate limit (resets on deploy/restart — sufficient for contact form)
-const rateLimit = new Map();
-
-function isRateLimited(ip) {
-  const now = Date.now();
-  const windowMs = 60_000; // 1 minute
-  const maxRequests = 3;
-
-  const entry = rateLimit.get(ip) || [];
-  const recent = entry.filter((t) => now - t < windowMs);
-  if (recent.length >= maxRequests) return true;
-  recent.push(now);
-  rateLimit.set(ip, recent);
-  return false;
-}
-
 export async function POST(request) {
   try {
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-    if (isRateLimited(ip)) {
-      return NextResponse.json({ error: 'Too many requests. Please try again in a minute.' }, { status: 429 });
-    }
+    const limited = await rateLimit(request, limiters.contact);
+    if (limited) return limited;
 
     const { data, response: validationError } = await validateBody(request, contactFormSchema);
     if (validationError) return validationError;

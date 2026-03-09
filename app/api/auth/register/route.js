@@ -4,8 +4,12 @@ import { NextResponse } from 'next/server'
 import { sendWelcomeEmail } from '@/lib/email'
 import { registerSchema } from '@/lib/validation/authSchemas'
 import { validateBody } from '@/lib/validation/helpers'
+import { rateLimit, limiters } from '@/lib/rate-limit'
 
 export async function POST(request) {
+  const limited = await rateLimit(request, limiters.auth)
+  if (limited) return limited
+
   const { data: body, response: validationError } = await validateBody(request, registerSchema)
   if (validationError) return validationError
 
