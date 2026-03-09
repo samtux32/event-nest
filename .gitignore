@@ -2,6 +2,7 @@
 .Trash/
 .bash_history
 .claude.json*
+.mcp.json
 .cursor/
 .lesshst
 .npm/

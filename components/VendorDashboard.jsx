@@ -22,7 +22,7 @@ import {
 import AddToCalendarButton from './AddToCalendarButton';
 
 function formatPrice(val) {
-  const num = Number(val);
+  const num = Number(val) || 0;
   return `£${num.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
