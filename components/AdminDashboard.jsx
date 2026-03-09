@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
-import { CheckCircle, XCircle, Loader2, LogOut, Store, Users, Clock, BadgeCheck, FileText, Eye, X, Flag, Star, Trash2, MessageSquare } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, LogOut, Store, Users, Clock, BadgeCheck, FileText, Eye, X, Flag, Star, Trash2, MessageSquare, BarChart3, ShoppingBag, TrendingUp } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 
 function formatDate(dateStr) {
@@ -22,6 +22,8 @@ export default function AdminDashboard() {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewActionId, setReviewActionId] = useState(null);
   const [deletingReviewId, setDeletingReviewId] = useState(null);
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   useEffect(() => {
     async function fetchVendors() {
@@ -37,6 +39,24 @@ export default function AdminDashboard() {
     }
     fetchVendors();
   }, []);
+
+  useEffect(() => {
+    if (tab !== 'analytics') return;
+    if (analytics) return; // already loaded
+    async function fetchAnalytics() {
+      setAnalyticsLoading(true);
+      try {
+        const res = await fetch('/api/admin/analytics');
+        const data = await res.json();
+        if (res.ok) setAnalytics(data);
+      } catch (err) {
+        console.error('Failed to fetch analytics:', err);
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    }
+    fetchAnalytics();
+  }, [tab, analytics]);
 
   useEffect(() => {
     if (tab !== 'reviews') return;
@@ -232,10 +252,21 @@ export default function AdminDashboard() {
               </span>
             )}
           </button>
+          <button
+            onClick={() => setTab('analytics')}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-1.5 ${
+              tab === 'analytics'
+                ? 'bg-purple-100 text-purple-800'
+                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <BarChart3 size={14} />
+            Analytics
+          </button>
         </div>
 
         {/* Vendor List */}
-        {tab !== 'reviews' && (
+        {(tab === 'pending' || tab === 'approved') && (
           <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
             {loading ? (
               <div className="text-center py-16">
@@ -436,6 +467,94 @@ export default function AdminDashboard() {
                   ))}
                 </tbody>
               </table>
+            )}
+          </div>
+        )}
+        {/* Analytics */}
+        {tab === 'analytics' && (
+          <div>
+            {analyticsLoading ? (
+              <div className="text-center py-16">
+                <Loader2 className="mx-auto mb-3 text-purple-600 animate-spin" size={32} />
+                <p className="text-gray-500">Loading analytics...</p>
+              </div>
+            ) : analytics ? (
+              <>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+                  {[
+                    { label: 'Total Vendors', value: analytics.totals.vendors, icon: <Store size={20} />, color: 'purple' },
+                    { label: 'Total Customers', value: analytics.totals.customers, icon: <Users size={20} />, color: 'blue' },
+                    { label: 'Total Bookings', value: analytics.totals.bookings, icon: <ShoppingBag size={20} />, color: 'green' },
+                    { label: 'Total Reviews', value: analytics.totals.reviews, icon: <Star size={20} />, color: 'yellow' },
+                    { label: 'Pending Approval', value: analytics.totals.pendingVendors, icon: <Clock size={20} />, color: 'red' },
+                  ].map(stat => (
+                    <div key={stat.label} className="bg-white rounded-xl border border-gray-200 p-4">
+                      <div className={`text-${stat.color}-600 mb-2`}>{stat.icon}</div>
+                      <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                      <p className="text-sm text-gray-500">{stat.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Bookings by Status */}
+                {Object.keys(analytics.bookingsByStatus).length > 0 && (
+                  <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+                    <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <ShoppingBag size={18} />
+                      Bookings by Status
+                    </h3>
+                    <div className="flex flex-wrap gap-3">
+                      {Object.entries(analytics.bookingsByStatus).map(([status, count]) => (
+                        <div key={status} className="px-4 py-2 bg-gray-50 rounded-lg">
+                          <p className="text-sm text-gray-500 capitalize">{status.replace(/_/g, ' ')}</p>
+                          <p className="text-xl font-bold text-gray-900">{count}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Signups Chart (simple bar chart) */}
+                {[
+                  { title: 'Vendor Signups (30 days)', data: analytics.vendorSignups, color: 'bg-purple-500' },
+                  { title: 'Customer Signups (30 days)', data: analytics.customerSignups, color: 'bg-blue-500' },
+                  { title: 'Bookings (30 days)', data: analytics.bookingsOverTime, color: 'bg-green-500' },
+                ].map(chart => {
+                  const maxCount = Math.max(...chart.data.map(d => d.count), 1);
+                  const total = chart.data.reduce((sum, d) => sum + d.count, 0);
+                  return (
+                    <div key={chart.title} className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                          <TrendingUp size={18} />
+                          {chart.title}
+                        </h3>
+                        <span className="text-sm font-medium text-gray-500">{total} total</span>
+                      </div>
+                      <div className="flex items-end gap-[2px] h-32">
+                        {chart.data.map(d => (
+                          <div key={d.date} className="flex-1 flex flex-col items-center justify-end h-full group relative">
+                            <div
+                              className={`w-full ${chart.color} rounded-t opacity-80 hover:opacity-100 transition-opacity min-h-[2px]`}
+                              style={{ height: `${Math.max((d.count / maxCount) * 100, d.count > 0 ? 8 : 2)}%` }}
+                            />
+                            <div className="hidden group-hover:block absolute -top-8 bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
+                              {new Date(d.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}: {d.count}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-400 mt-2">
+                        <span>{new Date(chart.data[0]?.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                        <span>Today</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            ) : (
+              <p className="text-center text-gray-500 py-16">Failed to load analytics</p>
             )}
           </div>
         )}
