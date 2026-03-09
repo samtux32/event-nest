@@ -27,6 +27,13 @@ const nextConfig = {
 module.exports = withSentryConfig(nextConfig, {
   org: 'event-nest-group-limited',
   project: 'event-nest',
-  silent: true, // suppress Sentry build output noise
-  disableLogger: true,
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  tunnelRoute: '/monitoring',
+  webpack: {
+    automaticVercelMonitors: true,
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 });
