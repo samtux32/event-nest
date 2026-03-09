@@ -4,17 +4,41 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Star, MapPin, Search, Calendar, PartyPopper } from 'lucide-react';
 
-const categories = [
-  { name: 'Catering', icon: '🍽️', slug: 'caterers' },
-  { name: 'Photography', icon: '📸', slug: 'photographers' },
-  { name: 'Videography', icon: '🎬', slug: 'videographers' },
-  { name: 'Florist', icon: '💐', slug: 'florists' },
-  { name: 'DJ', icon: '🎧', slug: 'djs' },
-  { name: 'Live Band/Music', icon: '🎵', slug: 'live-bands' },
-  { name: 'Venue', icon: '🏛️', slug: 'venues' },
-  { name: 'Decorator/Stylist', icon: '✨', slug: 'decorators' },
-  { name: 'Cake', icon: '🎂', slug: 'cake-makers' },
-];
+const CATEGORY_ICONS = {
+  'Photography': '📸',
+  'Videography': '🎬',
+  'Catering': '🍽️',
+  'Florist': '💐',
+  'DJ': '🎧',
+  'Live Band/Music': '🎵',
+  'Venue': '🏛️',
+  'Decorator/Stylist': '✨',
+  'Cake': '🎂',
+  'Wedding Planner': '💍',
+  'Hair & Makeup': '💄',
+  'Transport': '🚗',
+  'Stationery': '✉️',
+  'Entertainment': '🎪',
+  'Other': '🎉',
+};
+
+const CATEGORY_SLUG_MAP = {
+  'Photography': 'photographers',
+  'Videography': 'videographers',
+  'Catering': 'caterers',
+  'Florist': 'florists',
+  'DJ': 'djs',
+  'Live Band/Music': 'live-bands',
+  'Venue': 'venues',
+  'Decorator/Stylist': 'decorators',
+  'Cake': 'cake-makers',
+  'Wedding Planner': 'wedding-planners',
+  'Hair & Makeup': 'hair-and-makeup',
+  'Transport': 'transport',
+  'Stationery': 'stationery',
+  'Entertainment': 'entertainment',
+  'Other': 'other',
+};
 
 function VendorCard({ vendor }) {
   return (
@@ -57,23 +81,31 @@ function VendorCard({ vendor }) {
 
 export default function LandingPage() {
   const [featuredVendors, setFeaturedVendors] = useState([]);
+  const [activeCategories, setActiveCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchFeatured() {
+    async function fetchData() {
       try {
-        const res = await fetch('/api/vendors');
-        const data = await res.json();
-        if (res.ok) {
-          setFeaturedVendors(data.vendors.slice(0, 4));
+        const [vendorsRes, catsRes] = await Promise.all([
+          fetch('/api/vendors'),
+          fetch('/api/vendors/categories'),
+        ]);
+        const vendorsData = await vendorsRes.json();
+        const catsData = await catsRes.json();
+        if (vendorsRes.ok) {
+          setFeaturedVendors(vendorsData.vendors.slice(0, 4));
+        }
+        if (catsData.categories?.length > 0) {
+          setActiveCategories(catsData.categories);
         }
       } catch (err) {
-        console.error('Failed to fetch featured vendors:', err);
+        console.error('Failed to fetch data:', err);
       } finally {
         setLoading(false);
       }
     }
-    fetchFeatured();
+    fetchData();
   }, []);
 
   return (
@@ -187,18 +219,27 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900">Browse by Category</h2>
           <p className="text-center text-gray-500 mt-2 mb-12">Find exactly what you need for your event</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-            {categories.map((cat) => (
-              <Link
-                key={cat.name}
-                href={`/vendors/${cat.slug}`}
-                className="bg-white rounded-xl p-5 text-center shadow-sm border border-gray-100 hover:shadow-md hover:border-purple-200 transition-all"
-              >
-                <span className="text-3xl">{cat.icon}</span>
-                <p className="mt-2 font-medium text-gray-700 text-sm">{cat.name}</p>
-              </Link>
-            ))}
-          </div>
+          {activeCategories.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+              {activeCategories.map((cat) => (
+                <Link
+                  key={cat.name}
+                  href={`/vendors/${CATEGORY_SLUG_MAP[cat.name] || 'other'}`}
+                  className="bg-white rounded-xl p-5 text-center shadow-sm border border-gray-100 hover:shadow-md hover:border-purple-200 transition-all"
+                >
+                  <span className="text-3xl">{CATEGORY_ICONS[cat.name] || '🎉'}</span>
+                  <p className="mt-2 font-medium text-gray-700 text-sm">{cat.name}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{cat.count} vendor{cat.count !== 1 ? 's' : ''}</p>
+                </Link>
+              ))}
+            </div>
+          ) : loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="bg-white rounded-xl p-5 h-24 animate-pulse" />
+              ))}
+            </div>
+          ) : null}
         </div>
       </section>
 

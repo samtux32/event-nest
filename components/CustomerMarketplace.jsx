@@ -157,18 +157,18 @@ export default function CustomerMarketplace() {
     }
   }, [shouldResetPrice]);
 
-  const categories = [
-    'All Categories',
-    'Catering',
-    'Photography',
-    'Videography',
-    'Florist',
-    'DJ',
-    'Live Band/Music',
-    'Venue',
-    'Decorator/Stylist',
-    'Cake'
-  ];
+  const [categories, setCategories] = useState(['All Categories']);
+
+  useEffect(() => {
+    fetch('/api/vendors/categories')
+      .then(r => r.json())
+      .then(data => {
+        if (data.categories?.length > 0) {
+          setCategories(['All Categories', ...data.categories.map(c => c.name)]);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const buildParams = (extraOffset) => {
     const params = new URLSearchParams();
