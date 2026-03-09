@@ -1,4 +1,4 @@
-import VendorProfileEditor from '../../components/VendorProfileEditor';
+import VendorProfileEditor from '@/components/VendorProfileEditor';
 
 export const metadata = { title: 'Edit Profile | Event Nest' }
 

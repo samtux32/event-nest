@@ -1,4 +1,4 @@
-import VendorAnalytics from '../../components/VendorAnalytics';
+import VendorAnalytics from '@/components/VendorAnalytics';
 
 export const metadata = { title: 'Analytics | Event Nest' }
 
