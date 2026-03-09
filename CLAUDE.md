@@ -35,6 +35,13 @@
 - Admin can manually verify/un-verify in admin dashboard
 - Verified badge (blue checkmark) shows on marketplace cards and vendor profile pages
 
+## Useful Scripts (package.json)
+- `npm run db:push` — push schema changes to DB
+- `npm run db:studio` — open visual DB browser at localhost:5555
+- `npm run db:generate` — regenerate Prisma client after schema changes
+- `npm run cron:profile-nudge` — manually trigger profile nudge cron (requires dev server running + CRON_SECRET in .env)
+- `npm run cron:vendor-followup` — manually trigger vendor follow-up cron
+
 ## Cron Jobs (vercel.json)
 - `/api/cron/complete-bookings` — daily 2am, auto-completes past bookings
 - `/api/cron/event-reminders` — daily 9am, reminds about events in 3 days

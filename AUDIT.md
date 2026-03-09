@@ -1,6 +1,6 @@
 # Event Nest - Codebase Audit Report
-**Date:** 2026-02-20
-**Scope:** Full frontend + backend review (read-only, no changes made)
+**Date:** 2026-03-09 (updated)
+**Scope:** Full frontend + backend review
 
 ---
 
@@ -83,14 +83,29 @@ No critical bugs found. Code is production-ready.
 
 ---
 
+## Session 26 Security Additions
+
+| Check | Result |
+|-------|--------|
+| Zod validation on all mutation routes | ✓ Added |
+| Rate limiting (Upstash Redis) | ✓ Added — auth, messages, bookings, contact, AI |
+| HTML injection in emails | ✓ Fixed — `escapeHtml()` on all user-interpolated values |
+| SQL injection in vendor search | ✓ Fixed — parameterized `$queryRaw` |
+| File upload extension allowlists | ✓ Added to all 3 upload routes |
+| Checklist item ownership | ✓ Fixed — scoped to `checklistId` on update/delete |
+| Data ownership audit (53 routes) | ✓ 51/53 already correct, 2 fixed |
+| AI kill switch | ✓ `AI_ENABLED=false` env var disables AI planner only |
+
+---
+
 ## Summary
 
-**Auth/Authorization** — Solid. Consistent role checks on every route.
-**Data Validation** — Solid. Input validated at all mutation endpoints.
+**Auth/Authorization** — Solid. Consistent role checks on every route. All 53 routes audited.
+**Data Validation** — Strong. Zod schemas on all mutation endpoints + file extension allowlists.
+**Rate Limiting** — Upstash Redis on auth, messages, bookings, contact, AI routes.
 **Error Handling** — Solid. All catch blocks return proper JSON error responses.
 **Transactions** — Excellent. Used wherever multiple DB writes need to stay consistent.
-**Emails** — Fully wired. 8 triggers, all fire-and-forget, all guarded by API key check.
-**Components** — All 35 exist, all imports resolve, no broken API calls.
+**Emails** — Fully wired. 15+ triggers, all fire-and-forget, HTML-escaped, guarded by API key check.
 **Middleware** — All routes protected correctly.
 
-**Verdict: Ready for testing with real users.**
+**Verdict: Production-ready.**

@@ -1,36 +1,55 @@
-# Event Nest — 10k Users Roadmap
+# Event Nest — Roadmap
 
-## Critical — Performance
-- [ ] 1. Database indexes on frequently queried fields
-- [ ] 2. Pagination (marketplace, messages, bookings, conversations)
-- [ ] 3. Supabase Realtime for messaging (replace polling)
-- [ ] 4. Paid geocoding API (replace Nominatim)
-- [ ] 5. Image compression/optimization + CDN
+_Last updated: March 2026_
+
+## Done ✓
+- [x] Rate limiting on all sensitive API routes (Upstash Redis)
+- [x] Input validation (zod schemas across all API routes)
+- [x] Input sanitization — HTML escaping in emails, file extension allowlists
+- [x] SQL injection prevention — parameterized queries throughout
+- [x] Push notifications (PWA/web push, VAPID)
+- [x] Full-text search + filtering (price range, rating, location/distance, categories)
+- [x] Vendor availability calendar (blocked dates)
+- [x] Vendor approval flow (admin gate before appearing on marketplace)
+- [x] Vendor verification system (badge, auto-verify on profile completion)
+- [x] Admin moderation tools (vendor approval, verify, review flagging/deletion)
+- [x] Admin analytics dashboard (signups, bookings, stats over time)
+- [x] Pagination (messages, marketplace, bookings)
+- [x] Programmatic SEO (294+ pages, JSON-LD schema markup)
+- [x] Dynamic categories (only shown when vendors exist)
+- [x] Recommended sort on marketplace (quality scoring)
+- [x] Profile completion nudge emails (weekly cron)
+- [x] Admin notification on new vendor signup
+- [x] Vendor follow-up reminder (auto-email if vendor doesn't respond in 24h)
+- [x] AI kill switch (AI_ENABLED env var)
+- [x] Data ownership — all API routes scoped to authenticated user
+- [x] Route groups (clean App Router structure)
 
 ## Critical — Revenue
-- [ ] 6. Stripe payment integration
-- [ ] 7. Cancellation policy (flexible/moderate/strict + automatic refunds via Stripe)
+- [ ] Stripe payment integration (10% vendor fee, 2% customer fee)
+- [ ] Cancellation policy (flexible/moderate/strict + automatic refunds)
+- [ ] Request invoice (via Stripe)
+- [ ] Promoted/featured vendor listings (paid placement)
 
-## High — Reliability
-- [ ] 8. Error monitoring (Sentry)
-- [ ] 9. Rate limiting on API routes
-- [ ] 10. Input sanitization audit
+## High — Performance
+- [ ] Supabase Realtime for messaging (replace polling)
+- [ ] Paid geocoding API (replace Nominatim — rate limited on production)
+- [ ] Image compression/optimization + CDN
+- [ ] Database indexes audit for high-traffic queries
 
 ## High — UX
-- [ ] 11. Push notifications (PWA)
-- [ ] 12. Proper search and filtering (full-text, price range, availability)
-- [ ] 13. Unsend messages in chat
-- [ ] 14. Block contact info in messages until booking confirmed
-- [ ] 15. Update/cancel booking (tied to cancellation policy)
-- [ ] 16. Request invoice (via Stripe)
-- [ ] 17. Clickable dashboard stats with detailed breakdowns
-- [ ] 18. "Become a Vendor" in customer settings
+- [ ] Block contact info in messages until booking confirmed
+- [ ] Update/cancel booking (tied to cancellation policy)
+- [ ] Clickable dashboard stats with detailed breakdowns
+- [ ] "Become a Vendor" option in customer settings
 
 ## Medium — Platform
-- [ ] 19. Vendor approval flow (portal access but hidden until admin approves)
-- [ ] 20. Vendor verification system
-- [ ] 21. Admin/moderation tools at scale
-- [ ] 22. Automated tests for core flows
+- [ ] Error monitoring (Sentry)
+- [ ] Automated tests for core flows (booking, messaging, auth)
+- [ ] Vendor referral dashboard (track referrals + rewards)
 
 ## Later Phase
-- [ ] 23. Date availability filter + vendor availability calendar
+- [ ] Stripe Connect for vendor payouts
+- [ ] Mobile app (Capacitor wrapper already scaffolded)
+- [ ] Multi-currency (GBP + EUR)
+- [ ] Scale to wider UK

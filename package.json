@@ -6,7 +6,14 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:generate": "prisma generate",
+    "cron:complete-bookings": "curl -H \"Authorization: Bearer $CRON_SECRET\" http://localhost:3000/api/cron/complete-bookings",
+    "cron:event-reminders": "curl -H \"Authorization: Bearer $CRON_SECRET\" http://localhost:3000/api/cron/event-reminders",
+    "cron:profile-nudge": "curl -H \"Authorization: Bearer $CRON_SECRET\" http://localhost:3000/api/cron/profile-nudge",
+    "cron:vendor-followup": "curl -H \"Authorization: Bearer $CRON_SECRET\" http://localhost:3000/api/cron/vendor-followup"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

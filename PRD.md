@@ -26,8 +26,8 @@ A person planning an event who needs to find, compare, and book vendors.
 ### 2.2 Vendor
 A business or individual providing event services who needs to manage their profile, inquiries, bookings, and client communications.
 
-### 2.3 Admin (future)
-Platform administrators who manage vendor approvals, document verification, disputes, and platform settings.
+### 2.3 Admin
+Platform administrators who manage vendor approvals, document verification, disputes, and platform settings. Admin dashboard includes: vendor approval queue, verification, review moderation, and analytics (signups, bookings, revenue over time).
 
 ---
 
@@ -51,6 +51,7 @@ The platform supports the following vendor categories:
 | Transport | Wedding cars, guest transport |
 | Stationery | Invitations, signage, programs |
 | Entertainment | Photo booths, magicians, performers |
+| Other | Clowns, unusual acts, anything that doesn't fit above — splits into sub-categories as volume grows |
 
 ---
 
