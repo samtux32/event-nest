@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
-import { sendWelcomeEmail } from '@/lib/email'
+import { sendWelcomeEmail, sendAdminNewVendorEmail } from '@/lib/email'
 import { registerSchema } from '@/lib/validation/authSchemas'
 import { validateBody } from '@/lib/validation/helpers'
 import { rateLimit, limiters } from '@/lib/rate-limit'
@@ -83,6 +83,14 @@ export async function POST(request) {
       recipientName: role === 'customer' ? (fullName || email.split('@')[0]) : (businessName || 'there'),
       isVendor: role === 'vendor',
     }).catch(() => {})
+
+    if (role === 'vendor') {
+      sendAdminNewVendorEmail({
+        vendorName: businessName || 'My Business',
+        vendorEmail: email,
+        categories: categories.length > 0 ? categories : ['Other'],
+      }).catch(() => {})
+    }
 
     return NextResponse.json({ success: true })
   } catch (err) {

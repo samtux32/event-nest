@@ -94,7 +94,18 @@ export default function LandingPage() {
         const vendorsData = await vendorsRes.json();
         const catsData = await catsRes.json();
         if (vendorsRes.ok) {
-          setFeaturedVendors(vendorsData.vendors.slice(0, 4));
+          // Score and rank vendors — best profiles first
+          const scored = vendorsData.vendors.map(v => {
+            let s = 0;
+            if (v.image) s += 20;
+            if (v.startingPrice) s += 15;
+            if (v.location) s += 10;
+            if (v.rating !== null) s += 15 + Math.min(v.rating * 4, 20);
+            if (v.reviews > 0) s += Math.min(v.reviews * 2, 20);
+            return { ...v, _score: s };
+          });
+          scored.sort((a, b) => b._score - a._score);
+          setFeaturedVendors(scored.slice(0, 4));
         }
         if (catsData.categories?.length > 0) {
           setActiveCategories(catsData.categories);

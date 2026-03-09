@@ -14,6 +14,18 @@ function parsePrice(str) {
   return Number(str.replace(/[£,]/g, ''));
 }
 
+// Quality score for "Recommended" sort — weights profile completeness, rating, and reviews
+function vendorScore(v) {
+  let score = 0;
+  if (v.image) score += 20;
+  if (v.startingPrice) score += 15;
+  if (v.location) score += 10;
+  if (v.description && v.description.length > 10) score += 10;
+  if (v.rating !== null) score += 15 + Math.min(v.rating * 4, 20); // up to 35 pts for 5★
+  if (v.reviews > 0) score += Math.min(v.reviews * 2, 20); // up to 20 pts
+  return score;
+}
+
 function haversineKm(lat1, lng1, lat2, lng2) {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -132,7 +144,7 @@ export default function CustomerMarketplace() {
   const [locationError, setLocationError] = useState('');
 
   // Sort & filter state
-  const [sortBy, setSortBy] = useState('rating');
+  const [sortBy, setSortBy] = useState('recommended');
   const [showFilters, setShowFilters] = useState(false);
   const [minRating, setMinRating] = useState(0);
   const [minPriceFilter, setMinPriceFilter] = useState(null); // null = unset
@@ -339,6 +351,9 @@ export default function CustomerMarketplace() {
       return matchesRating && matchesPrice;
     })
     .sort((a, b) => {
+      if (sortBy === 'recommended') {
+        return vendorScore(b) - vendorScore(a);
+      }
       if (sortBy === 'rating') {
         return (b.rating ?? -1) - (a.rating ?? -1);
       }
@@ -575,6 +590,7 @@ export default function CustomerMarketplace() {
             onChange={e => setSortBy(e.target.value)}
             className="px-4 py-2 border border-gray-200 rounded-lg outline-none cursor-pointer"
           >
+            <option value="recommended">Recommended</option>
             <option value="rating">Highest Rated</option>
             <option value="price_asc">Price: Low to High</option>
             <option value="price_desc">Price: High to Low</option>

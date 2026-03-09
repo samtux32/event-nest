@@ -165,6 +165,7 @@ model VendorProfile {
   promotions           Promotion[]
   faqs                 VendorFAQ[]
   blockedDates         BlockedDate[]
+  lastNudgedAt         DateTime?     @map("last_nudged_at")
   referralCode         String?       @unique @map("referral_code")
   referredByVendorId   String?       @map("referred_by_vendor_id") @db.Uuid
   referredByVendor     VendorProfile? @relation("VendorReferrals", fields: [referredByVendorId], references: [id], onDelete: SetNull)
