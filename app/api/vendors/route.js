@@ -4,7 +4,8 @@ import { NextResponse } from 'next/server'
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const categories = searchParams.get('categories')
-  const search = searchParams.get('search')
+  const rawSearch = searchParams.get('search')
+  const search = rawSearch ? rawSearch.trim().slice(0, 200) : null
   const limit = Math.min(parseInt(searchParams.get('limit')) || 24, 100)
   const offset = parseInt(searchParams.get('offset')) || 0
 
@@ -12,19 +13,20 @@ export async function GET(request) {
     const where = { isApproved: true }
 
     if (categories) {
-      const list = categories.split(',').map(c => c.trim()).filter(Boolean)
+      const list = categories.split(',').map(c => c.trim()).filter(Boolean).slice(0, 20)
       if (list.length > 0) {
         where.categories = { hasSome: list }
       }
     }
 
     if (search) {
-      // First, find vendor IDs whose keywords partially match the search term
+      // Parameterized query — search term is safely passed as a Prisma parameter
+      const searchPattern = `%${search}%`
       const keywordMatchIds = await prisma.$queryRaw`
         SELECT id::text FROM vendor_profiles
         WHERE EXISTS (
           SELECT 1 FROM unnest(keywords) AS kw
-          WHERE kw ILIKE ${'%' + search + '%'}
+          WHERE kw ILIKE ${searchPattern}
         )
       `.then(rows => rows.map(r => r.id))
 

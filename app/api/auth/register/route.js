@@ -2,14 +2,15 @@ import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendWelcomeEmail } from '@/lib/email'
+import { registerSchema } from '@/lib/validation/authSchemas'
+import { validateBody } from '@/lib/validation/helpers'
 
 export async function POST(request) {
-  const body = await request.json()
-  const { role, fullName, businessName, categories, category, userId, userEmail, ref: referralCode } = body
+  const { data: body, response: validationError } = await validateBody(request, registerSchema)
+  if (validationError) return validationError
 
-  if (!role || (role !== 'customer' && role !== 'vendor')) {
-    return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
-  }
+  const { role, fullName, businessName, userId, userEmail, ref: referralCode } = body
+  const categories = body.categories || (body.category ? [body.category] : [])
 
   // Try to get user from session first
   let id = null
@@ -22,8 +23,6 @@ export async function POST(request) {
     id = user.id
     email = user.email
   } else if (userId && userEmail) {
-    // Fallback for when email confirmation is enabled -
-    // the client passes the user info from the signUp response
     id = userId
     email = userEmail
   } else {
@@ -31,7 +30,6 @@ export async function POST(request) {
   }
 
   try {
-    // Check if user already exists in our DB
     const existing = await prisma.user.findUnique({ where: { id } })
     if (existing) {
       return NextResponse.json({ error: 'User already registered' }, { status: 409 })
@@ -51,7 +49,6 @@ export async function POST(request) {
         },
       })
     } else {
-      // Look up referrer if a referral code was provided
       let referredByVendorId = null;
       if (referralCode) {
         const referrer = await prisma.vendorProfile.findUnique({
@@ -69,7 +66,7 @@ export async function POST(request) {
           vendorProfile: {
             create: {
               businessName: businessName || 'My Business',
-              categories: Array.isArray(categories) && categories.length > 0 ? categories : category ? [category] : ['Other'],
+              categories: categories.length > 0 ? categories : ['Other'],
               ...(referredByVendorId ? { referredByVendorId } : {}),
             },
           },
@@ -77,7 +74,6 @@ export async function POST(request) {
       })
     }
 
-    // Fire-and-forget welcome email
     sendWelcomeEmail({
       recipientEmail: email,
       recipientName: role === 'customer' ? (fullName || email.split('@')[0]) : (businessName || 'there'),

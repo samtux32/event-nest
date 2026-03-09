@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { validateFileExtension } from '@/lib/sanitize'
 
 export async function POST(request) {
   const supabase = await createClient()
@@ -23,13 +24,20 @@ export async function POST(request) {
       return NextResponse.json({ error: 'file and type are required' }, { status: 400 })
     }
 
+    if (!['cover', 'profile', 'portfolio', 'document'].includes(type)) {
+      return NextResponse.json({ error: 'Invalid upload type' }, { status: 400 })
+    }
+
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json({ error: 'File must be under 10MB' }, { status: 400 })
     }
 
     const isDocument = type === 'document'
     const bucket = isDocument ? 'vendor-documents' : 'vendor-images'
-    const ext = file.name.split('.').pop()
+    const ext = validateFileExtension(file.name, isDocument ? 'document' : 'image')
+    if (!ext) {
+      return NextResponse.json({ error: 'File type not allowed' }, { status: 400 })
+    }
     const path = `${user.id}/${type}-${Date.now()}.${ext}`
 
     // Use service role client for uploads (bypasses RLS)

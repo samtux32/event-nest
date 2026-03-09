@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendNewReviewEmail } from '@/lib/email'
+import { createReviewSchema } from '@/lib/validation/reviewSchemas'
+import { validateBody } from '@/lib/validation/helpers'
 
 // Public endpoint: fetch all reviews for a vendor (no auth required)
 export async function GET(request) {
@@ -42,16 +44,12 @@ export async function POST(request) {
   const role = user.user_metadata?.role
   if (role !== 'customer' && role !== 'vendor') return NextResponse.json({ error: 'Customers only' }, { status: 403 })
 
+  const { data: body, response: validationError } = await validateBody(request, createReviewSchema)
+  if (validationError) return validationError
+
+  const { bookingId, rating, text, photos } = body
+
   try {
-    const { bookingId, rating, text, photos } = await request.json()
-
-    if (!bookingId || !rating || !text) {
-      return NextResponse.json({ error: 'bookingId, rating, and text are required' }, { status: 400 })
-    }
-    if (rating < 1 || rating > 5) {
-      return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 400 })
-    }
-
     let dbUser = await prisma.user.findUnique({ where: { id: user.id }, include: { customerProfile: true } })
     if (!dbUser) {
       dbUser = await prisma.user.findUnique({ where: { email: user.email }, include: { customerProfile: true } })

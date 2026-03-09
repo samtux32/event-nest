@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { updateVendorProfileSchema } from '@/lib/validation/vendorSchemas'
 
 export async function GET() {
   const supabase = await createClient()
@@ -76,7 +77,13 @@ export async function PUT(request) {
   }
 
   try {
-    const body = await request.json()
+    const raw = await request.json()
+    const validation = updateVendorProfileSchema.safeParse(raw)
+    if (!validation.success) {
+      const msg = validation.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ')
+      return NextResponse.json({ error: msg }, { status: 400 })
+    }
+    const body = validation.data
 
     // Find vendor profile — try by Supabase auth ID first, then email fallback
     let vendorProfile = await prisma.vendorProfile.findUnique({ where: { userId: user.id } })
@@ -150,7 +157,7 @@ export async function PUT(request) {
       referralCode = `${nameSlug}-${rand}`;
     }
 
-    // Update vendor profile
+    // Update vendor profile — raw text stored, zod validates shape/length
     const updated = await prisma.vendorProfile.update({
       where: { id: vendorProfile.id },
       data: {
@@ -158,6 +165,7 @@ export async function PUT(request) {
         ...(Array.isArray(body.categories) ? { categories: body.categories } : {}),
         description: body.description || null,
         location: body.location || null,
+        ...(body.tagline !== undefined ? { tagline: body.tagline || null } : {}),
         responseTime: body.responseTime || null,
         pricingModel: pricingModelMap[body.pricingModel] || 'per_day',
         pricePerDay: body.pricePerDay ? parseFloat(body.pricePerDay) : null,

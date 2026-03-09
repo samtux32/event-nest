@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { validateFileExtension } from '@/lib/sanitize'
 
 export async function POST(request) {
   const supabase = await createClient()
@@ -16,12 +17,16 @@ export async function POST(request) {
       return NextResponse.json({ error: 'File must be under 10MB' }, { status: 400 })
     }
 
+    const ext = validateFileExtension(file.name)
+    if (!ext) {
+      return NextResponse.json({ error: 'File type not allowed' }, { status: 400 })
+    }
+
     // Determine file type
     let attachmentType = 'file'
     if (file.type.startsWith('image/')) attachmentType = 'image'
     else if (file.type === 'application/pdf') attachmentType = 'pdf'
 
-    const ext = file.name.split('.').pop()
     const path = `${user.id}/${Date.now()}.${ext}`
 
     const admin = createAdminClient(

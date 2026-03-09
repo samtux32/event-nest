@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { vendorFaqSchema } from '@/lib/validation/vendorSchemas'
+import { validateBody } from '@/lib/validation/helpers'
 
 async function getVendorProfile(supabase) {
   const { data: { user } } = await supabase.auth.getUser()
@@ -37,11 +39,10 @@ export async function POST(request) {
     const vp = await getVendorProfile(supabase)
     if (!vp) return NextResponse.json({ error: 'Vendor profile not found' }, { status: 403 })
 
-    const body = await request.json()
+    const { data: body, response: validationError } = await validateBody(request, vendorFaqSchema)
+    if (validationError) return validationError
+
     const { question, answer } = body
-    if (!question?.trim() || !answer?.trim()) {
-      return NextResponse.json({ error: 'Question and answer are required' }, { status: 400 })
-    }
 
     const maxSort = await prisma.vendorFAQ.aggregate({
       where: { vendorId: vp.id },

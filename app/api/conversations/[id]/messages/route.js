@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { sendNewMessageEmail } from '@/lib/email'
 import { createNotification } from '@/lib/notifications'
+import { sendMessageSchema } from '@/lib/validation/messageSchemas'
 
 async function getDbUserId(authUserId, email) {
   let dbUser = await prisma.user.findUnique({ where: { id: authUserId }, select: { id: true } })
@@ -163,11 +164,18 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  const { text, attachmentUrl, attachmentName, attachmentType } = await request.json()
-
-  if (!text?.trim() && !attachmentUrl) {
-    return NextResponse.json({ error: 'Message text or attachment is required' }, { status: 400 })
+  let body
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
+  const result = sendMessageSchema.safeParse(body)
+  if (!result.success) {
+    const msg = result.error.issues.map(i => i.message).join(', ')
+    return NextResponse.json({ error: msg }, { status: 400 })
+  }
+  const { text, attachmentUrl, attachmentName, attachmentType } = result.data
 
   try {
     // Verify user is part of this conversation
