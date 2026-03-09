@@ -25,7 +25,7 @@ const nextConfig = {
 };
 
 module.exports = withSentryConfig(nextConfig, {
-  org: 'event-nest',
+  org: 'event-nest-group-limited',
   project: 'event-nest',
   silent: true, // suppress Sentry build output noise
   disableLogger: true,
