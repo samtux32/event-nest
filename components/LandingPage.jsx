@@ -5,15 +5,15 @@ import Link from 'next/link';
 import { Star, MapPin, Search, Calendar, PartyPopper } from 'lucide-react';
 
 const categories = [
-  { name: 'Catering', icon: '🍽️' },
-  { name: 'Photography', icon: '📸' },
-  { name: 'Videography', icon: '🎬' },
-  { name: 'Florist', icon: '💐' },
-  { name: 'DJ', icon: '🎧' },
-  { name: 'Live Band/Music', icon: '🎵' },
-  { name: 'Venue', icon: '🏛️' },
-  { name: 'Decorator/Stylist', icon: '✨' },
-  { name: 'Cake', icon: '🎂' },
+  { name: 'Catering', icon: '🍽️', slug: 'caterers' },
+  { name: 'Photography', icon: '📸', slug: 'photographers' },
+  { name: 'Videography', icon: '🎬', slug: 'videographers' },
+  { name: 'Florist', icon: '💐', slug: 'florists' },
+  { name: 'DJ', icon: '🎧', slug: 'djs' },
+  { name: 'Live Band/Music', icon: '🎵', slug: 'live-bands' },
+  { name: 'Venue', icon: '🏛️', slug: 'venues' },
+  { name: 'Decorator/Stylist', icon: '✨', slug: 'decorators' },
+  { name: 'Cake', icon: '🎂', slug: 'cake-makers' },
 ];
 
 function VendorCard({ vendor }) {
@@ -191,7 +191,7 @@ export default function LandingPage() {
             {categories.map((cat) => (
               <Link
                 key={cat.name}
-                href="/marketplace"
+                href={`/vendors/${cat.slug}`}
                 className="bg-white rounded-xl p-5 text-center shadow-sm border border-gray-100 hover:shadow-md hover:border-purple-200 transition-all"
               >
                 <span className="text-3xl">{cat.icon}</span>
