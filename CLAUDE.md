@@ -14,6 +14,11 @@
 - Keep everything in JS — no TypeScript files
 - Don't add features or changes beyond what's explicitly requested
 
+## Schema Gotchas
+- `CustomerProfile` has NO `createdAt` — use `User` model with `role: 'customer'` filter for date-based customer queries
+- `verificationStatus` enum values: `pending | verified | rejected` — there is NO `unverified` value
+- `VendorProfile.verificationStatus` maps to column `vendor_verification_status` (to avoid conflict with `Document.verificationStatus`)
+
 ## Security
 - All API calls go through Next.js `/api/*` routes — frontend never calls external services directly
 - Input validation via zod schemas in `lib/validation/`

@@ -42,8 +42,8 @@ export async function GET() {
         orderBy: { createdAt: 'asc' },
       }),
       // Signups over last 30 days (customers)
-      prisma.customerProfile.findMany({
-        where: { createdAt: { gte: thirtyDaysAgo } },
+      prisma.user.findMany({
+        where: { role: 'customer', createdAt: { gte: thirtyDaysAgo } },
         select: { createdAt: true },
         orderBy: { createdAt: 'asc' },
       }),
