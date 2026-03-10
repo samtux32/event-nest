@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -32,6 +32,16 @@ function RegisterForm() {
   const isOAuth = searchParams.get('oauth') === 'true'
   const refCode = searchParams.get('ref') || ''
   const supabase = createClient()
+
+  // Auto-select role from query param (e.g. /register?role=vendor)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const roleParam = params.get('role')
+    if (roleParam === 'vendor' || roleParam === 'customer') {
+      setRole(roleParam)
+      setStep(2)
+    }
+  }, [])
 
   async function handleRegister(e) {
     e.preventDefault()
@@ -92,7 +102,7 @@ function RegisterForm() {
           role,
           fullName: fullName || undefined,
           businessName: businessName || undefined,
-          category: role === 'vendor' ? category : undefined,
+          categories: role === 'vendor' ? categories : undefined,
           userId: data.user?.id,
           userEmail: data.user?.email,
           ref: role === 'vendor' && refCode ? refCode : undefined,
