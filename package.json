@@ -13,7 +13,8 @@
     "cron:complete-bookings": "curl -H \"Authorization: Bearer $CRON_SECRET\" http://localhost:3000/api/cron/complete-bookings",
     "cron:event-reminders": "curl -H \"Authorization: Bearer $CRON_SECRET\" http://localhost:3000/api/cron/event-reminders",
     "cron:profile-nudge": "curl -H \"Authorization: Bearer $CRON_SECRET\" http://localhost:3000/api/cron/profile-nudge",
-    "cron:vendor-followup": "curl -H \"Authorization: Bearer $CRON_SECRET\" http://localhost:3000/api/cron/vendor-followup"
+    "cron:vendor-followup": "curl -H \"Authorization: Bearer $CRON_SECRET\" http://localhost:3000/api/cron/vendor-followup",
+    "marketing": "node marketing/social/generate-posts.js && node marketing/outreach/generate-vendor-outreach.js && node marketing/launch/generate-launch-campaign.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
@@ -42,6 +43,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.2.0",
+    "@playwright/test": "^1.58.2",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6"
