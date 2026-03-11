@@ -630,6 +630,31 @@ model PushSubscription {
   @@map("push_subscriptions")
 }
 
+// ═══════════════════════════════════════════════════
+// MARKETING / PRE-LAUNCH
+// ═══════════════════════════════════════════════════
+
+model Waitlist {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String   @unique
+  userType      String   @map("user_type")
+  businessName  String?  @map("business_name")
+  categories    String[] @default([])
+  name          String?
+  location      String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("waitlist")
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("newsletter_subscribers")
+}
+
 /// Tracks each time a customer views a vendor profile
 model ProfileView {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid

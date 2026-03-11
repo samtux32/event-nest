@@ -45,6 +45,7 @@
     "@capacitor/cli": "^8.2.0",
     "@playwright/test": "^1.58.2",
     "autoprefixer": "^10.4.16",
+    "googleapis": "^171.4.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6"
   }
