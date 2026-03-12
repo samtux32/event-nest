@@ -38,7 +38,7 @@ function LoginForm() {
     if (error) {
       if (error.message?.toLowerCase().includes('email not confirmed')) {
         setError('Please verify your email first — check your inbox for a confirmation link, then try logging in again.')
-      } else if (error.message?.toLowerCase().includes('invalid login credentials')) {
+      } else if (error.message?.toLowerCase().includes('invalid') || error.code === 'invalid_credentials' || error.status === 400) {
         setError('password_reset_hint')
       } else {
         setError(error.message)
