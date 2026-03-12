@@ -67,16 +67,17 @@ function LoginForm() {
 
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          {error && (
-            <div className={`mb-4 p-3 rounded-lg text-sm ${error === 'password_reset_hint' ? 'bg-amber-50 border border-amber-200 text-amber-800' : 'bg-red-50 border border-red-200 text-red-700'}`}>
-              {error === 'password_reset_hint' ? (
-                <>
-                  Incorrect email or password. If you haven&apos;t logged in recently, you may need to{' '}
-                  <Link href="/forgot-password" className="font-semibold underline hover:text-amber-900">
-                    reset your password
-                  </Link>.
-                </>
-              ) : error}
+          <div className="mb-4 p-3 rounded-lg text-sm bg-amber-50 border border-amber-200 text-amber-800">
+            We&apos;ve recently upgraded our systems. If you had an account before, please{' '}
+            <Link href="/forgot-password" className="font-semibold underline hover:text-amber-900">
+              reset your password
+            </Link>{' '}
+            before logging in.
+          </div>
+
+          {error && error !== 'password_reset_hint' && (
+            <div className="mb-4 p-3 rounded-lg text-sm bg-red-50 border border-red-200 text-red-700">
+              {error}
             </div>
           )}
 
