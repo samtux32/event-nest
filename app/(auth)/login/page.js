@@ -38,10 +38,9 @@ function LoginForm() {
     if (error) {
       if (error.message?.toLowerCase().includes('email not confirmed')) {
         setError('Please verify your email first — check your inbox for a confirmation link, then try logging in again.')
-      } else if (error.message?.toLowerCase().includes('invalid') || error.code === 'invalid_credentials' || error.status === 400) {
-        setError('password_reset_hint')
       } else {
-        setError(error.message)
+        // Any other login failure — prompt password reset (temporary, remove after migration period)
+        setError('password_reset_hint')
       }
       setLoading(false)
       return
@@ -67,13 +66,15 @@ function LoginForm() {
 
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="mb-4 p-3 rounded-lg text-sm bg-amber-50 border border-amber-200 text-amber-800">
-            We&apos;ve recently upgraded our systems. If you had an account before, please{' '}
-            <Link href="/forgot-password" className="font-semibold underline hover:text-amber-900">
-              reset your password
-            </Link>{' '}
-            before logging in.
-          </div>
+          {error === 'password_reset_hint' && (
+            <div className="mb-4 p-3 rounded-lg text-sm bg-amber-50 border border-amber-200 text-amber-800">
+              We&apos;ve recently upgraded our systems. Please{' '}
+              <Link href="/forgot-password" className="font-semibold underline hover:text-amber-900">
+                reset your password
+              </Link>{' '}
+              to log in.
+            </div>
+          )}
 
           {error && error !== 'password_reset_hint' && (
             <div className="mb-4 p-3 rounded-lg text-sm bg-red-50 border border-red-200 text-red-700">
