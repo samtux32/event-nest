@@ -4,7 +4,8 @@ import { NextResponse } from 'next/server'
 export async function GET(request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const raw = searchParams.get('redirectTo') || '/'
+  const type = searchParams.get('type')
+  const raw = searchParams.get('redirectTo') || searchParams.get('redirect_to') || '/'
   const redirectTo = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/'
 
   if (code) {
@@ -12,6 +13,11 @@ export async function GET(request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
+      // Password recovery — send to reset password page
+      if (type === 'recovery' || redirectTo === '/reset-password') {
+        return NextResponse.redirect(`${origin}/reset-password`)
+      }
+
       // Check if user has a role set (returning user vs first-time OAuth)
       const { data: { user } } = await supabase.auth.getUser()
       if (user && !user.user_metadata?.role) {
