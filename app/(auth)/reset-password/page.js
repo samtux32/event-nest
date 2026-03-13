@@ -17,17 +17,31 @@ export default function ResetPasswordPage() {
   const supabase = createClient()
 
   useEffect(() => {
-    // Supabase sets the session from the URL hash automatically
-    // We just need to wait for it to be ready
+    // Listen for password recovery event
     supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
         setReady(true)
       }
     })
-    // Also check if already in a session (e.g. page refreshed)
+
+    // Check if already in a session (redirected from AuthProvider)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setReady(true)
     })
+
+    // Fallback: if we have a session after a short delay, show the form
+    const timeout = setTimeout(() => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setReady(true)
+        } else {
+          setError('Your reset link has expired. Please request a new one.')
+          setReady(true)
+        }
+      })
+    }, 3000)
+
+    return () => clearTimeout(timeout)
   }, [])
 
   async function handleSubmit(e) {
