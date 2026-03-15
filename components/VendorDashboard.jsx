@@ -55,6 +55,12 @@ function ReviewCustomerModal({ booking, onClose, onSubmitted }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (rating === 0) { setError('Please select a rating'); return; }
@@ -176,6 +182,7 @@ export default function VendorDashboard() {
   const [reviewModalBooking, setReviewModalBooking] = useState(null);
   const [referralCode, setReferralCode] = useState(null);
   const [referralCount, setReferralCount] = useState(0);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -210,8 +217,8 @@ export default function VendorDashboard() {
           if (p.referralCode) setReferralCode(p.referralCode);
           if (p.referralCount !== undefined) setReferralCount(p.referralCount);
         }
-      } catch (err) {
-        console.error('Failed to fetch dashboard data:', err);
+      } catch {
+        setFetchError(true);
       } finally {
         setLoading(false);
       }
@@ -274,6 +281,18 @@ export default function VendorDashboard() {
     <AppHeader />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {fetchError && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
+            <AlertTriangle size={20} className="text-red-600 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="font-medium text-red-800">Failed to load dashboard data</p>
+              <p className="text-sm text-red-600">Please check your connection and try refreshing the page.</p>
+            </div>
+            <button onClick={() => window.location.reload()} className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700">
+              Retry
+            </button>
+          </div>
+        )}
         {authProfile?.isApproved === false && (
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3">
             <AlertTriangle size={20} className="text-amber-600 flex-shrink-0" />

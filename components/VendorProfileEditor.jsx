@@ -272,7 +272,13 @@ export default function EditVendorProfile() {
     formData.append('file', file);
     formData.append('type', type);
     const res = await fetch('/api/vendors/upload', { method: 'POST', body: formData });
-    if (!res.ok) throw new Error('File upload failed');
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      if (res.status === 413 || errData.error?.includes('size')) {
+        throw new Error('File is too large. Maximum size is 10MB.');
+      }
+      throw new Error(errData.error || 'File upload failed. Please try again.');
+    }
     const data = await res.json();
     return data.url;
   };

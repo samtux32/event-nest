@@ -80,6 +80,7 @@ export default function VendorCalendar() {
   const [blockReason, setBlockReason] = useState('');
   const [blockSubmitting, setBlockSubmitting] = useState(false);
   const [quickBlocking, setQuickBlocking] = useState(false);
+  const [actionError, setActionError] = useState(null);
 
   // Fetch blocked dates
   useEffect(() => {
@@ -180,9 +181,12 @@ export default function VendorCalendar() {
         setProposalSentIds(prev => new Set([...prev, proposingFor.id]));
         setProposingFor(null);
         setProposeDateInput('');
+        setActionError(null);
+      } else {
+        setActionError('Failed to propose date. Please try again.');
       }
-    } catch (err) {
-      console.error('Failed to propose date:', err);
+    } catch {
+      setActionError('Failed to propose date. Please check your connection.');
     } finally {
       setProposalSubmitting(false);
     }
@@ -210,9 +214,12 @@ export default function VendorCalendar() {
         });
         if (res.ok) {
           setBlockedDates(prev => prev.filter(bd => bd.id !== blocked.id));
+          setActionError(null);
+        } else {
+          setActionError('Failed to unblock date. Please try again.');
         }
-      } catch (err) {
-        console.error('Failed to unblock date:', err);
+      } catch {
+        setActionError('Failed to unblock date. Please check your connection.');
       }
     } else {
       // Show reason input
@@ -234,9 +241,12 @@ export default function VendorCalendar() {
       if (res.ok) {
         const data = await res.json();
         setBlockedDates(prev => [...prev, data.blockedDate]);
+        setActionError(null);
+      } else {
+        setActionError('Failed to block date. Please try again.');
       }
-    } catch (err) {
-      console.error('Failed to block date:', err);
+    } catch {
+      setActionError('Failed to block date. Please check your connection.');
     } finally {
       setBlockSubmitting(false);
       setBlockingDate(null);
@@ -326,6 +336,14 @@ export default function VendorCalendar() {
       <AppHeader />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {actionError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center justify-between">
+            <span>{actionError}</span>
+            <button onClick={() => setActionError(null)} className="text-red-500 hover:text-red-700 ml-3 flex-shrink-0">
+              <X size={16} />
+            </button>
+          </div>
+        )}
         <div className="mb-8">
           <h1 className="text-2xl sm:text-4xl font-bold mb-2">Calendar</h1>
           <p className="text-gray-600">Manage your upcoming events and bookings</p>
