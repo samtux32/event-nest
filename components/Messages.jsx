@@ -27,6 +27,7 @@ export default function Messages() {
   const [messageInput, setMessageInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingConvos, setLoadingConvos] = useState(true);
+  const [convoError, setConvoError] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -40,6 +41,7 @@ export default function Messages() {
   // Fetch conversations
   useEffect(() => {
     async function fetchConversations() {
+      setConvoError(false);
       try {
         const res = await fetch('/api/conversations');
         const data = await res.json();
@@ -48,9 +50,11 @@ export default function Messages() {
           if (data.conversations.length > 0) {
             setSelectedConversation(prev => prev || data.conversations[0].id);
           }
+        } else {
+          setConvoError(true);
         }
-      } catch (err) {
-        console.error('Failed to fetch conversations:', err);
+      } catch {
+        setConvoError(true);
       } finally {
         setLoadingConvos(false);
       }
@@ -378,11 +382,19 @@ export default function Messages() {
               <div className="text-center">
                 <MessageCircle className="mx-auto text-gray-300 mb-4" size={48} />
                 <p className="text-lg font-medium">
-                  {loadingConvos ? 'Loading conversations...' : 'No conversations yet'}
+                  {loadingConvos ? 'Loading conversations...' : convoError ? 'Couldn\'t load messages' : 'No conversations yet'}
                 </p>
                 <p className="text-sm">
-                  {loadingConvos ? '' : 'Conversations will appear here when customers message you'}
+                  {loadingConvos ? '' : convoError ? 'Please check your connection and try again' : 'Conversations will appear here when customers message you'}
                 </p>
+                {convoError && (
+                  <button
+                    onClick={() => { setLoadingConvos(true); setConvoError(false); fetch('/api/conversations').then(r => r.json()).then(data => { if (data.conversations) { setConversations(data.conversations); if (data.conversations.length > 0) setSelectedConversation(prev => prev || data.conversations[0].id); } }).catch(() => setConvoError(true)).finally(() => setLoadingConvos(false)); }}
+                    className="mt-3 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700"
+                  >
+                    Retry
+                  </button>
+                )}
               </div>
             </div>
           )}

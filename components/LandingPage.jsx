@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Star, MapPin, Search, Calendar, PartyPopper, BadgeCheck } from 'lucide-react';
 
 const CATEGORY_ICONS = {
@@ -43,9 +44,9 @@ const CATEGORY_SLUG_MAP = {
 function VendorCard({ vendor }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-      <div className="h-48 bg-gradient-to-br from-purple-100 to-purple-50 flex items-center justify-center">
+      <div className="h-48 bg-gradient-to-br from-purple-100 to-purple-50 flex items-center justify-center relative">
         {vendor.image ? (
-          <img src={vendor.image} alt={vendor.name} className="w-full h-full object-cover" />
+          <Image src={vendor.image} alt={vendor.name} fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 25vw" />
         ) : (
           <span className="text-5xl">🏪</span>
         )}
@@ -128,7 +129,7 @@ export default function LandingPage() {
       <header className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Event Nest" className="w-14 h-14 rounded-xl object-cover" />
+            <Image src="/logo.png" alt="Event Nest" width={56} height={56} className="rounded-xl object-cover" />
             <span className="font-bold text-xl text-gray-900">Event Nest</span>
           </div>
           <div className="flex items-center gap-4">

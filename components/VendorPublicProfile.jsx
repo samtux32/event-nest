@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { trackVendorView } from '@/components/RecentlyViewed';
@@ -351,10 +352,13 @@ export default function VendorPublicProfile({ vendorId }) {
       {/* Cover Image */}
       <div className="relative h-48 sm:h-96 bg-gray-200">
         {vendor.coverImageUrl ? (
-          <img
+          <Image
             src={vendor.coverImageUrl}
             alt={vendor.businessName}
-            className="w-full h-full object-cover"
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-purple-400 to-purple-600" />
@@ -380,11 +384,15 @@ export default function VendorPublicProfile({ vendorId }) {
             )}
             <div className="flex items-start gap-4">
               {vendor.profileImageUrl ? (
-                <img
-                  src={vendor.profileImageUrl}
-                  alt={vendor.businessName}
-                  className="w-20 h-20 sm:w-32 sm:h-32 rounded-2xl object-cover border-4 border-white shadow-lg flex-shrink-0"
-                />
+                <div className="relative w-20 h-20 sm:w-32 sm:h-32 flex-shrink-0">
+                  <Image
+                    src={vendor.profileImageUrl}
+                    alt={vendor.businessName}
+                    fill
+                    sizes="128px"
+                    className="rounded-2xl object-cover border-4 border-white shadow-lg"
+                  />
+                </div>
               ) : (
                 <div className="w-20 h-20 sm:w-32 sm:h-32 rounded-2xl bg-purple-100 border-4 border-white shadow-lg flex items-center justify-center flex-shrink-0">
                   <span className="text-2xl sm:text-4xl font-bold text-purple-600">
@@ -580,12 +588,14 @@ export default function VendorPublicProfile({ vendorId }) {
                   {vendor.portfolioImages.map((image) => (
                     <div
                       key={image.id}
-                      className="aspect-square rounded-xl overflow-hidden cursor-pointer group"
+                      className="aspect-square rounded-xl overflow-hidden cursor-pointer group relative"
                     >
-                      <img
+                      <Image
                         src={image.imageUrl}
                         alt={image.caption || 'Portfolio image'}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                     </div>
                   ))}

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, WifiOff } from 'lucide-react';
 import Link from 'next/link';
 
 function timeAgo(dateStr) {
@@ -20,13 +20,38 @@ export default function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const ref = useRef(null);
+  const failCountRef = useRef(0);
 
   useEffect(() => {
     fetchNotifications();
-    // Poll every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+
+    // Poll every 30s, but only when tab is visible and pause on repeated failures
+    let interval;
+    function startPolling() {
+      clearInterval(interval);
+      const delay = Math.min(30000 * Math.pow(2, failCountRef.current), 300000); // backoff up to 5min
+      interval = setInterval(() => {
+        if (!document.hidden) fetchNotifications();
+      }, delay);
+    }
+    startPolling();
+
+    // Re-fetch immediately when tab becomes visible again
+    function handleVisibility() {
+      if (!document.hidden) {
+        fetchNotifications();
+        failCountRef.current = 0;
+        startPolling();
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   // Close on outside click
@@ -45,26 +70,38 @@ export default function NotificationBell() {
       if (res.ok) {
         setNotifications(data.notifications);
         setUnreadCount(data.unreadCount);
+        setFetchError(false);
+        failCountRef.current = 0;
+      } else {
+        failCountRef.current++;
+        setFetchError(true);
       }
-    } catch {}
+    } catch {
+      failCountRef.current++;
+      setFetchError(true);
+    }
   }
 
   async function markAllRead() {
-    await fetch('/api/notifications', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    });
+    try {
+      await fetch('/api/notifications', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+    } catch {}
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     setUnreadCount(0);
   }
 
   async function markRead(id) {
-    await fetch('/api/notifications', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notificationId: id }),
-    });
+    try {
+      await fetch('/api/notifications', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationId: id }),
+      });
+    } catch {}
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
   }
@@ -72,9 +109,12 @@ export default function NotificationBell() {
   const handleBellClick = () => {
     const opening = !open;
     setOpen(opening);
-    // Mark all as read when opening the dropdown
     if (opening && unreadCount > 0) {
       markAllRead();
+    }
+    // Retry fetch if in error state
+    if (opening && fetchError) {
+      fetchNotifications();
     }
   };
 
@@ -83,7 +123,7 @@ export default function NotificationBell() {
       <button
         onClick={handleBellClick}
         className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        title="Notifications"
+        aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
       >
         <Bell size={20} className="text-gray-600" />
         {unreadCount > 0 && (
@@ -94,13 +134,28 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="fixed left-2 right-2 top-16 z-50 md:absolute md:left-auto md:right-0 md:top-12 md:w-80 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+        <div
+          className="fixed left-2 right-2 top-16 z-50 md:absolute md:left-auto md:right-0 md:top-12 md:w-80 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
+          role="dialog"
+          aria-label="Notifications"
+        >
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <h3 className="font-semibold text-gray-900">Notifications</h3>
           </div>
 
           <div className="max-h-80 overflow-y-auto">
-            {notifications.length === 0 ? (
+            {fetchError ? (
+              <div className="text-center py-8 px-4">
+                <WifiOff className="mx-auto text-gray-300 mb-2" size={24} />
+                <p className="text-gray-500 text-sm mb-2">Couldn't load notifications</p>
+                <button
+                  onClick={fetchNotifications}
+                  className="text-purple-600 text-sm font-medium hover:underline"
+                >
+                  Tap to retry
+                </button>
+              </div>
+            ) : notifications.length === 0 ? (
               <div className="text-center py-8 text-gray-400 text-sm">
                 No notifications yet
               </div>

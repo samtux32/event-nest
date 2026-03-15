@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Search, Heart, Star, MapPin, SlidersHorizontal, X, GitCompareArrows, Clock, BadgeCheck } from 'lucide-react';
+import { Search, Heart, Star, MapPin, SlidersHorizontal, X, GitCompareArrows, Clock, BadgeCheck, WifiOff } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import AppHeader from './AppHeader';
 import AuthPromptModal from './AuthPromptModal';
@@ -74,6 +75,7 @@ export default function CustomerMarketplace() {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [fetchError, setFetchError] = useState(null);
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [suggestedCategories, setSuggestedCategories] = useState([]);
@@ -200,6 +202,7 @@ export default function CustomerMarketplace() {
       setLoading(true);
       setOffset(0);
       setShouldResetPrice(true);
+      setFetchError(null);
       try {
         const params = new URLSearchParams();
         if (selectedCategories.length > 0) params.set('categories', selectedCategories.join(','));
@@ -212,9 +215,11 @@ export default function CustomerMarketplace() {
           setVendors(data.vendors);
           setHasMore(data.hasMore ?? false);
           setOffset(data.vendors.length);
+        } else {
+          setFetchError('Failed to load vendors. Please try again.');
         }
-      } catch (err) {
-        console.error('Failed to fetch vendors:', err);
+      } catch {
+        setFetchError('Something went wrong. Please check your connection and try again.');
       } finally {
         setLoading(false);
       }
@@ -680,10 +685,12 @@ export default function CustomerMarketplace() {
               >
                 <div className="relative h-48 sm:h-64">
                   {vendor.image ? (
-                    <img
+                    <Image
                       src={vendor.image}
                       alt={vendor.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
                     <div className="w-full h-full bg-purple-100 flex items-center justify-center">
@@ -758,6 +765,27 @@ export default function CustomerMarketplace() {
           </div>
         )}
 
+        {!loading && fetchError && (
+          <div className="text-center py-16">
+            <WifiOff className="mx-auto text-gray-300 mb-4" size={48} />
+            <p className="text-gray-600 text-lg mb-2">{fetchError}</p>
+            <button
+              onClick={() => {
+                setFetchError(null);
+                setLoading(true);
+                fetch(`/api/vendors?${buildParams(0).toString()}`)
+                  .then(r => r.json())
+                  .then(data => { setVendors(data.vendors); setHasMore(data.hasMore ?? false); setOffset(data.vendors.length); })
+                  .catch(() => setFetchError('Still unable to connect. Please try again later.'))
+                  .finally(() => setLoading(false));
+              }}
+              className="px-6 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {!loading && hasMore && (
           <div className="text-center mt-8">
             <button
@@ -770,7 +798,11 @@ export default function CustomerMarketplace() {
           </div>
         )}
 
-        {!loading && filteredVendors.length === 0 && (
+        {!loading && !hasMore && filteredVendors.length > 0 && !fetchError && (
+          <p className="text-center text-gray-400 text-sm mt-8">You've seen all vendors matching your criteria</p>
+        )}
+
+        {!loading && !fetchError && filteredVendors.length === 0 && (
           <div className="text-center py-20">
             <Search className="mx-auto text-gray-300 mb-4" size={64} />
             <p className="text-gray-600 text-lg">No vendors found matching your criteria</p>
