@@ -207,7 +207,9 @@ export async function GET(request) {
     const hasMore = bookings.length > limit
     if (hasMore) bookings.pop()
 
-    return NextResponse.json({ bookings, hasMore })
+    const response = NextResponse.json({ bookings, hasMore })
+    response.headers.set('Cache-Control', 'private, max-age=10, stale-while-revalidate=30')
+    return response
   } catch (err) {
     console.error('Fetch bookings error:', err)
     return NextResponse.json({ error: 'Failed to fetch bookings' }, { status: 500 })

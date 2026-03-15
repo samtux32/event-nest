@@ -3,6 +3,7 @@ import { AuthProvider } from '@/components/AuthProvider'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import CookieConsent from '@/components/CookieConsent'
+import { ToastProvider } from '@/components/Toast'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 export const metadata = {
@@ -41,7 +42,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider><ToastProvider>{children}</ToastProvider></AuthProvider>
         <CookieConsent />
         <GoogleAnalytics />
         <Analytics />

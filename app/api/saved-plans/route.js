@@ -30,7 +30,9 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     })
 
-    return NextResponse.json({ plans })
+    const response = NextResponse.json({ plans })
+    response.headers.set('Cache-Control', 'private, max-age=15, stale-while-revalidate=60')
+    return response
   } catch (err) {
     console.error('GET /api/saved-plans error:', err)
     return NextResponse.json({ error: 'Failed to load plans' }, { status: 500 })

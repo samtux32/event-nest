@@ -187,22 +187,17 @@ export default function VendorDashboard() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [statsRes, bookingsRes, profileRes] = await Promise.all([
-          fetch('/api/bookings/stats'),
-          fetch('/api/bookings?limit=20'),
-          fetch('/api/vendors/profile'),
-        ]);
-        const [statsData, bookingsData] = await Promise.all([statsRes.json(), bookingsRes.json()]);
-        if (statsRes.ok) setStats(statsData);
-        if (bookingsRes.ok) {
-          setBookings(bookingsData.bookings);
-          setHasMore(bookingsData.hasMore ?? false);
-          setOffset(bookingsData.bookings.length);
+        const res = await fetch('/api/vendors/dashboard?limit=20');
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (data.stats) setStats(data.stats);
+        if (data.bookings) {
+          setBookings(data.bookings);
+          setHasMore(data.hasMore ?? false);
+          setOffset(data.bookings.length);
         }
-        if (profileRes.ok) {
-          const profileData = await profileRes.json();
-          const p = profileData.vendor || profileData;
-          // Calculate completion steps
+        if (data.vendor) {
+          const p = data.vendor;
           const steps = [
             { label: 'Business Info', done: !!(p.businessName && p.description && p.location), field: 'businessName' },
             { label: 'Photos', done: !!(p.profileImageUrl || (p.portfolioImages && p.portfolioImages.length > 0)), field: 'photos' },

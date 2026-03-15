@@ -29,7 +29,9 @@ export async function GET() {
       .filter(cat => counts[cat] > 0)
       .map(cat => ({ name: cat, count: counts[cat] }))
 
-    return NextResponse.json({ categories: active })
+    const response = NextResponse.json({ categories: active })
+    response.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300')
+    return response
   } catch (err) {
     console.error('Categories error:', err)
     return NextResponse.json({ categories: [] })
