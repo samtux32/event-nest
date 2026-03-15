@@ -70,7 +70,9 @@ export async function GET(request) {
       verified: v.verificationStatus === 'verified',
     }))
 
-    return NextResponse.json({ vendors: mapped, hasMore })
+    const response = NextResponse.json({ vendors: mapped, hasMore })
+    response.headers.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=120')
+    return response
   } catch (err) {
     console.error('Vendors list error:', err)
     return NextResponse.json({ error: 'Failed to fetch vendors' }, { status: 500 })

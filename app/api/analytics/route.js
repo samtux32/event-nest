@@ -70,6 +70,7 @@ export async function GET(request) {
       prisma.profileView.findMany({
         where: { vendorId: vendor.id, viewedAt: { gte: periodStart } },
         select: { viewedAt: true },
+        take: 1000,
       }),
       prisma.booking.findMany({
         where: { vendorId: vendor.id, createdAt: { gte: periodStart } },
@@ -81,6 +82,7 @@ export async function GET(request) {
       prisma.booking.findMany({
         where: { vendorId: vendor.id },
         select: { status: true, customerId: true },
+        take: 1000,
       }),
       // Quote acceptance stats
       prisma.quote.groupBy({
@@ -326,7 +328,7 @@ export async function GET(request) {
     // Upcoming revenue
     const upcomingRevenue = Math.round(parseFloat(upcomingRevenueAgg._sum.totalPrice || 0))
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       profileViews: currentViewsCount,
       profileViewsChange: isAllTime ? null : pctChange(currentViewsCount, prevViewsCount),
       inquiries: currentInquiries,
@@ -354,6 +356,8 @@ export async function GET(request) {
       repeatCustomerRate,
       upcomingRevenue,
     })
+    response.headers.set('Cache-Control', 'private, max-age=60, stale-while-revalidate=300')
+    return response
   } catch (err) {
     console.error('Analytics error:', err)
     return NextResponse.json({ error: 'Failed to load analytics' }, { status: 500 })

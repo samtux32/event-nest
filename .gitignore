@@ -39,3 +39,4 @@ marketing/**/*.json
 # Playwright
 test-results/
 playwright-report/
+.vercel

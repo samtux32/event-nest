@@ -118,7 +118,7 @@ public/
 - **Never use direct `prisma.notification.create()`** — always use `createNotification()` or `createNotificationInTx()`
 - **Never skip `prisma generate` in the build script** — Vercel will deploy a stale Prisma client
 - **Never forget to restart the dev server** after `prisma db push` or `prisma generate`
-- **Never use the direct DB host** (`db.xxx.supabase.co`) — it doesn't resolve; use the session pooler (`aws-1-ap-south-1.pooler.supabase.com`)
+- **Never use the direct DB host** (`db.xxx.supabase.co`) — it doesn't resolve; use the session pooler (`aws-1-eu-west-2.pooler.supabase.com`)
 
 ### Auth
 - **Never trust client-side role checks alone** — always verify on the server via `supabase.auth.getUser()`
