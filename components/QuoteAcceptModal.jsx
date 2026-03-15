@@ -14,6 +14,12 @@ export default function QuoteAcceptModal({ quote, onClose, onAccepted }) {
   const [confirmed, setConfirmed] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
   useEffect(() => { setMounted(true); }, []);
 
   const handleConfirm = async () => {

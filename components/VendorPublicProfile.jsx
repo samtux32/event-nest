@@ -87,6 +87,18 @@ export default function VendorPublicProfile({ vendorId }) {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [starFilter, setStarFilter] = useState(null);
 
+  // ESC key closes modals
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        if (showReviewsModal) setShowReviewsModal(false);
+        if (authModal) setAuthModal(null);
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [showReviewsModal, authModal]);
+
   // Load wishlist state for this vendor
   useEffect(() => {
     if (!user) return;

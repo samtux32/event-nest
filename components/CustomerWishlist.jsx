@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Heart, Star, MapPin, Search, Plus, X, FolderPlus, Check } from 'lucide-react';
 import AppHeader from './AppHeader';
 import ConfirmModal from './ConfirmModal';
@@ -15,6 +16,7 @@ export default function CustomerWishlist() {
   const [newGroupName, setNewGroupName] = useState('');
   const [openDropdown, setOpenDropdown] = useState(null); // vendorId
   const [deletingGroupId, setDeletingGroupId] = useState(null);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -29,8 +31,8 @@ export default function CustomerWishlist() {
         ]);
         if (wishlistRes.ok) setVendors(wishlistData.vendors ?? []);
         if (groupsRes.ok) setGroups(groupsData.groups ?? []);
-      } catch (err) {
-        console.error('Wishlist load error:', err);
+      } catch {
+        setFetchError(true);
       } finally {
         setLoading(false);
       }
@@ -208,8 +210,23 @@ export default function CustomerWishlist() {
           </div>
         )}
 
+        {/* Error state */}
+        {!loading && fetchError && (
+          <div className="text-center py-24">
+            <Heart className="mx-auto text-gray-200 mb-4" size={72} />
+            <h2 className="text-xl font-semibold text-gray-700 mb-2">Couldn't load your wishlist</h2>
+            <p className="text-gray-500 mb-6">Please check your connection and try again.</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Empty wishlist */}
-        {!loading && vendors.length === 0 && (
+        {!loading && !fetchError && vendors.length === 0 && (
           <div className="text-center py-24">
             <Heart className="mx-auto text-gray-200 mb-4" size={72} />
             <h2 className="text-xl font-semibold text-gray-700 mb-2">No saved vendors yet</h2>
@@ -248,10 +265,12 @@ export default function CustomerWishlist() {
                 >
                   <div className="relative h-56">
                     {vendor.image ? (
-                      <img
+                      <Image
                         src={vendor.image}
                         alt={vendor.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
                       <div className="w-full h-full bg-purple-100 flex items-center justify-center">

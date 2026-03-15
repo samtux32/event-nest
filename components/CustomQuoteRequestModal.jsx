@@ -1,11 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Send, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function CustomQuoteRequestModal({ vendor, onClose }) {
   const router = useRouter();
+
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
   const [eventType, setEventType] = useState('');
   const [eventDate, setEventDate] = useState('');
   const [eventTime, setEventTime] = useState('');

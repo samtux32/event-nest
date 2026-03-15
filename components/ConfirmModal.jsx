@@ -1,10 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { AlertTriangle } from 'lucide-react';
 
 export default function ConfirmModal({ title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', onConfirm, onCancel, destructive = true }) {
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') onCancel(); };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [onCancel]);
+
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" onClick={onCancel}>
       <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl" onClick={e => e.stopPropagation()}>

@@ -1,9 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Loader2, Send } from 'lucide-react';
 
 export default function QuoteForm({ conversationId, onClose, onSent }) {
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
   const [eventDate, setEventDate] = useState('');

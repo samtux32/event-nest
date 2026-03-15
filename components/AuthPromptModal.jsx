@@ -8,6 +8,11 @@ import Link from 'next/link';
 export default function AuthPromptModal({ message, redirectTo, onClose }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
 
   if (!mounted) return null;
 

@@ -59,6 +59,12 @@ function ReviewModal({ booking, onClose, onSubmitted }) {
   const [photos, setPhotos] = useState([]); // [{ file, preview }]
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
   const photoInputRef = React.useRef(null);
 
   const handlePhotoSelect = (e) => {
@@ -232,6 +238,7 @@ export default function CustomerBookings() {
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const [savedPlans, setSavedPlans] = useState([]);
   const [linkingBookingId, setLinkingBookingId] = useState(null); // booking id currently showing plan picker
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
@@ -254,8 +261,8 @@ export default function CustomerBookings() {
           const alreadyReviewed = new Set(data.bookings.filter(b => b.review).map(b => b.id));
           setReviewedIds(alreadyReviewed);
         }
-      } catch (err) {
-        console.error('Failed to fetch bookings:', err);
+      } catch {
+        setFetchError(true);
       } finally {
         setLoading(false);
       }
@@ -371,6 +378,18 @@ export default function CustomerBookings() {
           <div className="text-center py-20">
             <Loader2 className="mx-auto mb-4 text-purple-600 animate-spin" size={40} />
             <p className="text-gray-500">Loading bookings...</p>
+          </div>
+        ) : fetchError ? (
+          <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
+            <Calendar className="mx-auto text-gray-300 mb-4" size={64} />
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Couldn't load bookings</h2>
+            <p className="text-gray-500 mb-6">Please check your connection and try again</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
+            >
+              Retry
+            </button>
           </div>
         ) : bookings.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
